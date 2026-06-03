@@ -66,7 +66,6 @@ describe('router-runtime parseSearch', () => {
     }>(parsed);
   });
 
-
   it('parses static many fields with comma array format', () => {
     expect(parseSearch('?q=urlkit&tags=ts%2Curl', { schema, arrayFormat: 'comma' })).toEqual({
       q: 'urlkit',

@@ -1,3 +1,9 @@
+import type { PathConstraintMap } from '../contracts.js';
+
+export interface CompileStaticUrlOptions {
+  readonly pathConstraints?: PathConstraintMap;
+}
+
 export interface StaticUrlDescriptor {
   readonly path?: string;
   readonly search?: StaticSearchDescriptor;

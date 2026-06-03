@@ -2,13 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   buildHash,
   buildSearch,
+  createConstraint,
   createRouteUrlContract,
+  hasPathConstraint,
   normalizeHash,
   omitSearch,
   parseHash,
   parseSearch,
   patchSearch,
   pickSearch,
+  registerPathConstraint,
+  registerPathConstraints,
   replaceSearch,
 } from './router-runtime.js';
 
@@ -17,6 +21,10 @@ const expectType = <Value>(_value: Value): void => undefined;
 describe('router-runtime public exports', () => {
   it('exports framework-agnostic router-runtime helpers', () => {
     expect(createRouteUrlContract).toBeTypeOf('function');
+    expect(createConstraint).toBeTypeOf('function');
+    expect(hasPathConstraint).toBeTypeOf('function');
+    expect(registerPathConstraint).toBeTypeOf('function');
+    expect(registerPathConstraints).toBeTypeOf('function');
     expect(parseSearch).toBeTypeOf('function');
     expect(buildSearch).toBeTypeOf('function');
     expect(patchSearch).toBeTypeOf('function');
@@ -64,7 +72,7 @@ describe('router-runtime public exports', () => {
   });
 
   it('does not expose route definition concepts through router-runtime options', () => {
-    expectType<'params' | 'unknownSearch' | 'arrayFormat' | never>(
+    expectType<'params' | 'unknownSearch' | 'arrayFormat' | 'pathConstraints' | never>(
       {} as keyof import('./runtime/contracts.js').CreateRouteUrlContractOptions,
     );
   });

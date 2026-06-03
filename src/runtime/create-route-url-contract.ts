@@ -82,7 +82,12 @@ function compileRouteUrlDescriptor<
     mode,
     pattern: mode === 'path' ? descriptor.path : undefined,
     ...(mode === 'path' && descriptor.path !== undefined
-      ? { path: compilePath(descriptor.path, { params: paramsMode }) }
+      ? {
+          path: compilePath(descriptor.path, {
+            params: paramsMode,
+            ...(options?.pathConstraints ? { pathConstraints: options.pathConstraints } : {}),
+          }),
+        }
       : {}),
     ...(Object.prototype.hasOwnProperty.call(descriptor, 'search')
       ? { search: compileStaticSearch(descriptor.search ?? {}) }

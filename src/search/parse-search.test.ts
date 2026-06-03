@@ -124,8 +124,6 @@ describe('parseSearch', () => {
     expect(Object.isFrozen(parsed.search.category)).toBe(true);
   });
 
-
-
   it('parses schema-based many fields with comma array format', () => {
     const parsed = parseSearch('?tag=react%2Crouter&category=docs', {
       schema: {
@@ -351,8 +349,6 @@ describe('parseSearch', () => {
     });
     expect(Object.isFrozen(parsed.search.filter.tags)).toBe(true);
   });
-
-
 
   it('parses arrays inside object fields with comma array format', () => {
     const parsed = parseSearch('?filter.tags=react%2Crouter', {

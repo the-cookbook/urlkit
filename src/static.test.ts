@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { compileStaticHash, compileStaticSearch, compileStaticUrl } from './static.js';
+import {
+  compileStaticHash,
+  compileStaticSearch,
+  compileStaticUrl,
+  createConstraint,
+  hasPathConstraint,
+  registerPathConstraint,
+  registerPathConstraints,
+} from './static.js';
 import type {
   InferStaticHash,
   InferStaticSearch,
@@ -15,6 +23,10 @@ describe('static public exports', () => {
     expect(compileStaticUrl).toBeTypeOf('function');
     expect(compileStaticSearch).toBeTypeOf('function');
     expect(compileStaticHash).toBeTypeOf('function');
+    expect(createConstraint).toBeTypeOf('function');
+    expect(hasPathConstraint).toBeTypeOf('function');
+    expect(registerPathConstraint).toBeTypeOf('function');
+    expect(registerPathConstraints).toBeTypeOf('function');
   });
 
   it('exports static descriptor contracts for tooling users', () => {

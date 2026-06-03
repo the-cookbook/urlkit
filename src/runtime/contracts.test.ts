@@ -8,10 +8,17 @@ describe('runtime contracts', () => {
     const raw: CreateRouteUrlContractOptions = { params: 'raw' };
     const parsed: CreateRouteUrlContractOptions = { params: 'parsed' };
     const omitted: CreateRouteUrlContractOptions = {};
+    const withOptions: CreateRouteUrlContractOptions = {
+      arrayFormat: 'comma',
+      unknownSearch: 'preserve',
+      pathConstraints: {},
+    };
 
     expect(raw.params).toBe('raw');
     expect(parsed.params).toBe('parsed');
     expect(omitted.params).toBeUndefined();
+    expect(withOptions.arrayFormat).toBe('comma');
+    expect(withOptions.pathConstraints).toEqual({});
     expectType<'raw' | 'parsed' | undefined>(raw.params);
   });
 });

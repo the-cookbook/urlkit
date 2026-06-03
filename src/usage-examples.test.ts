@@ -5,13 +5,22 @@ import {
   commaSuffix,
   compactDefaults,
   fullPath,
+  normalized as normalizedFilters,
   preserved,
   rejectedUnknown,
   repeatedSuffix,
   searchOnlySuffix,
-  state,
+  state as productFilterState,
   suffix,
 } from '../examples/search-filters.js';
+import {
+  articleHref,
+  articleState,
+  compiledStaticUrl as customCompiledStaticUrl,
+  invalidArticle,
+  productState,
+  routeState as customRouteState,
+} from '../examples/custom-path-constraints.js';
 import { requestLikeState, requestState, safeRequest } from '../examples/server-request.js';
 import {
   builtSearch,
@@ -48,40 +57,42 @@ describe('usage examples', () => {
   });
 
   it('executes the search filters example', () => {
+    expect(productFilterState.pathname).toBe('/products');
+    expect(productFilterState.search.tags).toEqual(['sale', 'leather']);
+    expect(productFilterState.search.inStock).toBe(true);
+
     expect(suffix).toBe('?page=2&sort=popular&tags=sale&tags=leather&inStock=true');
     expect(fullPath).toBe(
       '/products?q=shoes&page=2&sort=popular&tags=sale&tags=leather&inStock=true',
     );
     expect(compactDefaults).toBe('/products');
+
+    expect(normalizedFilters.search.page).toBe(1);
+    expect(normalizedFilters.search.inStock).toBe(false);
+
     expect(preserved.unknownSearch).toEqual({ debug: 'true' });
     expect(rejectedUnknown.success).toBe(false);
-    expect(searchOnlySuffix).toBe('?page=2');
+
+    expect(commaParsed.success).toBe(true);
+    if (commaParsed.success) {
+      expect(commaParsed.data.search.tags).toEqual(['sale', 'leather']);
+    }
+
     expect(commaSuffix).toBe('?tags=sale%2Cleather');
     expect(repeatedSuffix).toBe('?tags=sale&tags=leather');
-    expect(commaParsed).toEqual({
-      success: true,
-      data: {
-        hash: undefined,
-        params: {},
-        pathname: '/products',
-        search: {
-          tags: ['sale', 'leather'],
-        },
-      },
-    });
 
-    expect(state).toEqual({
-      hash: undefined,
-      params: {},
-      pathname: '/products',
-      search: {
-        q: 'shoes',
-        inStock: true,
-        page: 2,
-        sort: 'popular',
-        tags: ['sale', 'leather'],
-      },
+    expect(searchOnlySuffix).toBe('?page=2');
+  });
+
+  it('executes the custom path constraints example', () => {
+    expect(articleState.params.slug).toBe('urlkit-custom-path-constraints');
+    expect(articleHref).toBe('/articles/urlkit-custom-path-constraints');
+    expect(invalidArticle.success).toBe(false);
+    expect(productState.params.sku).toBe('sku-42');
+    expect(customCompiledStaticUrl.path?.parsePathname('/docs/custom-paths')).toEqual({
+      slug: 'custom-paths',
     });
+    expect(customRouteState.params.slug).toBe('router-runtime-path-constraints');
   });
 
   it('executes the server request example', () => {

@@ -1,3 +1,4 @@
+import type { ConstraintValidation } from '@cookbook/pathkit';
 import type { UrlKitError } from './errors/url-kit-error.js';
 
 export type UrlMode = 'path' | 'pathless';
@@ -9,6 +10,12 @@ export type SearchArrayFormat = 'repeat' | 'comma';
 export type UnknownSearchParams = Readonly<Record<string, string | readonly string[]>>;
 
 export type EmptyParams = Readonly<Record<never, never>>;
+
+export type PathConstraintMap = Record<string, ConstraintValidation>;
+
+export interface RegisterPathConstraintOptions {
+  readonly overwrite?: boolean;
+}
 
 export interface UrlState<Pathname, Params, Search, Hash> {
   readonly pathname: Pathname;
@@ -124,12 +131,7 @@ export type PathBasedBuildInput<
   ? PathBasedBuildInputWithoutParams<Search, Hash, SearchInput, HashInput>
   : PathBasedBuildInputWithParams<Params, Search, Hash, SearchInput, HashInput>;
 
-export type PathlessBuildInput<
-  Search,
-  Hash,
-  SearchInput = Partial<Search>,
-  HashInput = Hash,
-> = {
+export type PathlessBuildInput<Search, Hash, SearchInput = Partial<Search>, HashInput = Hash> = {
   readonly pathname?: string;
   readonly params?: never;
 } & SearchInputProperty<SearchInput> &

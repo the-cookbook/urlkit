@@ -39,8 +39,6 @@ describe('parseCompiledSearch', () => {
     expect(Object.isFrozen(parsed.unknownSearch?.tag)).toBe(true);
   });
 
-
-
   it('parses compiled array fields with comma array format', () => {
     const compiled = compileSearchSchema({ tag: array(string()) });
 

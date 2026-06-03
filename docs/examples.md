@@ -25,6 +25,40 @@ UserUrl.build({
 // '/users/42?page=3#activity'
 ```
 
+## Custom path constraints
+
+```ts
+import { createConstraint, registerPathConstraint, url } from '@cookbook/urlkit';
+
+const slug = createConstraint({
+  parse(paramName, value) {
+    if (!/^[a-z0-9-]+$/.test(String(value))) {
+      throw new Error(`Path parameter "${paramName}" must be a slug.`);
+    }
+  },
+  verify(_paramName, params) {
+    if (params.trim()) {
+      throw new Error('Slug constraint does not accept arguments.');
+    }
+  },
+  toRegExp() {
+    return '[a-z0-9-]+';
+  },
+});
+
+registerPathConstraint('slug', slug);
+
+const ArticleUrl = url({
+  path: '/articles/{slug:slug}',
+});
+
+ArticleUrl.parse('/articles/custom-paths').params.slug;
+// string
+
+ArticleUrl.match('/articles/InvalidSlug');
+// false
+```
+
 ## Pathless search contract
 
 ```ts
@@ -43,7 +77,6 @@ ProductSearch.build({ search: { page: 2 } });
 ProductSearch.build({ pathname: '/products', search: { page: 2 } });
 // '/products?page=2'
 ```
-
 
 ## Comma-separated array search params
 

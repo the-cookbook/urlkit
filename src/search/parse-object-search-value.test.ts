@@ -26,8 +26,6 @@ describe('parseObjectSearchValue', () => {
     ).toEqual({ role: 'admin', active: true, ids: [1, 2] });
   });
 
-
-
   it('splits comma-separated arrays inside object fields when requested', () => {
     const schema = object({
       tags: array(string()),

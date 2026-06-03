@@ -67,7 +67,6 @@ describe('router-runtime search helpers', () => {
     >(value);
   });
 
-
   it('builds static many fields with comma array format', () => {
     expect(
       buildSearch({ q: 'urlkit', tags: ['ts', 'url'] }, { schema, arrayFormat: 'comma' }),

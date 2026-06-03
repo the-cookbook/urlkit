@@ -3,6 +3,7 @@ import { compileHashDescriptor } from '../hash/compile-hash-descriptor.js';
 import { compileSearchSchema } from '../search/compile-search-schema.js';
 import { compilePath } from './compile-path.js';
 import type {
+  CreateUrlOptions,
   NormalizedUrlDescriptor,
   RuntimeUrlDescriptor,
   UrlModeFromRuntimeDescriptor,
@@ -10,6 +11,7 @@ import type {
 
 export function compileRuntimeUrlDescriptor<Descriptor extends RuntimeUrlDescriptor>(
   descriptor: Descriptor,
+  options: CreateUrlOptions = {},
 ): NormalizedUrlDescriptor<UrlModeFromRuntimeDescriptor<Descriptor>> {
   assertRuntimeUrlDescriptor(descriptor);
 
@@ -23,7 +25,12 @@ export function compileRuntimeUrlDescriptor<Descriptor extends RuntimeUrlDescrip
     mode,
     pattern: mode === 'path' ? descriptor.path : undefined,
     ...(mode === 'path' && descriptor.path !== undefined
-      ? { path: compilePath(descriptor.path, { params: 'parsed' }) }
+      ? {
+          path: compilePath(descriptor.path, {
+            params: 'parsed',
+            ...(options.pathConstraints ? { pathConstraints: options.pathConstraints } : {}),
+          }),
+        }
       : {}),
     ...(descriptor.search ? { search: descriptor.search } : {}),
     ...(descriptor.hash ? { hash: compileHashDescriptor(descriptor.hash).descriptor } : {}),

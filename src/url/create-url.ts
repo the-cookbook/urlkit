@@ -33,5 +33,5 @@ export function url<const Descriptor extends RuntimeUrlDescriptor>(
     HashFromRuntimeDescriptor<Descriptor>,
     SearchBuildInputFromRuntimeDescriptor<Descriptor>,
     HashBuildInputFromRuntimeDescriptor<Descriptor>
-  >(compileRuntimeUrlDescriptor(descriptor), options);
+  >(compileRuntimeUrlDescriptor(descriptor, options), options);
 }

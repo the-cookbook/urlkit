@@ -4,13 +4,17 @@ import {
   UrlKitError,
   array,
   boolean,
+  createConstraint,
   date,
   dateTime,
   enumOf,
   hash,
+  hasPathConstraint,
   int,
   number as numberSchema,
   object,
+  registerPathConstraint,
+  registerPathConstraints,
   search,
   string,
   url,
@@ -26,6 +30,8 @@ import type {
   SearchArrayFormat,
   PatchSearchOptions,
   PathBuildMethod,
+  PathConstraintMap,
+  RegisterPathConstraintOptions,
   UnknownSearchBehavior,
   UnknownSearchParams,
   UrlMode,
@@ -33,6 +39,7 @@ import type {
   UrlSafeNormalizeResult,
   UrlSafeParseResult,
   UrlState,
+  ConstraintValidation,
 } from './index.js';
 
 const expectType = <Value>(_value: Value): void => undefined;
@@ -42,15 +49,19 @@ describe('main public exports', () => {
     expect(url).toBeTypeOf('function');
     expect(search).toBeTypeOf('function');
     expect(hash).toBeTypeOf('function');
+    expect(hasPathConstraint).toBeTypeOf('function');
     expect(string).toBeTypeOf('function');
     expect(numberSchema).toBeTypeOf('function');
     expect(int).toBeTypeOf('function');
     expect(boolean).toBeTypeOf('function');
+    expect(createConstraint).toBeTypeOf('function');
     expect(date).toBeTypeOf('function');
     expect(dateTime).toBeTypeOf('function');
     expect(array).toBeTypeOf('function');
     expect(enumOf).toBeTypeOf('function');
     expect(object).toBeTypeOf('function');
+    expect(registerPathConstraint).toBeTypeOf('function');
+    expect(registerPathConstraints).toBeTypeOf('function');
   });
 
   it('exports UrlKitError', () => {
@@ -72,6 +83,7 @@ describe('main public exports', () => {
     expectType<BuildUrlOptions>({ defaults: 'omit', arrayFormat: 'comma' });
     expectType<BuildSearchOptions>({ defaults: 'include', arrayFormat: 'repeat', sortKeys: true });
     expectType<PatchSearchOptions>({ removeNull: true, removeUndefined: true });
+    expectType<RegisterPathConstraintOptions>({ overwrite: true });
     expectType<UrlRequestInput>({ url: '/users/42' });
     expectType<ParseRequestOptions>({
       baseUrl: 'https://example.com',
@@ -114,6 +126,15 @@ describe('main public exports', () => {
     expectType<PathBuildMethod<{ readonly id: number }>>(
       (params: { readonly id: number }) => `/users/${params.id}`,
     );
+    const constraint = createConstraint({
+      parse() {},
+      verify() {},
+      toRegExp() {
+        return '[a-z]+';
+      },
+    });
+    expectType<ConstraintValidation>(constraint);
+    expectType<PathConstraintMap>({ urlkitindexconstraint: constraint });
   });
 
   it('exports the custom date format codec contract', () => {

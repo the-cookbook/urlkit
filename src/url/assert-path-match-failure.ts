@@ -1,3 +1,4 @@
+import { getConstraint } from '@cookbook/pathkit/constraints';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { getPathParamKind } from './path-param-kind.js';
 import type { ParsedPathSegment } from './path-segment.js';
@@ -79,6 +80,20 @@ function isValidPathParamSegment(
     }
 
     return new RegExp(`^(?:${params})$`).test(value);
+  }
+
+  if (segment.constraint) {
+    const constraint = getConstraint(segment.constraint);
+
+    if (!constraint) {
+      return false;
+    }
+
+    try {
+      return new RegExp(`^(?:${constraint.toRegExp(segment.constraintParams ?? '')})$`).test(value);
+    } catch {
+      return false;
+    }
   }
 
   return true;

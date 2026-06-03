@@ -30,8 +30,6 @@ describe('parseSearchFieldValue', () => {
     expect(Object.isFrozen(parsed)).toBe(true);
   });
 
-
-
   it('parses many-field values with comma array format', () => {
     expect(
       parseSearchFieldValue(

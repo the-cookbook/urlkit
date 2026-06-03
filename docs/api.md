@@ -59,13 +59,14 @@ import {
 
 ### Parameters and options
 
-| Parameter               | Type                         | Description                                                                     |
-| ----------------------- | ---------------------------- | ------------------------------------------------------------------------------- |
-| `descriptor.path`       | `string \| undefined`         | Optional PathKit-compatible path pattern. If omitted, the contract is pathless. |
-| `descriptor.search`     | `RuntimeSearchSchema \| undefined` | Optional runtime search schema.                                                 |
-| `descriptor.hash`       | `HashSchema \| undefined`     | Optional runtime hash schema.                                                   |
-| `options.unknownSearch` | `UnknownSearchBehavior`      | Contract-level default unknown search behavior.                                 |
-| `options.arrayFormat`   | `'repeat' \| 'comma'`         | Contract-level default array search format for parsing and building.            |
+| Parameter                 | Type                               | Description                                                                     |
+| ------------------------- | ---------------------------------- | ------------------------------------------------------------------------------- |
+| `descriptor.path`         | `string \| undefined`              | Optional PathKit-compatible path pattern. If omitted, the contract is pathless. |
+| `descriptor.search`       | `RuntimeSearchSchema \| undefined` | Optional runtime search schema.                                                 |
+| `descriptor.hash`         | `HashSchema \| undefined`          | Optional runtime hash schema.                                                   |
+| `options.unknownSearch`   | `UnknownSearchBehavior`            | Contract-level default unknown search behavior.                                 |
+| `options.arrayFormat`     | `'repeat' \| 'comma'`              | Contract-level default array search format for parsing and building.            |
+| `options.pathConstraints` | `PathConstraintMap`                | Per-contract custom PathKit constraints, registered before path compilation.    |
 
 Standalone `url(...)` path params default to parsed mode. `int` and `number` path params parse to numbers.
 
@@ -85,6 +86,46 @@ const UserUrl = url({
 const state = UserUrl.parse('/users/42?page=2#activity');
 // state.params.id is number
 ```
+
+## Custom path constraints
+
+URLKit re-exports PathKit's `createConstraint` and provides global helpers for app-level constraint setup.
+
+```ts
+import { createConstraint, registerPathConstraint, url } from '@cookbook/urlkit';
+
+const slug = createConstraint({
+  parse(paramName, value) {
+    if (!/^[a-z0-9-]+$/.test(String(value))) {
+      throw new Error(`Path parameter "${paramName}" must be a slug.`);
+    }
+  },
+  verify(_paramName, params) {
+    if (params.trim()) {
+      throw new Error('Slug constraint does not accept arguments.');
+    }
+  },
+  toRegExp() {
+    return '[a-z0-9-]+';
+  },
+});
+
+registerPathConstraint('slug', slug);
+
+const ArticleUrl = url({
+  path: '/articles/{slug:slug}',
+});
+```
+
+Per-contract constraints are also supported on `url(...)`, `compileStaticUrl(...)`, and `createRouteUrlContract(...)`:
+
+```ts
+const ArticleUrl = url({ path: '/articles/{slug:slug}' }, { pathConstraints: { slug } });
+```
+
+Duplicate global registration with the same constraint instance is allowed. Registering a different constraint under an existing name throws unless `{ overwrite: true }` is passed to `registerPathConstraint` or `registerPathConstraints`.
+
+Custom constraints infer `string` route params by default. Built-in `int` and `number` constraints continue to infer `number`.
 
 ## `search`
 
@@ -348,12 +389,12 @@ if (!result.success) {
 
 ## `parseRequest` and `safeParseRequest`
 
-| Item       | Details                                                                       |
-| ---------- | ----------------------------------------------------------------------------- | ------------------------------------------------- |
-| Purpose    | Parse web-standard `Request` or request-like `{ url: string }`.               |
-| Parameters | `input: Request                                                               | UrlRequestInput`, `options?: ParseRequestOptions` |
+| Item       | Details                                                                                |
+| ---------- | -------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Purpose    | Parse web-standard `Request` or request-like `{ url: string }`.                        |
+| Parameters | `input: Request                                                                        | UrlRequestInput`, `options?: ParseRequestOptions` |
 | Options    | `baseUrl` for relative request-like URLs; `unknownSearch` and `arrayFormat` overrides. |
-| Throws     | `parseRequest` throws `UrlKitError`; `safeParseRequest` returns safe failure. |
+| Throws     | `parseRequest` throws `UrlKitError`; `safeParseRequest` returns safe failure.          |
 
 ```ts
 UserUrl.parseRequest(new Request('https://example.com/users/42'));
@@ -380,11 +421,11 @@ UserUrl.normalize({
 
 ## `build`
 
-| Item     | Details                                                                                                                    |
-| -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Purpose  | Serialize typed state to a canonical URL string.                                                                           |
-| Options  | `BuildUrlOptions` with `defaults?: 'include' \| 'omit'` and `arrayFormat?: 'repeat' \| 'comma'`.                     |
-| Behavior | Path-based contracts build pathname from `params`; pathless contracts return suffixes without `pathname`.                  |
+| Item     | Details                                                                                                   |
+| -------- | --------------------------------------------------------------------------------------------------------- |
+| Purpose  | Serialize typed state to a canonical URL string.                                                          |
+| Options  | `BuildUrlOptions` with `defaults?: 'include' \| 'omit'` and `arrayFormat?: 'repeat' \| 'comma'`.          |
+| Behavior | Path-based contracts build pathname from `params`; pathless contracts return suffixes without `pathname`. |
 
 ```ts
 UserUrl.build({ params: { id: 42 }, search: { page: 2 } });
@@ -491,6 +532,14 @@ type UnknownSearchBehavior = 'strip' | 'preserve' | 'error';
 
 ```ts
 type SearchArrayFormat = 'repeat' | 'comma';
+
+interface PathConstraintMap {
+  readonly [name: string]: ConstraintValidation;
+}
+
+interface RegisterPathConstraintOptions {
+  readonly overwrite?: boolean;
+}
 
 interface ParseUrlOptions {
   readonly unknownSearch?: UnknownSearchBehavior;
@@ -614,11 +663,11 @@ Static descriptors are plain data and are suitable for router tooling and static
 
 ## `compileStaticUrl`
 
-| Item      | Details                                                                                                          |
-| --------- | ---------------------------------------------------------------------------------------------------------------- |
-| Signature | `compileStaticUrl<Descriptor extends StaticUrlDescriptor>(descriptor: Descriptor): NormalizedUrlDescriptor<...>` |
-| Purpose   | Compile a static URL descriptor into URLKit's normalized internal descriptor.                                    |
-| Throws    | `UrlKitError` with `invalid-descriptor` for invalid descriptors/defaults.                                        |
+| Item      | Details                                                                                                                                             |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signature | `compileStaticUrl<Descriptor extends StaticUrlDescriptor>(descriptor: Descriptor, options?: CompileStaticUrlOptions): NormalizedUrlDescriptor<...>` |
+| Purpose   | Compile a static URL descriptor into URLKit's normalized internal descriptor.                                                                       |
+| Throws    | `UrlKitError` with `invalid-descriptor` for invalid descriptors/defaults.                                                                           |
 
 ```ts
 const compiled = compileStaticUrl({
@@ -735,13 +784,13 @@ Router-runtime APIs are low-level primitives for router packages. They are frame
 
 ## `createRouteUrlContract`
 
-| Item                | Details                                                                                                                                       |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Signature           | `createRouteUrlContract<Descriptor, Options>(descriptor, options?: CreateRouteUrlContractOptions): UrlContract<...>`                          |
-| Purpose             | Create a URL contract from a static route-compatible descriptor.                                                                               |
-| Options             | `params?: 'raw' \| 'parsed'`, `unknownSearch?: UnknownSearchBehavior`, `arrayFormat?: 'repeat' \| 'comma'`.                              |
-| Default params mode | `raw`                                                                                                                                         |
-| Throws              | `invalid-descriptor` for invalid static descriptors.                                                                                          |
+| Item                | Details                                                                                                                                            |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signature           | `createRouteUrlContract<Descriptor, Options>(descriptor, options?: CreateRouteUrlContractOptions): UrlContract<...>`                               |
+| Purpose             | Create a URL contract from a static route-compatible descriptor.                                                                                   |
+| Options             | `params?: 'raw' \| 'parsed'`, `unknownSearch?: UnknownSearchBehavior`, `arrayFormat?: 'repeat' \| 'comma'`, `pathConstraints?: PathConstraintMap`. |
+| Default params mode | `raw`                                                                                                                                              |
+| Throws              | `invalid-descriptor` for invalid static descriptors.                                                                                               |
 
 ```ts
 const ArticleUrl = createRouteUrlContract({
@@ -768,12 +817,12 @@ UserUrl.parse('/users/42').params.id;
 
 ## Router-runtime `parseSearch`
 
-| Item                  | Details                                                                            |
-| --------------------- | ---------------------------------------------------------------------------------- |
+| Item                  | Details                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
 | Signature with schema | `parseSearch(input, { schema, unknownSearch?, arrayFormat? }): InferStaticSearch<typeof schema>` |
-| Fallback signature    | `parseSearch(input, options?): RawSearchParams`                                    |
-| Purpose               | Parse raw or static-schema search. `arrayFormat: 'comma'` splits declared array fields. |
-| Throws                | `invalid-search` / `missing-search` for schema validation failures.                |
+| Fallback signature    | `parseSearch(input, options?): RawSearchParams`                                                  |
+| Purpose               | Parse raw or static-schema search. `arrayFormat: 'comma'` splits declared array fields.          |
+| Throws                | `invalid-search` / `missing-search` for schema validation failures.                              |
 
 ```ts
 parseSearch('?page=2', {

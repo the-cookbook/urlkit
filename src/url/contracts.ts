@@ -9,6 +9,7 @@ import type {
   ParseUrlOptions,
   PatchSearchOptions,
   PathBuildMethod,
+  PathConstraintMap,
   SearchInputArgument,
   UrlBuildInput,
   UrlMode,
@@ -45,6 +46,7 @@ export interface RuntimeUrlDescriptor {
 export interface CreateUrlOptions {
   readonly unknownSearch?: UnknownSearchBehavior;
   readonly arrayFormat?: SearchArrayFormat;
+  readonly pathConstraints?: PathConstraintMap;
 }
 
 export interface CreateUrlContractOptions extends CreateUrlOptions {}
@@ -123,6 +125,7 @@ export interface UrlContract<
 
 export interface CompilePathOptions {
   readonly params?: 'raw' | 'parsed';
+  readonly pathConstraints?: PathConstraintMap;
 }
 
 export interface CompiledPath<

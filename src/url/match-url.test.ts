@@ -92,7 +92,6 @@ describe('matchCompiledUrl', () => {
     expect(matchCompiledUrl('/search#other', compiled, 'strip')).toBe(false);
   });
 
-
   it('uses arrayFormat options when validating array search fields', () => {
     const compiled = compileRuntime({
       path: '/search',
@@ -102,9 +101,9 @@ describe('matchCompiledUrl', () => {
     });
 
     expect(matchCompiledUrl('/search?page=1%2C2', compiled, 'strip')).toBe(false);
-    expect(matchCompiledUrl('/search?page=1%2C2', compiled, 'strip', { arrayFormat: 'comma' })).toBe(
-      true,
-    );
+    expect(
+      matchCompiledUrl('/search?page=1%2C2', compiled, 'strip', { arrayFormat: 'comma' }),
+    ).toBe(true);
   });
 
   it('applies unknownSearch behavior', () => {
@@ -156,7 +155,6 @@ describe('UrlContract.match', () => {
     expect(UserUrl.match('/users/wrong#activity')).toBe(false);
     expect(UserUrl.match('/users/42#other')).toBe(false);
   });
-
 
   it('uses contract-level arrayFormat and method-level overrides', () => {
     const SearchUrl = url(

@@ -59,7 +59,6 @@ describe('parseCompiledUrl', () => {
     });
   });
 
-
   it('passes arrayFormat options to search parsing', () => {
     const compiled = compileUrlDescriptor(
       compileRuntimeUrlDescriptor({

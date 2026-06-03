@@ -1,3 +1,4 @@
+import { createConstraint } from '@cookbook/pathkit/constraints';
 import { describe, expect, it } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { createRouteUrlContract } from './create-route-url-contract.js';
@@ -88,6 +89,42 @@ describe('createRouteUrlContract', () => {
     expect(route.parse('/users/42').params).toEqual({ id: '42' });
   });
 
+  it('supports custom PathKit constraints in router-runtime contracts', () => {
+    const slug = createConstraint({
+      parse(paramName, value) {
+        if (!/^[a-z0-9-]+$/.test(String(value))) {
+          throw new Error(`Path parameter "${paramName}" must be a slug.`);
+        }
+      },
+      verify(_paramName, params) {
+        if (params.trim()) {
+          throw new Error('Slug constraint does not accept arguments.');
+        }
+      },
+      toRegExp() {
+        return '[a-z0-9-]+';
+      },
+    });
+
+    const contract = createRouteUrlContract(
+      {
+        path: '/articles/{slug:urlkitslugroute}',
+      } as const,
+      {
+        pathConstraints: {
+          urlkitslugroute: slug,
+        },
+      },
+    );
+
+    const state = contract.parse('/articles/hello-world');
+
+    expect(state.params).toEqual({ slug: 'hello-world' });
+    expect(contract.build({ params: { slug: 'hello-world' } })).toBe('/articles/hello-world');
+    expect(contract.match('/articles/HelloWorld')).toBe(false);
+    expectType<{ readonly slug: string }>(state.params);
+  });
+
   it('supports pathless descriptors', () => {
     const contract = createRouteUrlContract({
       search: {
@@ -127,11 +164,10 @@ describe('createRouteUrlContract', () => {
   it('keeps route concepts outside the router-runtime options contract', () => {
     createRouteUrlContract({ path: '/users/{id}' } as const);
 
-    expectType<'params' | 'unknownSearch' | 'arrayFormat' | never>(
+    expectType<'params' | 'unknownSearch' | 'arrayFormat' | 'pathConstraints' | never>(
       {} as keyof import('./contracts.js').CreateRouteUrlContractOptions,
     );
   });
-
 
   it('supports contract-level arrayFormat options', () => {
     const contract = createRouteUrlContract(

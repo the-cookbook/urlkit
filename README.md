@@ -143,6 +143,45 @@ const user = UserUrl.parse('/users/42');
 // user.params.id: number
 ```
 
+### Custom path constraints
+
+URLKit re-exports PathKit's `createConstraint` and provides global registration helpers for reusable path constraints. Custom constraints infer `string` params by default; built-in `int` and `number` still infer `number`.
+
+```ts
+import { createConstraint, registerPathConstraint, url } from '@cookbook/urlkit';
+
+const slug = createConstraint({
+  parse(paramName, value) {
+    if (!/^[a-z0-9-]+$/.test(String(value))) {
+      throw new Error(`Path parameter "${paramName}" must be a slug.`);
+    }
+  },
+  verify(paramName, params) {
+    if (params.trim()) {
+      throw new Error(`Constraint "slug" declared for "${paramName}" does not accept arguments.`);
+    }
+  },
+  toRegExp() {
+    return '[a-z0-9-]+';
+  },
+});
+
+registerPathConstraint('slug', slug);
+
+const ArticleUrl = url({
+  path: '/articles/{slug:slug}',
+});
+
+ArticleUrl.parse('/articles/hello-world').params.slug;
+// string
+```
+
+Use per-contract registration when a constraint should be local to a contract or test:
+
+```ts
+const ArticleUrl = url({ path: '/articles/{slug:slug}' }, { pathConstraints: { slug } });
+```
+
 ## Pathless URL contracts
 
 Pathless contracts validate search/hash independently of pathname. `pattern` is `undefined`, `params` is `{}`, and `parse` preserves the input pathname.
@@ -254,7 +293,6 @@ TagUrl.build({ search: { tags: ['ts', 'router'] } });
 TagUrl.build({ search: { tags: ['ts', 'router'] } }, { arrayFormat: 'repeat' });
 // '/search?tags=ts&tags=router'
 ```
-
 
 ## Unknown search params
 

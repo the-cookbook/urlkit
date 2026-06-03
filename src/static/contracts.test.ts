@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type {
+  CompileStaticUrlOptions,
   InferStaticHash,
   InferStaticSearch,
   InferStaticUrlHash,
@@ -10,6 +11,14 @@ import type {
 const expectType = <Value>(_value: Value): void => undefined;
 
 describe('static contracts', () => {
+  it('models static URL compiler path constraint options', () => {
+    const options: CompileStaticUrlOptions = {
+      pathConstraints: {},
+    };
+
+    expect(options.pathConstraints).toEqual({});
+  });
+
   it('infers static search fields', () => {
     const descriptor = {
       ref: {

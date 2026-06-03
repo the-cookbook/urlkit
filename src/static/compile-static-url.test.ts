@@ -1,3 +1,4 @@
+import { createConstraint } from '@cookbook/pathkit/constraints';
 import { describe, expect, it } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { buildSearch } from '../search/build-search.js';
@@ -45,6 +46,38 @@ describe('compileStaticUrl', () => {
     });
     expect(Object.isFrozen(compiled)).toBe(true);
     expectType<'path'>({} as StaticUrlModeFromDescriptor<typeof descriptor>);
+  });
+
+  it('supports custom PathKit constraints outside static descriptors', () => {
+    const slug = createConstraint({
+      parse(paramName, value) {
+        if (!/^[a-z0-9-]+$/.test(String(value))) {
+          throw new Error(`Path parameter "${paramName}" must be a slug.`);
+        }
+      },
+      verify(_paramName, params) {
+        if (params.trim()) {
+          throw new Error('Slug constraint does not accept arguments.');
+        }
+      },
+      toRegExp() {
+        return '[a-z0-9-]+';
+      },
+    });
+
+    const compiled = compileStaticUrl(
+      {
+        path: '/articles/{slug:urlkitslugstatic}',
+      },
+      {
+        pathConstraints: {
+          urlkitslugstatic: slug,
+        },
+      },
+    );
+
+    expect(compiled.path?.parsePathname('/articles/post-1')).toEqual({ slug: 'post-1' });
+    expect(compiled.path?.buildPath({ slug: 'post-1' })).toBe('/articles/post-1');
   });
 
   it('compiles pathless descriptors to normalized pathless mode', () => {

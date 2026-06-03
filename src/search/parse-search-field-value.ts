@@ -19,19 +19,30 @@ export function parseSearchFieldValue(
   options: SearchParseOptions = {},
 ): unknown {
   if (isRuntimeSchemaKind(field.schema, 'object')) {
-    return parseObjectSearchValue(field.schema as AnyObjectSchema, field.key, rawSearch, {
-      kind: 'object',
-      path: [field.key],
-      errorCode: 'invalid-search',
-    }, options);
+    return parseObjectSearchValue(
+      field.schema as AnyObjectSchema,
+      field.key,
+      rawSearch,
+      {
+        kind: 'object',
+        path: [field.key],
+        errorCode: 'invalid-search',
+      },
+      options,
+    );
   }
 
   if (isRuntimeSchemaKind(field.schema, 'array')) {
-    return parseArraySearchValue(field.schema as ArraySchema<any>, rawSearch[field.key], {
-      kind: 'array',
-      path: [field.key],
-      errorCode: 'invalid-search',
-    }, options);
+    return parseArraySearchValue(
+      field.schema as ArraySchema<any>,
+      rawSearch[field.key],
+      {
+        kind: 'array',
+        path: [field.key],
+        errorCode: 'invalid-search',
+      },
+      options,
+    );
   }
 
   return parseNonObjectSearchFieldValue(field, rawSearch[field.key], options);

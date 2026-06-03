@@ -126,7 +126,6 @@ describe('buildCompiledUrl', () => {
     ).toBe('/search?q=router');
   });
 
-
   it('passes arrayFormat options to search serialization', () => {
     const compiled = compileRuntime({
       path: '/search',

@@ -1,12 +1,17 @@
 import { UrlKitError } from '../errors/url-kit-error.js';
 import type { NormalizedUrlDescriptor } from '../url/contracts.js';
-import type { StaticUrlDescriptor, StaticUrlModeFromDescriptor } from './contracts.js';
+import type {
+  CompileStaticUrlOptions,
+  StaticUrlDescriptor,
+  StaticUrlModeFromDescriptor,
+} from './contracts.js';
 import { compilePath } from '../url/compile-path.js';
 import { compileStaticHash } from './compile-static-hash.js';
 import { compileStaticSearch } from './compile-static-search.js';
 
 export function compileStaticUrl<Descriptor extends StaticUrlDescriptor>(
   descriptor: Descriptor,
+  options: CompileStaticUrlOptions = {},
 ): NormalizedUrlDescriptor<StaticUrlModeFromDescriptor<Descriptor>> {
   assertStaticUrlDescriptor(descriptor);
 
@@ -15,7 +20,12 @@ export function compileStaticUrl<Descriptor extends StaticUrlDescriptor>(
     mode,
     pattern: mode === 'path' ? descriptor.path : undefined,
     ...(mode === 'path' && descriptor.path !== undefined
-      ? { path: compilePath(descriptor.path, { params: 'parsed' }) }
+      ? {
+          path: compilePath(descriptor.path, {
+            params: 'parsed',
+            ...(options.pathConstraints ? { pathConstraints: options.pathConstraints } : {}),
+          }),
+        }
       : {}),
     ...(Object.prototype.hasOwnProperty.call(descriptor, 'search')
       ? { search: compileStaticSearch(descriptor.search ?? {}) }

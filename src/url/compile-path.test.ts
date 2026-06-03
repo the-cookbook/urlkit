@@ -1,3 +1,4 @@
+import { createConstraint } from '@cookbook/pathkit/constraints';
 import { describe, expect, it } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { compilePath } from './compile-path.js';
@@ -73,6 +74,38 @@ describe('compilePath', () => {
     expect(path.parsePathname('/posts/post-1')).toEqual({ slug: 'post-1' });
     expectType<{ readonly slug: string }>(
       {} as ParamsFromPattern<'/posts/{slug:regex([a-z0-9-]+)}'>,
+    );
+  });
+
+  it('supports custom PathKit constraints passed at compile time', () => {
+    const slug = createConstraint({
+      parse(paramName, value) {
+        if (!/^[a-z0-9-]+$/.test(String(value))) {
+          throw new Error(`Path parameter "${paramName}" must be a slug.`);
+        }
+      },
+      verify(_paramName, params) {
+        if (params.trim()) {
+          throw new Error('Slug constraint does not accept arguments.');
+        }
+      },
+      toRegExp() {
+        return '[a-z0-9-]+';
+      },
+    });
+
+    const path = compilePath('/posts/{slug:urlkitslugcompile}', {
+      pathConstraints: {
+        urlkitslugcompile: slug,
+      },
+    });
+
+    expect(path.parsePathname('/posts/post-1')).toEqual({ slug: 'post-1' });
+    expect(path.buildPath({ slug: 'post-1' })).toBe('/posts/post-1');
+    expectUrlKitError(() => path.parsePathname('/posts/Post'), 'invalid-param', ['params', 'slug']);
+    expectUrlKitError(() => path.buildPath({ slug: 'Post' }), 'invalid-param', ['params']);
+    expectType<{ readonly slug: string }>(
+      {} as ParamsFromPattern<'/posts/{slug:urlkitslugcompile}'>,
     );
   });
 

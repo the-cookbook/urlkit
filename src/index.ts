@@ -1,3 +1,6 @@
+export * from './url/path-constraints.js';
+export { createConstraint } from '@cookbook/pathkit/constraints';
+export type { ConstraintValidation } from '@cookbook/pathkit';
 export * from './contracts.js';
 export * from './date/contracts.js';
 export * from './errors/contracts.js';

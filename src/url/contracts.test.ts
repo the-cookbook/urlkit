@@ -119,6 +119,16 @@ describe('url contract types', () => {
     expect(true).toBe(true);
   });
 
+  it('infers custom path constraint params as strings', () => {
+    type ArticleParams = ParamsFromPattern<'/articles/{slug:slug}'>;
+    type ArticlePathname = PathnameFromPattern<'/articles/{slug:slug}'>;
+    type MixedParams = ParamsFromPattern<'/users/{id:int}/articles/{slug:slug}'>;
+
+    expectType<Assert<IsEqual<ArticleParams, { readonly slug: string }>>>(true);
+    expectType<Assert<IsEqual<ArticlePathname, `/articles/${string}`>>>(true);
+    expectType<Assert<IsEqual<MixedParams, { readonly id: number; readonly slug: string }>>>(true);
+  });
+
   it('keeps pathless contract pathname as string while preserving normalize literals', () => {
     interface Search {
       readonly page: number;

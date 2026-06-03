@@ -1,3 +1,4 @@
+import { createConstraint } from '@cookbook/pathkit/constraints';
 import { describe, expect, it } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { dateTime } from '../schema/date-time.js';
@@ -56,6 +57,45 @@ describe('url', () => {
         'activity' | 'comments' | undefined
       >
     >(UserUrl);
+  });
+
+  it('supports custom PathKit constraints in runtime URL contracts', () => {
+    const slug = createConstraint({
+      parse(paramName, value) {
+        if (!/^[a-z0-9-]+$/.test(String(value))) {
+          throw new Error(`Path parameter "${paramName}" must be a slug.`);
+        }
+      },
+      verify(_paramName, params) {
+        if (params.trim()) {
+          throw new Error('Slug constraint does not accept arguments.');
+        }
+      },
+      toRegExp() {
+        return '[a-z0-9-]+';
+      },
+    });
+
+    const ArticleUrl = url(
+      {
+        path: '/articles/{slug:urlkitslugruntime}',
+      },
+      {
+        pathConstraints: {
+          urlkitslugruntime: slug,
+        },
+      },
+    );
+
+    const state = ArticleUrl.parse('/articles/hello-world');
+
+    expect(state.params).toEqual({ slug: 'hello-world' });
+    expect(ArticleUrl.build({ params: { slug: 'hello-world' } })).toBe('/articles/hello-world');
+    expect(ArticleUrl.match('/articles/HelloWorld')).toBe(false);
+
+    if (false) {
+      expectType<string>(state.params.slug);
+    }
   });
 
   it('constructs pathless contracts from runtime builder descriptors', () => {
@@ -187,7 +227,6 @@ describe('url parse and safeParse', () => {
     }
   });
 
-
   it('uses contract-level arrayFormat and method-level overrides for parse and safeParse', () => {
     const SearchUrl = url(
       {
@@ -211,11 +250,11 @@ describe('url parse and safeParse', () => {
       expect(result.data.search).toEqual({ tag: ['react', 'router'] });
     }
 
-    expect(
-      SearchUrl.parse('/search?tag=react%2Crouter', { arrayFormat: 'repeat' }).search,
-    ).toEqual({
-      tag: ['react,router'],
-    });
+    expect(SearchUrl.parse('/search?tag=react%2Crouter', { arrayFormat: 'repeat' }).search).toEqual(
+      {
+        tag: ['react,router'],
+      },
+    );
   });
 
   it('uses contract-level unknownSearch and method-level overrides', () => {
@@ -463,6 +502,27 @@ describe('url build', () => {
     }
   });
 
+  it('preserves method-level arrayFormat override on URL build options', () => {
+    const CommaProductFilters = url(
+      {
+        search: {
+          tags: { type: 'many', value: string() },
+        },
+      },
+      { arrayFormat: 'comma' },
+    );
+
+    const repeatedSuffix = CommaProductFilters.build(
+      {
+        search: {
+          tags: ['sale', 'leather'],
+        },
+      },
+      { arrayFormat: 'repeat' },
+    );
+
+    expect(repeatedSuffix).toBe('?tags=sale&tags=leather');
+  });
 
   it('uses contract-level arrayFormat and method-level overrides for build', () => {
     const SearchUrl = url(
@@ -555,7 +615,6 @@ describe('url contract helper methods', () => {
     expect(SearchUrl.buildSearch({ q: 'router' })).toBe('?q=router&page=1');
     expect(SearchUrl.buildSearch({ q: 'router', page: 1 }, { defaults: 'omit' })).toBe('?q=router');
   });
-
 
   it('uses contract-level arrayFormat and method-level overrides for search helpers', () => {
     const SearchUrl = url(
@@ -762,7 +821,6 @@ describe('url parseRequest and safeParseRequest', () => {
       hash: undefined,
     });
   });
-
 
   it('passes arrayFormat options through ParseRequestOptions', () => {
     const SearchUrl = url({
