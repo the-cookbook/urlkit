@@ -267,9 +267,9 @@ If two serialized keys resolve to the same object path after unescaping, parsing
 ## `date`
 
 | Item         | Details                                                                                                            |
-| ------------ | ------------------------------------------------------------------------------------------------------------------ | ----------- | -------------- | --------- | ------------------- |
+| ------------ | ------------------------------------------------------------------------------------------------------------------ |
 | Import path  | `@cookbook/urlkit`                                                                                                 |
-| Signatures   | `date()`, `date({ format: 'date'                                                                                   | 'date-time' | 'unix-seconds' | 'unix-ms' | DateFormatCodec })` |
+| Signatures   | `date()`, `date({ format: 'date' \| 'date-time' \| 'unix-seconds' \| 'unix-ms' \| DateFormatCodec })`              |
 | Return value | Runtime schema builder that infers `Date`.                                                                         |
 | Throws       | Invalid parse/serialize values use the validation context error code; invalid defaults throw `invalid-descriptor`. |
 
@@ -886,31 +886,3 @@ parseHash('#comments', ['comments', 'share'] as const);
 buildHash('comments', ['comments', 'share'] as const);
 normalizeHash('comments', ['comments', 'share'] as const);
 ```
-
----
-
-# Framework boundary
-
-URLKit core does not include React hooks/components, Express/Hono/Fastify/Next.js adapters, router route definitions, route IDs, route trees, loaders, or middleware.
-
-Use URLKit in servers and frameworks through:
-
-- `Request`
-- request-like `{ url: string }`
-- `parseRequest` / `safeParseRequest`
-- `normalize` / `safeNormalize`
-
-```ts
-const result = UserUrl.safeNormalize({
-  params: { id: '42' as never },
-  search: { page: '2' as never },
-});
-```
-
-Framework-provided raw objects can cross a type boundary before normalization; URLKit still validates and returns typed state.
-
----
-
-# Spec compliance gaps
-
-No spec/API gaps were found while preparing this documentation from the implemented public exports, `urlkit-spec.md`, existing tests/examples, and source contracts.
