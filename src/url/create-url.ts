@@ -1,0 +1,31 @@
+import { createUrlContract } from './create-url-contract.js';
+import { compileRuntimeUrlDescriptor } from './compile-runtime-url-descriptor.js';
+import type {
+  CreateUrlOptions,
+  HashFromRuntimeDescriptor,
+  ParamsFromRuntimeDescriptor,
+  PathnameFromRuntimeDescriptor,
+  RuntimeUrlDescriptor,
+  SearchFromRuntimeDescriptor,
+  UrlContract,
+  UrlModeFromRuntimeDescriptor,
+} from './contracts.js';
+
+export function url<const Descriptor extends RuntimeUrlDescriptor>(
+  descriptor: Descriptor,
+  options: CreateUrlOptions = {},
+): UrlContract<
+  UrlModeFromRuntimeDescriptor<Descriptor>,
+  PathnameFromRuntimeDescriptor<Descriptor>,
+  ParamsFromRuntimeDescriptor<Descriptor>,
+  SearchFromRuntimeDescriptor<Descriptor>,
+  HashFromRuntimeDescriptor<Descriptor>
+> {
+  return createUrlContract<
+    UrlModeFromRuntimeDescriptor<Descriptor>,
+    PathnameFromRuntimeDescriptor<Descriptor>,
+    ParamsFromRuntimeDescriptor<Descriptor>,
+    SearchFromRuntimeDescriptor<Descriptor>,
+    HashFromRuntimeDescriptor<Descriptor>
+  >(compileRuntimeUrlDescriptor(descriptor), options);
+}

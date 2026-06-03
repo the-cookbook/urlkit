@@ -1,0 +1,150 @@
+import { UrlKitError } from '../errors/url-kit-error.js';
+import { compileRuntimeSchema } from '../schema/compile-runtime-schema.js';
+import type { AnyRuntimeSchemaBuilder, RuntimeSchemaValueContext } from '../schema/contracts.js';
+import { getObjectSchemaShape, type ObjectSchema } from '../schema/object.js';
+import { parseRuntimeSchemaValue } from '../schema/parse-runtime-schema-value.js';
+import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
+import { parseArraySearchValue } from './parse-array-search-value.js';
+import type { RawSearchParams } from './contracts.js';
+import { assertNoObjectSearchCollisions } from './assert-object-search-collisions.js';
+import { findObjectSearchRawValue } from './find-object-search-raw-value.js';
+
+export function parseObjectSearchValue(
+  schema: ObjectSchema<any>,
+  parentKey: string,
+  rawSearch: RawSearchParams,
+  context: RuntimeSchemaValueContext,
+): unknown {
+  assertNoObjectSearchCollisions(parentKey, rawSearch, context.path);
+
+  const descriptor = compileRuntimeSchema(schema, { path: context.path });
+  const hasDeclaredValues = hasDeclaredObjectValues(schema, parentKey, [], rawSearch);
+
+  if (!hasDeclaredValues) {
+    if (descriptor.presence === 'optional') {
+      return undefined;
+    }
+
+    if (descriptor.presence === 'defaulted') {
+      return descriptor.defaultValue;
+    }
+  }
+
+  return parseObjectShape(schema, parentKey, [], rawSearch, context);
+}
+
+function parseObjectShape(
+  schema: ObjectSchema<any>,
+  parentKey: string,
+  objectPath: readonly string[],
+  rawSearch: RawSearchParams,
+  context: RuntimeSchemaValueContext,
+): Readonly<Record<string, unknown>> {
+  const shape = getObjectSchemaShape(schema);
+  const output: Record<string, unknown> = {};
+
+  for (const [key, childSchema] of Object.entries(shape)) {
+    const childObjectPath = [...objectPath, key];
+    const childPath = [...context.path, key];
+    const value = parseChildObjectSearchValue(
+      childSchema as AnyRuntimeSchemaBuilder,
+      parentKey,
+      childObjectPath,
+      rawSearch,
+      {
+        kind: 'object',
+        path: childPath,
+        errorCode: context.errorCode,
+      },
+    );
+
+    if (value !== undefined) {
+      output[key] = value;
+    }
+  }
+
+  return Object.freeze(output);
+}
+
+function parseChildObjectSearchValue(
+  schema: AnyRuntimeSchemaBuilder,
+  parentKey: string,
+  objectPath: readonly string[],
+  rawSearch: RawSearchParams,
+  context: RuntimeSchemaValueContext,
+): unknown {
+  if (isRuntimeSchemaKind(schema, 'object')) {
+    return parseNestedObjectSearchValue(
+      schema as ObjectSchema<any>,
+      parentKey,
+      objectPath,
+      rawSearch,
+      context,
+    );
+  }
+
+  const rawValue = findObjectSearchRawValue(parentKey, objectPath, rawSearch);
+
+  if (isRuntimeSchemaKind(schema, 'array')) {
+    return parseArraySearchValue(schema as never, rawValue, context);
+  }
+
+  if (Array.isArray(rawValue)) {
+    throw new UrlKitError('invalid-search', 'Expected a single object search parameter value.', {
+      path: context.path,
+    });
+  }
+
+  return parseRuntimeSchemaValue(schema, rawValue, {
+    path: context.path,
+    errorCode: context.errorCode,
+    missingCode: 'missing-search',
+  });
+}
+
+function parseNestedObjectSearchValue(
+  schema: ObjectSchema<any>,
+  parentKey: string,
+  objectPath: readonly string[],
+  rawSearch: RawSearchParams,
+  context: RuntimeSchemaValueContext,
+): unknown {
+  const descriptor = compileRuntimeSchema(schema, { path: context.path });
+  const hasDeclaredValues = hasDeclaredObjectValues(schema, parentKey, objectPath, rawSearch);
+
+  if (!hasDeclaredValues) {
+    if (descriptor.presence === 'optional') {
+      return undefined;
+    }
+
+    if (descriptor.presence === 'defaulted') {
+      return descriptor.defaultValue;
+    }
+  }
+
+  return parseObjectShape(schema, parentKey, objectPath, rawSearch, context);
+}
+
+function hasDeclaredObjectValues(
+  schema: ObjectSchema<any>,
+  parentKey: string,
+  objectPath: readonly string[],
+  rawSearch: RawSearchParams,
+): boolean {
+  const shape = getObjectSchemaShape(schema);
+
+  return Object.entries(shape).some(([key, childSchema]) => {
+    const childObjectPath = [...objectPath, key];
+
+    if (isRuntimeSchemaKind(childSchema as AnyRuntimeSchemaBuilder, 'object')) {
+      return hasDeclaredObjectValues(
+        childSchema as ObjectSchema<any>,
+        parentKey,
+        childObjectPath,
+        rawSearch,
+      );
+    }
+
+    return findObjectSearchRawValue(parentKey, childObjectPath, rawSearch) !== undefined;
+  });
+}

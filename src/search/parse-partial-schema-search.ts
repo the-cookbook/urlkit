@@ -1,0 +1,38 @@
+import type { RawSearchParams, RawSearchValue, RuntimeSearchSchema } from './contracts.js';
+import { compileSearchSchema } from './compile-search-schema.js';
+import { copyRawSearchParams } from './copy-raw-search-params.js';
+import { parseSearchFieldValue } from './parse-search-field-value.js';
+import { deleteSearchFieldRawKeys } from './delete-search-field-raw-keys.js';
+import { hasSearchFieldRawValue } from './has-search-field-raw-value.js';
+
+export interface PartialSchemaSearchParseResult {
+  readonly search: Record<string, unknown>;
+  readonly unknownSearch: RawSearchParams;
+}
+
+export function parsePartialSchemaSearch(
+  rawSearch: RawSearchParams,
+  schema: RuntimeSearchSchema,
+): PartialSchemaSearchParseResult {
+  const compiled = compileSearchSchema(schema);
+  const remainingUnknown = { ...rawSearch } satisfies Record<string, RawSearchValue>;
+  const search: Record<string, unknown> = {};
+
+  for (const field of compiled.fields) {
+    if (!hasSearchFieldRawValue(field, rawSearch)) {
+      continue;
+    }
+
+    const value = parseSearchFieldValue(field, rawSearch);
+    deleteSearchFieldRawKeys(field, remainingUnknown);
+
+    if (value !== undefined) {
+      search[field.key] = value;
+    }
+  }
+
+  return Object.freeze({
+    search: Object.freeze(search),
+    unknownSearch: copyRawSearchParams(remainingUnknown),
+  });
+}

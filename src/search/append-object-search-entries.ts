@@ -1,0 +1,84 @@
+import type { BuildSearchOptions } from '../contracts.js';
+import type { AnyRuntimeSchemaBuilder } from '../schema/contracts.js';
+import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
+import { type ObjectSchema, getObjectSchemaShape } from '../schema/object.js';
+import { serializeRuntimeSchemaValue } from '../schema/serialize-runtime-schema-value.js';
+import { serializeArrayRuntimeSchemaValue } from '../schema/array.js';
+import type { SearchEntry } from './search-entries.js';
+import { appendSearchEntry } from './append-search-entry.js';
+import { joinObjectSearchKey } from './object-search-key.js';
+
+export function appendObjectSearchEntries(
+  entries: SearchEntry[],
+  parentKey: string,
+  schema: ObjectSchema<any>,
+  value: unknown,
+  options: BuildSearchOptions = {},
+): void {
+  if (!isPlainObject(value)) {
+    return;
+  }
+
+  const shape = getObjectSchemaShape(schema);
+
+  for (const [key, childSchema] of Object.entries(shape)) {
+    const childValue = value[key];
+
+    if (childValue === undefined) {
+      continue;
+    }
+
+    const childKey = joinObjectSearchKey(parentKey, key);
+    appendObjectChildSearchEntry(
+      entries,
+      childKey,
+      childSchema as AnyRuntimeSchemaBuilder,
+      childValue,
+      options,
+    );
+  }
+}
+
+function appendObjectChildSearchEntry(
+  entries: SearchEntry[],
+  key: string,
+  schema: AnyRuntimeSchemaBuilder,
+  value: unknown,
+  options: BuildSearchOptions,
+): void {
+  if (isRuntimeSchemaKind(schema, 'object')) {
+    appendObjectSearchEntries(entries, key, schema as ObjectSchema<any>, value, options);
+    return;
+  }
+
+  if (isRuntimeSchemaKind(schema, 'array')) {
+    appendSearchEntry(
+      entries,
+      key,
+      serializeArrayRuntimeSchemaValue(schema as never, value, {
+        kind: 'array',
+        path: [key],
+        errorCode: 'invalid-search',
+      }),
+      options,
+    );
+    return;
+  }
+
+  appendSearchEntry(
+    entries,
+    key,
+    serializeRuntimeSchemaValue(schema, value, {
+      path: [key],
+      errorCode: 'invalid-search',
+      missingCode: 'missing-search',
+    }),
+    options,
+  );
+}
+
+function isPlainObject(input: unknown): input is Record<string, unknown> {
+  return (
+    typeof input === 'object' && input !== null && !Array.isArray(input) && !(input instanceof Date)
+  );
+}

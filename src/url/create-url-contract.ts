@@ -1,0 +1,209 @@
+import type {
+  BuildSearchOptions,
+  BuildUrlOptions,
+  EmptyParams,
+  NormalizeUrlOptions,
+  NormalizeUrlState,
+  ParseRequestOptions,
+  ParseUrlOptions,
+  PatchSearchOptions,
+  UrlBuildInput,
+  UrlNormalizeInput,
+  UrlRequestInput,
+  UrlSafeNormalizeResult,
+  UrlSafeParseResult,
+  UrlState,
+} from '../contracts.js';
+import { buildHash } from '../hash/build-hash.js';
+import { parseHash } from '../hash/parse-hash.js';
+import { buildCompiledSearch } from '../search/build-compiled-search.js';
+import { parseRawSearch } from '../search/parse-raw-search.js';
+import { parseCompiledSearch } from '../search/parse-compiled-search.js';
+import { UrlKitError } from '../errors/url-kit-error.js';
+import { normalizeCompiledUrl } from './normalize-compiled-url.js';
+import { buildCompiledUrl } from './build-compiled-url.js';
+import { parseCompiledUrl } from './parse-compiled-url.js';
+import { resolveRequestUrlInput } from './parse-request.js';
+import { matchCompiledUrl } from './match-url.js';
+import { omitCompiledUrlSearch, pickCompiledUrlSearch } from './filter-compiled-url-search.js';
+import { patchCompiledUrlSearch } from './patch-compiled-url-search.js';
+import { replaceCompiledUrlSearch } from './replace-compiled-url-search.js';
+import { compileUrlDescriptor } from './compile-url-descriptor.js';
+import type {
+  CreateUrlContractOptions,
+  NormalizedUrlDescriptor,
+  UrlContract,
+} from './contracts.js';
+
+export function createUrlContract<
+  Mode extends 'path' | 'pathless',
+  Pathname = Mode extends 'path' ? string : string,
+  Params = Mode extends 'path' ? Record<string, string | number> : EmptyParams,
+  Search = Record<string, unknown>,
+  Hash = string | undefined,
+>(
+  descriptor: NormalizedUrlDescriptor<Mode>,
+  options: CreateUrlContractOptions = {},
+): UrlContract<Mode, Pathname, Params, Search, Hash> {
+  const compiled = compileUrlDescriptor(descriptor);
+  const unknownSearch = options.unknownSearch ?? 'strip';
+
+  const contract = {
+    pattern: compiled.pattern,
+    parse(
+      input: string | URL,
+      options?: ParseUrlOptions,
+    ): UrlState<Pathname, Params, Search, Hash> {
+      return parseCompiledUrl<Pathname, Params, Search, Hash>(
+        input,
+        compiled,
+        options?.unknownSearch ?? unknownSearch,
+      );
+    },
+    safeParse(
+      input: string | URL,
+      options?: ParseUrlOptions,
+    ): UrlSafeParseResult<Pathname, Params, Search, Hash> {
+      try {
+        return Object.freeze({
+          success: true,
+          data: parseCompiledUrl<Pathname, Params, Search, Hash>(
+            input,
+            compiled,
+            options?.unknownSearch ?? unknownSearch,
+          ),
+        });
+      } catch (error) {
+        return Object.freeze({
+          success: false,
+          error:
+            error instanceof UrlKitError ? error : new UrlKitError('invalid-url', { cause: error }),
+        });
+      }
+    },
+    parseRequest(
+      input: Request | UrlRequestInput,
+      options?: ParseRequestOptions,
+    ): UrlState<Pathname, Params, Search, Hash> {
+      return parseCompiledUrl<Pathname, Params, Search, Hash>(
+        resolveRequestUrlInput(input, options),
+        compiled,
+        options?.unknownSearch ?? unknownSearch,
+      );
+    },
+    safeParseRequest(
+      input: Request | UrlRequestInput,
+      options?: ParseRequestOptions,
+    ): UrlSafeParseResult<Pathname, Params, Search, Hash> {
+      try {
+        return Object.freeze({
+          success: true,
+          data: parseCompiledUrl<Pathname, Params, Search, Hash>(
+            resolveRequestUrlInput(input, options),
+            compiled,
+            options?.unknownSearch ?? unknownSearch,
+          ),
+        });
+      } catch (error) {
+        return Object.freeze({
+          success: false,
+          error:
+            error instanceof UrlKitError ? error : new UrlKitError('invalid-url', { cause: error }),
+        });
+      }
+    },
+    normalize<const Input extends UrlNormalizeInput<Mode, Params, Search, Hash>>(
+      input: Input,
+      options?: NormalizeUrlOptions,
+    ): NormalizeUrlState<Mode, Pathname, Params, Search, Hash, Input> {
+      return normalizeCompiledUrl<Mode, Pathname, Params, Search, Hash, Input>(
+        input,
+        compiled,
+        options?.unknownSearch ?? unknownSearch,
+      );
+    },
+    safeNormalize<const Input extends UrlNormalizeInput<Mode, Params, Search, Hash>>(
+      input: Input,
+      options?: NormalizeUrlOptions,
+    ): UrlSafeNormalizeResult<Mode, Pathname, Params, Search, Hash, Input> {
+      try {
+        return Object.freeze({
+          success: true,
+          data: normalizeCompiledUrl<Mode, Pathname, Params, Search, Hash, Input>(
+            input,
+            compiled,
+            options?.unknownSearch ?? unknownSearch,
+          ),
+        });
+      } catch (error) {
+        return Object.freeze({
+          success: false,
+          error:
+            error instanceof UrlKitError ? error : new UrlKitError('invalid-url', { cause: error }),
+        });
+      }
+    },
+    build(
+      input: UrlBuildInput<Mode, Params, Search, Hash> | UrlState<Pathname, Params, Search, Hash>,
+      options?: BuildUrlOptions,
+    ): string {
+      return buildCompiledUrl<Mode, Params, Search, Hash>(
+        input as UrlBuildInput<Mode, Params, Search, Hash>,
+        compiled,
+        options,
+      );
+    },
+    match(input: string | URL, options?: ParseUrlOptions): boolean {
+      return matchCompiledUrl(input, compiled, options?.unknownSearch ?? unknownSearch);
+    },
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    parsePathname: compiled.path?.parsePathname,
+    buildPath: compiled.path?.buildPath,
+    parseSearch(input: string | URLSearchParams, options?: ParseUrlOptions): Search {
+      if (compiled.search) {
+        return parseCompiledSearch(
+          parseRawSearch(input),
+          compiled.search,
+          options?.unknownSearch ?? unknownSearch,
+        ).search as Search;
+      }
+
+      return Object.freeze({}) as Search;
+    },
+    parseHash(input: unknown): Hash {
+      return compiled.hash
+        ? (parseHash(input, compiled.hash.descriptor) as Hash)
+        : (parseHash(input) as Hash);
+    },
+    buildSearch(search: Partial<Search>, options?: BuildSearchOptions): string {
+      if (compiled.search) {
+        return buildCompiledSearch(search, compiled.search, options);
+      }
+
+      return '';
+    },
+    buildHash(hash: Hash, options?: BuildUrlOptions): string {
+      return compiled.hash
+        ? buildHash(hash, compiled.hash.descriptor, options)
+        : buildHash(hash, options);
+    },
+    withSearch(input: string | URL, search: Partial<Search>, options?: PatchSearchOptions): string {
+      return patchCompiledUrlSearch(input, search, compiled, options);
+    },
+    replaceSearch(
+      input: string | URL,
+      search: Partial<Search>,
+      options?: BuildSearchOptions,
+    ): string {
+      return replaceCompiledUrlSearch(input, search, compiled, options);
+    },
+    omitSearch(input: string | URL, keys: readonly string[], options?: BuildSearchOptions): string {
+      return omitCompiledUrlSearch(input, keys, compiled, options);
+    },
+    pickSearch(input: string | URL, keys: readonly string[], options?: BuildSearchOptions): string {
+      return pickCompiledUrlSearch(input, keys, compiled, options);
+    },
+  };
+
+  return Object.freeze(contract) as unknown as UrlContract<Mode, Pathname, Params, Search, Hash>;
+}
