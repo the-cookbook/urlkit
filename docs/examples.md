@@ -1,0 +1,284 @@
+# @cookbook/urlkit examples
+
+Focused examples for the implemented public API.
+
+## Basic path-based contract
+
+```ts
+import { enumOf, int, url } from '@cookbook/urlkit';
+
+const UserUrl = url({
+  path: '/users/{id:int}',
+  search: {
+    page: int().default(1),
+  },
+  hash: enumOf(['activity', 'comments']).optional(),
+});
+
+const state = UserUrl.parse('/users/42?page=2#activity');
+
+UserUrl.build({
+  params: { id: state.params.id },
+  search: { page: state.search.page + 1 },
+  hash: state.hash,
+});
+// '/users/42?page=3#activity'
+```
+
+## Pathless search contract
+
+```ts
+import { int, search, string } from '@cookbook/urlkit';
+
+const ProductSearch = search({
+  category: string().optional(),
+  page: int().default(1),
+});
+
+ProductSearch.parse('/products?page=2');
+
+ProductSearch.build({ search: { page: 2 } });
+// '?page=2'
+
+ProductSearch.build({ pathname: '/products', search: { page: 2 } });
+// '/products?page=2'
+```
+
+## Pathless hash contract
+
+```ts
+import { enumOf, hash } from '@cookbook/urlkit';
+
+const DocsHash = hash(enumOf(['intro', 'api']).optional());
+
+DocsHash.parse('/docs#api');
+DocsHash.build({ hash: 'api' });
+// '#api'
+```
+
+## Search defaults include/omit
+
+```ts
+import { int, search } from '@cookbook/urlkit';
+
+const Paging = search({
+  page: int().default(1),
+});
+
+Paging.build({ search: { page: 1 } });
+// '?page=1'
+
+Paging.build({ search: { page: 1 } }, { defaults: 'omit' });
+// ''
+```
+
+## Unknown search strip/preserve/error
+
+```ts
+import { search, string } from '@cookbook/urlkit';
+
+const Query = search({
+  q: string(),
+});
+
+Query.parse('/search?q=router&debug=true');
+// { search: { q: 'router' }, hash: undefined, ... }
+
+Query.parse('/search?q=router&debug=true', { unknownSearch: 'preserve' }).unknownSearch;
+// { debug: 'true' }
+
+Query.safeParse('/search?q=router&debug=true', { unknownSearch: 'error' }).success;
+// false
+```
+
+## Object search with escaped keys
+
+```ts
+import { boolean, object, search, string } from '@cookbook/urlkit';
+
+const Filters = search({
+  filter: object({
+    role: string().optional(),
+    active: boolean().optional(),
+    'user.name': string().optional(),
+  }),
+});
+
+Filters.build({
+  search: {
+    filter: {
+      role: 'admin',
+      active: true,
+      'user.name': 'Ada',
+    },
+  },
+});
+// '?filter.role=admin&filter.active=true&filter.user%7E1name=Ada'
+
+Filters.parse('/users?filter.user%7E1name=Ada').search.filter['user.name'];
+// 'Ada'
+```
+
+## Date-only field
+
+```ts
+import { date, search } from '@cookbook/urlkit';
+
+const Reports = search({
+  day: date(),
+});
+
+const state = Reports.parse('/reports?day=2026-06-02');
+state.search.day.toISOString();
+// '2026-06-02T00:00:00.000Z'
+```
+
+## dateTime field
+
+```ts
+import { dateTime, search } from '@cookbook/urlkit';
+
+const Events = search({
+  at: dateTime(),
+});
+
+Events.parse('/events?at=2026-01-01T10:30:00.000Z');
+```
+
+Ambiguous or offset values such as `2026-01-01T10:30:00` and `2026-01-01T10:30:00+02:00` are invalid.
+
+## Unix date field
+
+```ts
+import { date, search } from '@cookbook/urlkit';
+
+const Imported = search({
+  createdAt: date({ format: 'unix-seconds' }),
+});
+
+Imported.parse('/imports?createdAt=1704067200').search.createdAt;
+```
+
+## Custom runtime date codec
+
+```ts
+import { date, search } from '@cookbook/urlkit';
+
+const Reports = search({
+  from: date({
+    format: {
+      parse(value) {
+        const [day, month, year] = value.split('-');
+        return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+      },
+      serialize(value) {
+        const day = String(value.getUTCDate()).padStart(2, '0');
+        const month = String(value.getUTCMonth() + 1).padStart(2, '0');
+        return `${day}-${month}-${value.getUTCFullYear()}`;
+      },
+    },
+  }),
+});
+
+Reports.build({
+  search: {
+    from: new Date('2026-06-02T00:00:00.000Z'),
+  },
+});
+// '?from=02-06-2026'
+```
+
+Custom codecs are runtime-only and cannot be used in static descriptors.
+
+## Static descriptor compilation
+
+```ts
+import { compileStaticUrl } from '@cookbook/urlkit/static';
+
+const compiled = compileStaticUrl({
+  path: '/search',
+  search: {
+    q: 'string',
+    page: { value: 'int', default: 1 },
+    sort: {
+      value: { type: 'enum', values: ['newest', 'popular'] },
+      default: 'newest',
+    },
+  },
+  hash: ['results', 'filters'],
+} as const);
+
+compiled.pattern;
+// '/search'
+```
+
+## Router-runtime `createRouteUrlContract`
+
+```ts
+import { createRouteUrlContract } from '@cookbook/urlkit/router-runtime';
+
+const ArticleUrl = createRouteUrlContract({
+  path: '/articles/{slug:regex([a-z0-9-]+)}',
+  search: {
+    ref: { type: 'one', optional: true },
+    page: { value: 'int', default: 1 },
+  },
+  hash: ['comments', 'share'],
+} as const);
+
+ArticleUrl.parse('/articles/post-1?ref=email#comments');
+```
+
+Router-runtime params default to raw strings. Use `{ params: 'parsed' }` to parse `int` and `number` path params.
+
+## `parseRequest` and `safeParseRequest`
+
+```ts
+import { int, url } from '@cookbook/urlkit';
+
+const UserUrl = url({
+  path: '/users/{id:int}',
+  search: {
+    page: int().default(1),
+  },
+});
+
+UserUrl.parseRequest(new Request('https://example.com/users/42?page=2'));
+
+const result = UserUrl.safeParseRequest(
+  { url: '/users/42?page=2' },
+  { baseUrl: 'https://example.com' },
+);
+
+if (result.success) {
+  result.data.params.id;
+}
+```
+
+## `safeParse` and `safeNormalize` error handling
+
+```ts
+import { UrlKitError, int, url } from '@cookbook/urlkit';
+
+const UserUrl = url({
+  path: '/users/{id:int}',
+  search: {
+    page: int().default(1),
+  },
+});
+
+const parsed = UserUrl.safeParse('/users/not-a-number');
+
+if (!parsed.success) {
+  parsed.error instanceof UrlKitError;
+  parsed.error.code;
+}
+
+const normalized = UserUrl.safeNormalize({
+  params: { id: 'wrong' as never },
+});
+
+if (!normalized.success) {
+  normalized.error.code;
+}
+```
