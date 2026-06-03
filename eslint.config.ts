@@ -19,6 +19,7 @@ const urlkitTypeScriptRules = {
 } as const;
 
 const urlkitTypeTestRules = {
+  '@typescript-eslint/no-confusing-void-expression': 'off',
   '@typescript-eslint/no-empty-function': 'off',
   '@typescript-eslint/no-non-null-assertion': 'off',
   '@typescript-eslint/no-unused-expressions': 'off',

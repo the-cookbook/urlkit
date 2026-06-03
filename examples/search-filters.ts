@@ -73,6 +73,40 @@ const rejectedUnknown = ProductFilters.safeParse('/products?page=2&debug=true', 
 
 // rejectedUnknown.success === false
 
+
+const CommaProductFilters = url(
+  {
+    search: {
+      tags: array(string()).optional(),
+    },
+  },
+  { arrayFormat: 'comma' },
+);
+
+const commaParsed = CommaProductFilters.safeParse('/products?tags=sale%2Cleather');
+
+// commaParsed.success === true
+// commaParsed.data.search.tags === ['sale', 'leather']
+
+const commaSuffix = CommaProductFilters.build({
+  search: {
+    tags: ['sale', 'leather'],
+  },
+});
+
+// commaSuffix === '?tags=sale%2Cleather'
+
+const repeatedSuffix = CommaProductFilters.build(
+  {
+    search: {
+      tags: ['sale', 'leather'],
+    },
+  },
+  { arrayFormat: 'repeat' },
+);
+
+// repeatedSuffix === '?tags=sale&tags=leather'
+
 const FilterSearchOnly = search({
   page: int().default(1),
 });
@@ -83,12 +117,16 @@ const searchOnlySuffix = FilterSearchOnly.build({ search: { page: 2 } });
 
 export {
   FilterSearchOnly,
+  CommaProductFilters,
   ProductFilters,
+  commaParsed,
+  commaSuffix,
   compactDefaults,
   fullPath,
   normalized,
   preserved,
   rejectedUnknown,
+  repeatedSuffix,
   searchOnlySuffix,
   state,
   suffix,

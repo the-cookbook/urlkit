@@ -64,7 +64,7 @@ describe('router-runtime public exports', () => {
   });
 
   it('does not expose route definition concepts through router-runtime options', () => {
-    expectType<'params' | never>(
+    expectType<'params' | 'unknownSearch' | 'arrayFormat' | never>(
       {} as keyof import('./runtime/contracts.js').CreateRouteUrlContractOptions,
     );
   });

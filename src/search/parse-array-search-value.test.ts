@@ -15,6 +15,14 @@ describe('parseArraySearchValue', () => {
     expect(parseArraySearchValue(array(string()), 'react', context)).toEqual(['react']);
   });
 
+
+
+  it('splits comma-separated values when requested', () => {
+    expect(
+      parseArraySearchValue(array(string()), 'react,router', context, { arrayFormat: 'comma' }),
+    ).toEqual(['react', 'router']);
+  });
+
   it('applies defaulted and optional absence behavior', () => {
     expect(
       parseArraySearchValue(array(string()).optional() as never, undefined, context),

@@ -1,6 +1,7 @@
 import type {
   BuildSearchOptions,
   PatchSearchOptions,
+  SearchArrayFormat,
   UnknownSearchBehavior,
   UnknownSearchParams,
 } from '../contracts.js';
@@ -31,6 +32,7 @@ export type RuntimeSearchSchema = Readonly<Record<string, RuntimeSearchFieldInpu
 export interface ParseSearchOptions<SearchDescriptor = unknown> {
   readonly schema?: SearchDescriptor;
   readonly unknownSearch?: UnknownSearchBehavior;
+  readonly arrayFormat?: SearchArrayFormat;
 }
 
 export interface SearchBuildOptions<SearchDescriptor = unknown> extends BuildSearchOptions {
@@ -62,6 +64,10 @@ export interface CompiledSearchSchema {
 
 export interface SearchBuildContext {
   readonly options?: SearchBuildOptions;
+}
+
+export interface SearchParseOptions {
+  readonly arrayFormat?: SearchArrayFormat;
 }
 
 export interface SearchPatchContext {

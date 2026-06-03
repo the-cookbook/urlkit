@@ -44,6 +44,32 @@ ProductSearch.build({ pathname: '/products', search: { page: 2 } });
 // '/products?page=2'
 ```
 
+
+## Comma-separated array search params
+
+```ts
+import { array, search, string } from '@cookbook/urlkit';
+
+const Tags = search(
+  {
+    tags: array(string()).optional(),
+  },
+  { arrayFormat: 'comma' },
+);
+
+Tags.parse('/products?tags=ts%2Crouter').search.tags;
+// ['ts', 'router']
+
+Tags.safeParse('/products?tags=ts%2Crouter').success;
+// true
+
+Tags.build({ search: { tags: ['ts', 'router'] } });
+// '?tags=ts%2Crouter'
+
+Tags.build({ search: { tags: ['ts', 'router'] } }, { arrayFormat: 'repeat' });
+// '?tags=ts&tags=router'
+```
+
 ## Pathless hash contract
 
 ```ts

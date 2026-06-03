@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { array } from '../schema/array.js';
 import { int } from '../schema/int.js';
 import { string } from '../schema/string.js';
 import { compileSearchSchema } from './compile-search-schema.js';
@@ -36,6 +37,18 @@ describe('parseCompiledSearch', () => {
     });
     expect(Object.isFrozen(parsed.unknownSearch)).toBe(true);
     expect(Object.isFrozen(parsed.unknownSearch?.tag)).toBe(true);
+  });
+
+
+
+  it('parses compiled array fields with comma array format', () => {
+    const compiled = compileSearchSchema({ tag: array(string()) });
+
+    expect(
+      parseCompiledSearch({ tag: 'react,router' }, compiled, 'strip', { arrayFormat: 'comma' }),
+    ).toEqual({
+      search: { tag: ['react', 'router'] },
+    });
   });
 
   it('throws invalid-search for unknown search params in error mode', () => {

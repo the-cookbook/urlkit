@@ -59,6 +59,33 @@ describe('parseCompiledUrl', () => {
     });
   });
 
+
+  it('passes arrayFormat options to search parsing', () => {
+    const compiled = compileUrlDescriptor(
+      compileRuntimeUrlDescriptor({
+        path: '/search',
+        search: {
+          tag: { type: 'many', value: string() },
+        },
+      }),
+    );
+
+    expect(parseCompiledUrl('/search?tag=react%2Crouter', compiled, 'strip')).toEqual({
+      pathname: '/search',
+      params: {},
+      search: { tag: ['react,router'] },
+      hash: undefined,
+    });
+    expect(
+      parseCompiledUrl('/search?tag=react%2Crouter', compiled, 'strip', { arrayFormat: 'comma' }),
+    ).toEqual({
+      pathname: '/search',
+      params: {},
+      search: { tag: ['react', 'router'] },
+      hash: undefined,
+    });
+  });
+
   it('validates pathnames for path descriptors', () => {
     const compiled = compileUrlDescriptor(compileRuntimeUrlDescriptor({ path: '/users/{id:int}' }));
 

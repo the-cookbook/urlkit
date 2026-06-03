@@ -17,6 +17,7 @@ import type {
   UrlSafeNormalizeResult,
   UrlSafeParseResult,
   UrlState,
+  SearchArrayFormat,
   UnknownSearchBehavior,
 } from '../contracts.js';
 import type { HashSchema, NormalizedHashDescriptor } from '../hash/contracts.js';
@@ -43,6 +44,7 @@ export interface RuntimeUrlDescriptor {
 
 export interface CreateUrlOptions {
   readonly unknownSearch?: UnknownSearchBehavior;
+  readonly arrayFormat?: SearchArrayFormat;
 }
 
 export interface CreateUrlContractOptions extends CreateUrlOptions {}

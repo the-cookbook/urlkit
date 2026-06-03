@@ -6,7 +6,7 @@ const UserUrl = url({
     tab: string().default('profile'),
     page: int(),
   },
-  hash: enumOf(['show']),
+  hash: enumOf(['show']).default('show'),
 });
 
 const parsed = UserUrl.parse('/users/42?tab=settings&page=2#show');
@@ -20,12 +20,11 @@ const parsed = UserUrl.parse('/users/42?tab=settings&page=2#show');
 const href = UserUrl.build({
   params: { id: parsed.params.id },
   search: { tab: 'settings', page: 3 },
-  hash: 'show',
 });
 
 // href === '/users/42?tab=settings&page=3#show'
 
-const matches = UserUrl.match('/users/42?tab=settings&page=2#show');
+const matches = UserUrl.match('/users/42?tab=settings&page=2');
 const doesNotMatch = UserUrl.match('/projects/42?tab=settings&page=2#open');
 
 // matches === true

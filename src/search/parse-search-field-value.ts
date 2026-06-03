@@ -3,20 +3,27 @@ import { parseCompiledRuntimeSchemaValue } from '../schema/parse-compiled-runtim
 import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
 import type { AnyObjectSchema } from '../schema/object.js';
 import type { ArraySchema } from '../schema/array.js';
-import type { CompiledSearchField, RawSearchParams, RawSearchValue } from './contracts.js';
+import type {
+  CompiledSearchField,
+  RawSearchParams,
+  RawSearchValue,
+  SearchParseOptions,
+} from './contracts.js';
 import { parseArraySearchValue } from './parse-array-search-value.js';
 import { parseObjectSearchValue } from './parse-object-search-value.js';
+import { readArraySearchValues } from './search-array-format.js';
 
 export function parseSearchFieldValue(
   field: CompiledSearchField,
   rawSearch: RawSearchParams,
+  options: SearchParseOptions = {},
 ): unknown {
   if (isRuntimeSchemaKind(field.schema, 'object')) {
     return parseObjectSearchValue(field.schema as AnyObjectSchema, field.key, rawSearch, {
       kind: 'object',
       path: [field.key],
       errorCode: 'invalid-search',
-    });
+    }, options);
   }
 
   if (isRuntimeSchemaKind(field.schema, 'array')) {
@@ -24,22 +31,23 @@ export function parseSearchFieldValue(
       kind: 'array',
       path: [field.key],
       errorCode: 'invalid-search',
-    });
+    }, options);
   }
 
-  return parseNonObjectSearchFieldValue(field, rawSearch[field.key]);
+  return parseNonObjectSearchFieldValue(field, rawSearch[field.key], options);
 }
 
 function parseNonObjectSearchFieldValue(
   field: CompiledSearchField,
   value: RawSearchValue | undefined,
+  options: SearchParseOptions,
 ): unknown {
   if (value === undefined) {
     return parseMissingSearchFieldValue(field);
   }
 
   if (field.type === 'many') {
-    const values = Array.isArray(value) ? value : [value];
+    const values = readArraySearchValues(value, options.arrayFormat) ?? [];
 
     return Object.freeze(values.map((item) => parseRuntimeSearchValue(field, item)));
   }

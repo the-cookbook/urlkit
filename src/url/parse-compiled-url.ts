@@ -1,4 +1,4 @@
-import type { UrlState, UnknownSearchBehavior } from '../contracts.js';
+import type { ParseUrlOptions, UrlState, UnknownSearchBehavior } from '../contracts.js';
 import { readHashFragment } from '../hash/hash-fragment.js';
 import { parseCompiledSearch } from '../search/parse-compiled-search.js';
 import { parseRawSearch } from '../search/parse-raw-search.js';
@@ -11,10 +11,16 @@ export function parseCompiledUrl<Pathname, Params, Search, Hash>(
   input: string | URL,
   compiled: CompiledUrlDescriptor,
   unknownSearch: UnknownSearchBehavior,
+  options: Pick<ParseUrlOptions, 'arrayFormat'> = {},
 ): UrlState<Pathname, Params, Search, Hash> {
   const parsedUrl = parseUrl(input);
   const params = parseUrlParams<Params>(parsedUrl.pathname, compiled);
-  const searchResult = parseUrlSearch<Search>(parsedUrl.searchParams, compiled, unknownSearch);
+  const searchResult = parseUrlSearch<Search>(
+    parsedUrl.searchParams,
+    compiled,
+    unknownSearch,
+    options,
+  );
   const hash = parseUrlHash<Hash>(parsedUrl.hash, compiled);
 
   const state = {
@@ -40,11 +46,12 @@ function parseUrlSearch<Search>(
   searchParams: URLSearchParams,
   compiled: CompiledUrlDescriptor,
   unknownSearch: UnknownSearchBehavior,
+  options: Pick<ParseUrlOptions, 'arrayFormat'>,
 ): Pick<UrlState<string, {}, Search, undefined>, 'search' | 'unknownSearch'> {
   const rawSearch = parseRawSearch(searchParams);
 
   if (compiled.search) {
-    return parseCompiledSearch(rawSearch, compiled.search, unknownSearch) as Pick<
+    return parseCompiledSearch(rawSearch, compiled.search, unknownSearch, options) as Pick<
       UrlState<string, {}, Search, undefined>,
       'search' | 'unknownSearch'
     >;

@@ -1,4 +1,9 @@
-import type { RawSearchParams, RawSearchValue, RuntimeSearchSchema } from './contracts.js';
+import type {
+  RawSearchParams,
+  RawSearchValue,
+  RuntimeSearchSchema,
+  SearchParseOptions,
+} from './contracts.js';
 import { compileSearchSchema } from './compile-search-schema.js';
 import { copyRawSearchParams } from './copy-raw-search-params.js';
 import { parseSearchFieldValue } from './parse-search-field-value.js';
@@ -13,6 +18,7 @@ export interface PartialSchemaSearchParseResult {
 export function parsePartialSchemaSearch(
   rawSearch: RawSearchParams,
   schema: RuntimeSearchSchema,
+  options: SearchParseOptions = {},
 ): PartialSchemaSearchParseResult {
   const compiled = compileSearchSchema(schema);
   const remainingUnknown = { ...rawSearch } satisfies Record<string, RawSearchValue>;
@@ -23,7 +29,7 @@ export function parsePartialSchemaSearch(
       continue;
     }
 
-    const value = parseSearchFieldValue(field, rawSearch);
+    const value = parseSearchFieldValue(field, rawSearch, options);
     deleteSearchFieldRawKeys(field, remainingUnknown);
 
     if (value !== undefined) {

@@ -50,6 +50,7 @@ export function createUrlContract<
 ): UrlContract<Mode, Pathname, Params, Search, Hash, SearchInput, HashInput> {
   const compiled = compileUrlDescriptor(descriptor);
   const unknownSearch = options.unknownSearch ?? 'strip';
+  const arrayFormat = options.arrayFormat ?? 'repeat';
 
   const contract = {
     pattern: compiled.pattern,
@@ -61,6 +62,7 @@ export function createUrlContract<
         input,
         compiled,
         options?.unknownSearch ?? unknownSearch,
+        { arrayFormat: options?.arrayFormat ?? arrayFormat },
       );
     },
     safeParse(
@@ -74,6 +76,7 @@ export function createUrlContract<
             input,
             compiled,
             options?.unknownSearch ?? unknownSearch,
+            { arrayFormat: options?.arrayFormat ?? arrayFormat },
           ),
         });
       } catch (error) {
@@ -92,6 +95,7 @@ export function createUrlContract<
         resolveRequestUrlInput(input, options),
         compiled,
         options?.unknownSearch ?? unknownSearch,
+        { arrayFormat: options?.arrayFormat ?? arrayFormat },
       );
     },
     safeParseRequest(
@@ -105,6 +109,7 @@ export function createUrlContract<
             resolveRequestUrlInput(input, options),
             compiled,
             options?.unknownSearch ?? unknownSearch,
+            { arrayFormat: options?.arrayFormat ?? arrayFormat },
           ),
         });
       } catch (error) {
@@ -159,11 +164,13 @@ export function createUrlContract<
       return buildCompiledUrl<Mode, Params, Search, Hash, SearchInput, HashInput>(
         input as UrlBuildInput<Mode, Params, Search, Hash, SearchInput, HashInput>,
         compiled,
-        options,
+        mergeBuildOptions(arrayFormat, options),
       );
     },
     match(input: string | URL, options?: ParseUrlOptions): boolean {
-      return matchCompiledUrl(input, compiled, options?.unknownSearch ?? unknownSearch);
+      return matchCompiledUrl(input, compiled, options?.unknownSearch ?? unknownSearch, {
+        arrayFormat: options?.arrayFormat ?? arrayFormat,
+      });
     },
     // eslint-disable-next-line @typescript-eslint/unbound-method
     parsePathname: compiled.path?.parsePathname,
@@ -174,6 +181,7 @@ export function createUrlContract<
           parseRawSearch(input),
           compiled.search,
           options?.unknownSearch ?? unknownSearch,
+          { arrayFormat: options?.arrayFormat ?? arrayFormat },
         ).search as Search;
       }
 
@@ -186,7 +194,11 @@ export function createUrlContract<
     },
     buildSearch(search: SearchInputArgument<SearchInput>, options?: BuildSearchOptions): string {
       if (compiled.search) {
-        return buildCompiledSearch(search as Record<string, unknown>, compiled.search, options);
+        return buildCompiledSearch(
+          search as Record<string, unknown>,
+          compiled.search,
+          mergeBuildOptions(arrayFormat, options),
+        );
       }
 
       return '';
@@ -197,16 +209,26 @@ export function createUrlContract<
         : buildHash(hash, options);
     },
     withSearch(input: string | URL, search: Partial<Search>, options?: PatchSearchOptions): string {
-      return patchCompiledUrlSearch(input, search, compiled, options);
+      return patchCompiledUrlSearch(
+        input,
+        search,
+        compiled,
+        mergeBuildOptions(arrayFormat, options),
+      );
     },
     replaceSearch(input: string | URL, search: SearchInput, options?: BuildSearchOptions): string {
-      return replaceCompiledUrlSearch(input, search as Record<string, unknown>, compiled, options);
+      return replaceCompiledUrlSearch(
+        input,
+        search as Record<string, unknown>,
+        compiled,
+        mergeBuildOptions(arrayFormat, options),
+      );
     },
     omitSearch(input: string | URL, keys: readonly string[], options?: BuildSearchOptions): string {
-      return omitCompiledUrlSearch(input, keys, compiled, options);
+      return omitCompiledUrlSearch(input, keys, compiled, mergeBuildOptions(arrayFormat, options));
     },
     pickSearch(input: string | URL, keys: readonly string[], options?: BuildSearchOptions): string {
-      return pickCompiledUrlSearch(input, keys, compiled, options);
+      return pickCompiledUrlSearch(input, keys, compiled, mergeBuildOptions(arrayFormat, options));
     },
   };
 
@@ -219,4 +241,14 @@ export function createUrlContract<
     SearchInput,
     HashInput
   >;
+}
+
+function mergeBuildOptions<Options extends BuildUrlOptions>(
+  arrayFormat: NonNullable<BuildUrlOptions['arrayFormat']>,
+  options: Options | undefined,
+): Options & BuildUrlOptions {
+  return {
+    ...options,
+    arrayFormat: options?.arrayFormat ?? arrayFormat,
+  } as Options & BuildUrlOptions;
 }

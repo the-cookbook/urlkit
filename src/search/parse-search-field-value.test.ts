@@ -30,6 +30,18 @@ describe('parseSearchFieldValue', () => {
     expect(Object.isFrozen(parsed)).toBe(true);
   });
 
+
+
+  it('parses many-field values with comma array format', () => {
+    expect(
+      parseSearchFieldValue(
+        getField({ tag: { type: 'many', value: string() } }, 'tag'),
+        { tag: 'react,router' },
+        { arrayFormat: 'comma' },
+      ),
+    ).toEqual(['react', 'router']);
+  });
+
   it('parses single occurrences for many fields as one-item arrays', () => {
     expect(
       parseSearchFieldValue(getField({ tag: { type: 'many', value: string() } }, 'tag'), {

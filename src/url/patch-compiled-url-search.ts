@@ -23,7 +23,7 @@ export function patchCompiledUrlSearch(
     return formatParsedUrl(parsed, buildRawPatchSearch(rawSearch, patch, options));
   }
 
-  const currentParsed = parsePartialCompiledSearch(rawSearch, compiled.search);
+  const currentParsed = parsePartialCompiledSearch(rawSearch, compiled.search, options);
   const mergedSearch: Record<string, unknown> = { ...currentParsed.search };
   const unknownSearch: Record<string, RawSearchValue> = {
     ...copyRawSearchParams(currentParsed.unknownSearch),

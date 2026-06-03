@@ -43,7 +43,7 @@ export function createRouteUrlContract<
     InferStaticUrlHash<Descriptor>,
     InferStaticUrlSearchBuildInput<Descriptor>,
     InferStaticUrlHashBuildInput<Descriptor>
-  >(compileRouteUrlDescriptor(descriptor, options));
+  >(compileRouteUrlDescriptor(descriptor, options), options);
 }
 
 export type RoutePathnameFromDescriptor<Descriptor extends StaticUrlDescriptor> =

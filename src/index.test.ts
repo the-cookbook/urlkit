@@ -23,6 +23,7 @@ import type {
   NormalizeUrlOptions,
   ParseRequestOptions,
   ParseUrlOptions,
+  SearchArrayFormat,
   PatchSearchOptions,
   PathBuildMethod,
   UnknownSearchBehavior,
@@ -63,15 +64,20 @@ describe('main public exports', () => {
   it('exports user-facing contracts', () => {
     expectType<UrlMode>('path');
     expectType<UnknownSearchBehavior>('strip');
+    expectType<SearchArrayFormat>('comma');
     expectType<UnknownSearchParams>({ debug: 'true', tag: ['a', 'b'] });
     expectType<EmptyParams>({});
-    expectType<ParseUrlOptions>({ unknownSearch: 'preserve' });
+    expectType<ParseUrlOptions>({ unknownSearch: 'preserve', arrayFormat: 'comma' });
     expectType<NormalizeUrlOptions>({ unknownSearch: 'error' });
-    expectType<BuildUrlOptions>({ defaults: 'omit' });
+    expectType<BuildUrlOptions>({ defaults: 'omit', arrayFormat: 'comma' });
     expectType<BuildSearchOptions>({ defaults: 'include', arrayFormat: 'repeat', sortKeys: true });
     expectType<PatchSearchOptions>({ removeNull: true, removeUndefined: true });
     expectType<UrlRequestInput>({ url: '/users/42' });
-    expectType<ParseRequestOptions>({ baseUrl: 'https://example.com', unknownSearch: 'strip' });
+    expectType<ParseRequestOptions>({
+      baseUrl: 'https://example.com',
+      unknownSearch: 'strip',
+      arrayFormat: 'comma',
+    });
     expectType<UrlState<'/users/42', { readonly id: number }, { readonly q: string }, undefined>>({
       pathname: '/users/42',
       params: { id: 42 },

@@ -3,6 +3,7 @@ import type {
   CompiledSearchSchema,
   RawSearchParams,
   RawSearchValue,
+  SearchParseOptions,
   SearchParseResult,
 } from './contracts.js';
 import { copyRawSearchParams } from './copy-raw-search-params.js';
@@ -13,12 +14,13 @@ export function parseCompiledSearch(
   rawSearch: RawSearchParams,
   compiled: CompiledSearchSchema,
   unknownSearch: 'strip' | 'preserve' | 'error' = 'strip',
+  options: SearchParseOptions = {},
 ): SearchParseResult<Record<string, unknown>> {
   const remainingUnknown = { ...rawSearch } satisfies Record<string, RawSearchValue>;
   const search: Record<string, unknown> = {};
 
   for (const field of compiled.fields) {
-    const value = parseSearchFieldValue(field, rawSearch);
+    const value = parseSearchFieldValue(field, rawSearch, options);
     deleteSearchFieldRawKeys(field, remainingUnknown);
 
     if (value !== undefined) {

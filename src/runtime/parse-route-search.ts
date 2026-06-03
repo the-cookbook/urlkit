@@ -1,4 +1,4 @@
-import type { UnknownSearchBehavior } from '../contracts.js';
+import type { SearchArrayFormat, UnknownSearchBehavior } from '../contracts.js';
 import { parseSearch as parseRuntimeSearch } from '../search/parse-search.js';
 import type { RawSearchParams } from '../search/contracts.js';
 import { compileCachedStaticSearch } from './compile-cached-static-search.js';
@@ -7,6 +7,7 @@ import type { InferStaticSearch, StaticSearchDescriptor } from '../static/contra
 export interface ParseSearchOptions<SearchDescriptor = StaticSearchDescriptor> {
   readonly schema?: SearchDescriptor;
   readonly unknownSearch?: UnknownSearchBehavior;
+  readonly arrayFormat?: SearchArrayFormat;
 }
 
 export function parseSearch<const SearchDescriptor extends StaticSearchDescriptor>(
@@ -28,5 +29,6 @@ export function parseSearch(
   return parseRuntimeSearch(input, {
     schema: compileCachedStaticSearch(options.schema),
     ...(options.unknownSearch ? { unknownSearch: options.unknownSearch } : {}),
+    ...(options.arrayFormat ? { arrayFormat: options.arrayFormat } : {}),
   }).search;
 }

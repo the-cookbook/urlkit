@@ -33,7 +33,7 @@ describe('shared contracts', () => {
       debug: 'true',
       tag: ['a', 'b'],
     };
-    const buildOptions: BuildUrlOptions = { defaults: 'omit' };
+    const buildOptions: BuildUrlOptions = { defaults: 'omit', arrayFormat: 'comma' };
     const searchOptions: BuildSearchOptions = {
       ...buildOptions,
       arrayFormat: 'repeat',
@@ -46,6 +46,7 @@ describe('shared contracts', () => {
     };
     const requestOptions: ParseRequestOptions = {
       unknownSearch: 'strip',
+      arrayFormat: 'comma',
       baseUrl: 'https://example.com',
     };
 

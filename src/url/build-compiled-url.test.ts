@@ -126,6 +126,22 @@ describe('buildCompiledUrl', () => {
     ).toBe('/search?q=router');
   });
 
+
+  it('passes arrayFormat options to search serialization', () => {
+    const compiled = compileRuntime({
+      path: '/search',
+      search: {
+        tag: { type: 'many', value: string() },
+      },
+    });
+
+    expect(
+      buildCompiledUrl({ search: { tag: ['react', 'router'] } }, compiled, {
+        arrayFormat: 'comma',
+      }),
+    ).toBe('/search?tag=react%2Crouter');
+  });
+
   it('includes defaults by default and omits defaults when requested', () => {
     const compiled = compileRuntime({
       path: '/search',

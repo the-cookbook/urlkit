@@ -26,6 +26,20 @@ describe('parseObjectSearchValue', () => {
     ).toEqual({ role: 'admin', active: true, ids: [1, 2] });
   });
 
+
+
+  it('splits comma-separated arrays inside object fields when requested', () => {
+    const schema = object({
+      tags: array(string()),
+    });
+
+    expect(
+      parseObjectSearchValue(schema, 'filter', { 'filter.tags': 'react,router' }, context, {
+        arrayFormat: 'comma',
+      }),
+    ).toEqual({ tags: ['react', 'router'] });
+  });
+
   it('supports nested object defaults and optional absence', () => {
     const schema = object({
       nested: object({ role: string().default('reader'), label: string().optional() }),

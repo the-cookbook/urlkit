@@ -124,6 +124,35 @@ describe('parseSearch', () => {
     expect(Object.isFrozen(parsed.search.category)).toBe(true);
   });
 
+
+
+  it('parses schema-based many fields with comma array format', () => {
+    const parsed = parseSearch('?tag=react%2Crouter&category=docs', {
+      schema: {
+        tag: { type: 'many', value: string() },
+        category: { type: 'many', value: string() },
+      },
+      arrayFormat: 'comma',
+    });
+
+    expect(parsed.search).toEqual({
+      tag: ['react', 'router'],
+      category: ['docs'],
+    });
+  });
+
+  it('keeps comma values intact for schema arrays by default', () => {
+    const parsed = parseSearch('?tag=react%2Crouter', {
+      schema: {
+        tag: { type: 'many', value: string() },
+      },
+    });
+
+    expect(parsed.search).toEqual({
+      tag: ['react,router'],
+    });
+  });
+
   it('applies optional and defaulted fields', () => {
     const parsed = parseSearch('?q=router', {
       schema: {
@@ -321,6 +350,25 @@ describe('parseSearch', () => {
       },
     });
     expect(Object.isFrozen(parsed.search.filter.tags)).toBe(true);
+  });
+
+
+
+  it('parses arrays inside object fields with comma array format', () => {
+    const parsed = parseSearch('?filter.tags=react%2Crouter', {
+      schema: {
+        filter: object({
+          tags: array(string()),
+        }),
+      },
+      arrayFormat: 'comma',
+    });
+
+    expect(parsed.search).toEqual({
+      filter: {
+        tags: ['react', 'router'],
+      },
+    });
   });
 
   it('applies unknownSearch behavior to unknown nested object keys', () => {

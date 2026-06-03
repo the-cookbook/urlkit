@@ -92,6 +92,21 @@ describe('matchCompiledUrl', () => {
     expect(matchCompiledUrl('/search#other', compiled, 'strip')).toBe(false);
   });
 
+
+  it('uses arrayFormat options when validating array search fields', () => {
+    const compiled = compileRuntime({
+      path: '/search',
+      search: {
+        page: { type: 'many', value: int() },
+      },
+    });
+
+    expect(matchCompiledUrl('/search?page=1%2C2', compiled, 'strip')).toBe(false);
+    expect(matchCompiledUrl('/search?page=1%2C2', compiled, 'strip', { arrayFormat: 'comma' })).toBe(
+      true,
+    );
+  });
+
   it('applies unknownSearch behavior', () => {
     const compiled = compileRuntime({
       path: '/search',
@@ -140,6 +155,25 @@ describe('UrlContract.match', () => {
     expect(UserUrl.match('/users/42#activity')).toBe(true);
     expect(UserUrl.match('/users/wrong#activity')).toBe(false);
     expect(UserUrl.match('/users/42#other')).toBe(false);
+  });
+
+
+  it('uses contract-level arrayFormat and method-level overrides', () => {
+    const SearchUrl = url(
+      {
+        path: '/search',
+        search: {
+          page: { type: 'many', value: int() },
+        },
+      },
+      {
+        arrayFormat: 'comma',
+      },
+    );
+
+    expect(SearchUrl.match('/search?page=1%2C2')).toBe(true);
+    expect(SearchUrl.match('/search?page=1%2Cwrong')).toBe(false);
+    expect(SearchUrl.match('/search?page=1%2C2', { arrayFormat: 'repeat' })).toBe(false);
   });
 
   it('uses contract-level unknownSearch and method-level overrides', () => {

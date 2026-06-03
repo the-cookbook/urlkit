@@ -187,6 +187,37 @@ describe('url parse and safeParse', () => {
     }
   });
 
+
+  it('uses contract-level arrayFormat and method-level overrides for parse and safeParse', () => {
+    const SearchUrl = url(
+      {
+        path: '/search',
+        search: {
+          tag: { type: 'many', value: string() },
+        },
+      },
+      {
+        arrayFormat: 'comma',
+      },
+    );
+
+    expect(SearchUrl.parse('/search?tag=react%2Crouter').search).toEqual({
+      tag: ['react', 'router'],
+    });
+
+    const result = SearchUrl.safeParse('/search?tag=react%2Crouter');
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.search).toEqual({ tag: ['react', 'router'] });
+    }
+
+    expect(
+      SearchUrl.parse('/search?tag=react%2Crouter', { arrayFormat: 'repeat' }).search,
+    ).toEqual({
+      tag: ['react,router'],
+    });
+  });
+
   it('uses contract-level unknownSearch and method-level overrides', () => {
     const SearchUrl = url(
       {
@@ -432,6 +463,28 @@ describe('url build', () => {
     }
   });
 
+
+  it('uses contract-level arrayFormat and method-level overrides for build', () => {
+    const SearchUrl = url(
+      {
+        path: '/search',
+        search: {
+          tag: { type: 'many', value: string() },
+        },
+      },
+      {
+        arrayFormat: 'comma',
+      },
+    );
+
+    expect(SearchUrl.build({ search: { tag: ['react', 'router'] } })).toBe(
+      '/search?tag=react%2Crouter',
+    );
+    expect(
+      SearchUrl.build({ search: { tag: ['react', 'router'] } }, { arrayFormat: 'repeat' }),
+    ).toBe('/search?tag=react&tag=router');
+  });
+
   it('supports default include and omit behavior for search and hash defaults', () => {
     const SearchUrl = url({
       path: '/search',
@@ -501,6 +554,29 @@ describe('url contract helper methods', () => {
     expect(SearchUrl.parseSearch('?q=router&page=2')).toEqual({ q: 'router', page: 2 });
     expect(SearchUrl.buildSearch({ q: 'router' })).toBe('?q=router&page=1');
     expect(SearchUrl.buildSearch({ q: 'router', page: 1 }, { defaults: 'omit' })).toBe('?q=router');
+  });
+
+
+  it('uses contract-level arrayFormat and method-level overrides for search helpers', () => {
+    const SearchUrl = url(
+      {
+        search: {
+          tag: { type: 'many', value: string() },
+        },
+      },
+      {
+        arrayFormat: 'comma',
+      },
+    );
+
+    expect(SearchUrl.parseSearch('?tag=react%2Crouter')).toEqual({ tag: ['react', 'router'] });
+    expect(SearchUrl.parseSearch('?tag=react%2Crouter', { arrayFormat: 'repeat' })).toEqual({
+      tag: ['react,router'],
+    });
+    expect(SearchUrl.buildSearch({ tag: ['react', 'router'] })).toBe('?tag=react%2Crouter');
+    expect(SearchUrl.buildSearch({ tag: ['react', 'router'] }, { arrayFormat: 'repeat' })).toBe(
+      '?tag=react&tag=router',
+    );
   });
 
   it('delegates parseHash and buildHash to compiled hash codecs', () => {
@@ -685,6 +761,22 @@ describe('url parseRequest and safeParseRequest', () => {
       search: { page: 3 },
       hash: undefined,
     });
+  });
+
+
+  it('passes arrayFormat options through ParseRequestOptions', () => {
+    const SearchUrl = url({
+      search: {
+        tag: { type: 'many', value: string() },
+      },
+    });
+
+    expect(
+      SearchUrl.parseRequest(
+        { url: 'https://example.com/search?tag=react%2Crouter' },
+        { arrayFormat: 'comma' },
+      ).search,
+    ).toEqual({ tag: ['react', 'router'] });
   });
 
   it('passes unknownSearch options through ParseRequestOptions', () => {

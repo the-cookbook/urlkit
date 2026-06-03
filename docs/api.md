@@ -59,12 +59,13 @@ import {
 
 ### Parameters and options
 
-| Parameter               | Type                    | Description                                     |
-| ----------------------- | ----------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------- |
-| `descriptor.path`       | `string                 | undefined`                                      | Optional PathKit-compatible path pattern. If omitted, the contract is pathless. |
-| `descriptor.search`     | `RuntimeSearchSchema    | undefined`                                      | Optional runtime search schema.                                                 |
-| `descriptor.hash`       | `HashSchema             | undefined`                                      | Optional runtime hash schema.                                                   |
-| `options.unknownSearch` | `UnknownSearchBehavior` | Contract-level default unknown search behavior. |
+| Parameter               | Type                         | Description                                                                     |
+| ----------------------- | ---------------------------- | ------------------------------------------------------------------------------- |
+| `descriptor.path`       | `string \| undefined`         | Optional PathKit-compatible path pattern. If omitted, the contract is pathless. |
+| `descriptor.search`     | `RuntimeSearchSchema \| undefined` | Optional runtime search schema.                                                 |
+| `descriptor.hash`       | `HashSchema \| undefined`     | Optional runtime hash schema.                                                   |
+| `options.unknownSearch` | `UnknownSearchBehavior`      | Contract-level default unknown search behavior.                                 |
+| `options.arrayFormat`   | `'repeat' \| 'comma'`         | Contract-level default array search format for parsing and building.            |
 
 Standalone `url(...)` path params default to parsed mode. `int` and `number` path params parse to numbers.
 
@@ -351,7 +352,7 @@ if (!result.success) {
 | ---------- | ----------------------------------------------------------------------------- | ------------------------------------------------- |
 | Purpose    | Parse web-standard `Request` or request-like `{ url: string }`.               |
 | Parameters | `input: Request                                                               | UrlRequestInput`, `options?: ParseRequestOptions` |
-| Options    | `baseUrl` for relative request-like URLs; `unknownSearch` override.           |
+| Options    | `baseUrl` for relative request-like URLs; `unknownSearch` and `arrayFormat` overrides. |
 | Throws     | `parseRequest` throws `UrlKitError`; `safeParseRequest` returns safe failure. |
 
 ```ts
@@ -379,11 +380,11 @@ UserUrl.normalize({
 
 ## `build`
 
-| Item     | Details                                                                                                   |
-| -------- | --------------------------------------------------------------------------------------------------------- | -------- |
-| Purpose  | Serialize typed state to a canonical URL string.                                                          |
-| Options  | `BuildUrlOptions` with `defaults?: 'include'                                                              | 'omit'`. |
-| Behavior | Path-based contracts build pathname from `params`; pathless contracts return suffixes without `pathname`. |
+| Item     | Details                                                                                                                    |
+| -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Purpose  | Serialize typed state to a canonical URL string.                                                                           |
+| Options  | `BuildUrlOptions` with `defaults?: 'include' \| 'omit'` and `arrayFormat?: 'repeat' \| 'comma'`.                     |
+| Behavior | Path-based contracts build pathname from `params`; pathless contracts return suffixes without `pathname`.                  |
 
 ```ts
 UserUrl.build({ params: { id: 42 }, search: { page: 2 } });
@@ -489,8 +490,11 @@ type UnknownSearchBehavior = 'strip' | 'preserve' | 'error';
 ## Options
 
 ```ts
+type SearchArrayFormat = 'repeat' | 'comma';
+
 interface ParseUrlOptions {
   readonly unknownSearch?: UnknownSearchBehavior;
+  readonly arrayFormat?: SearchArrayFormat;
 }
 
 interface NormalizeUrlOptions {
@@ -499,10 +503,10 @@ interface NormalizeUrlOptions {
 
 interface BuildUrlOptions {
   readonly defaults?: 'include' | 'omit';
+  readonly arrayFormat?: SearchArrayFormat;
 }
 
 interface BuildSearchOptions extends BuildUrlOptions {
-  readonly arrayFormat?: 'repeat' | 'comma';
   readonly sortKeys?: boolean;
 }
 
@@ -731,12 +735,13 @@ Router-runtime APIs are low-level primitives for router packages. They are frame
 
 ## `createRouteUrlContract`
 
-| Item                | Details                                                                                         |
-| ------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------ |
-| Signature           | `createRouteUrlContract<Descriptor, Options>(descriptor: Descriptor, options?: { params?: 'raw' | 'parsed' }): UrlContract<...>` |
-| Purpose             | Create a URL contract from a static route-compatible descriptor.                                |
-| Default params mode | `raw`                                                                                           |
-| Throws              | `invalid-descriptor` for invalid static descriptors.                                            |
+| Item                | Details                                                                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signature           | `createRouteUrlContract<Descriptor, Options>(descriptor, options?: CreateRouteUrlContractOptions): UrlContract<...>`                          |
+| Purpose             | Create a URL contract from a static route-compatible descriptor.                                                                               |
+| Options             | `params?: 'raw' \| 'parsed'`, `unknownSearch?: UnknownSearchBehavior`, `arrayFormat?: 'repeat' \| 'comma'`.                              |
+| Default params mode | `raw`                                                                                                                                         |
+| Throws              | `invalid-descriptor` for invalid static descriptors.                                                                                          |
 
 ```ts
 const ArticleUrl = createRouteUrlContract({
@@ -765,9 +770,9 @@ UserUrl.parse('/users/42').params.id;
 
 | Item                  | Details                                                                            |
 | --------------------- | ---------------------------------------------------------------------------------- |
-| Signature with schema | `parseSearch(input, { schema, unknownSearch? }): InferStaticSearch<typeof schema>` |
+| Signature with schema | `parseSearch(input, { schema, unknownSearch?, arrayFormat? }): InferStaticSearch<typeof schema>` |
 | Fallback signature    | `parseSearch(input, options?): RawSearchParams`                                    |
-| Purpose               | Parse raw or static-schema search.                                                 |
+| Purpose               | Parse raw or static-schema search. `arrayFormat: 'comma'` splits declared array fields. |
 | Throws                | `invalid-search` / `missing-search` for schema validation failures.                |
 
 ```ts
@@ -777,6 +782,14 @@ parseSearch('?page=2', {
   },
 });
 // { page: 2 }
+
+parseSearch('?tags=ts%2Crouter', {
+  schema: {
+    tags: { type: 'many', optional: true },
+  },
+  arrayFormat: 'comma',
+});
+// { tags: ['ts', 'router'] }
 
 parseSearch('?filter.role=admin');
 // { 'filter.role': 'admin' }
@@ -796,10 +809,11 @@ parseSearch('?filter.role=admin');
 const schema = {
   page: { value: 'int', default: 1 },
   q: { value: 'string', optional: true },
+  tags: { type: 'many', optional: true },
 } as const;
 
-buildSearch({ page: 2 }, { schema });
-// '?page=2'
+buildSearch({ page: 2, tags: ['ts', 'router'] }, { schema, arrayFormat: 'comma' });
+// '?page=2&tags=ts%2Crouter'
 
 patchSearch('?page=1&debug=true', { page: 2 }, { schema });
 // '?page=2&debug=true'

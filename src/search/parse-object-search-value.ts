@@ -5,7 +5,7 @@ import { getObjectSchemaShape, type AnyObjectSchema } from '../schema/object.js'
 import { parseRuntimeSchemaValue } from '../schema/parse-runtime-schema-value.js';
 import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
 import { parseArraySearchValue } from './parse-array-search-value.js';
-import type { RawSearchParams } from './contracts.js';
+import type { RawSearchParams, SearchParseOptions } from './contracts.js';
 import { assertNoObjectSearchCollisions } from './assert-object-search-collisions.js';
 import { findObjectSearchRawValue } from './find-object-search-raw-value.js';
 
@@ -14,6 +14,7 @@ export function parseObjectSearchValue(
   parentKey: string,
   rawSearch: RawSearchParams,
   context: RuntimeSchemaValueContext,
+  options: SearchParseOptions = {},
 ): unknown {
   assertNoObjectSearchCollisions(parentKey, rawSearch, context.path);
 
@@ -30,7 +31,7 @@ export function parseObjectSearchValue(
     }
   }
 
-  return parseObjectShape(schema, parentKey, [], rawSearch, context);
+  return parseObjectShape(schema, parentKey, [], rawSearch, context, options);
 }
 
 function parseObjectShape(
@@ -39,6 +40,7 @@ function parseObjectShape(
   objectPath: readonly string[],
   rawSearch: RawSearchParams,
   context: RuntimeSchemaValueContext,
+  options: SearchParseOptions,
 ): Readonly<Record<string, unknown>> {
   const shape = getObjectSchemaShape(schema);
   const output: Record<string, unknown> = {};
@@ -56,6 +58,7 @@ function parseObjectShape(
         path: childPath,
         errorCode: context.errorCode,
       },
+      options,
     );
 
     if (value !== undefined) {
@@ -72,6 +75,7 @@ function parseChildObjectSearchValue(
   objectPath: readonly string[],
   rawSearch: RawSearchParams,
   context: RuntimeSchemaValueContext,
+  options: SearchParseOptions,
 ): unknown {
   if (isRuntimeSchemaKind(schema, 'object')) {
     return parseNestedObjectSearchValue(
@@ -80,13 +84,14 @@ function parseChildObjectSearchValue(
       objectPath,
       rawSearch,
       context,
+      options,
     );
   }
 
   const rawValue = findObjectSearchRawValue(parentKey, objectPath, rawSearch);
 
   if (isRuntimeSchemaKind(schema, 'array')) {
-    return parseArraySearchValue(schema as never, rawValue, context);
+    return parseArraySearchValue(schema as never, rawValue, context, options);
   }
 
   if (Array.isArray(rawValue)) {
@@ -108,6 +113,7 @@ function parseNestedObjectSearchValue(
   objectPath: readonly string[],
   rawSearch: RawSearchParams,
   context: RuntimeSchemaValueContext,
+  options: SearchParseOptions,
 ): unknown {
   const descriptor = compileRuntimeSchema(schema, { path: context.path });
   const hasDeclaredValues = hasDeclaredObjectValues(schema, parentKey, objectPath, rawSearch);
@@ -122,7 +128,7 @@ function parseNestedObjectSearchValue(
     }
   }
 
-  return parseObjectShape(schema, parentKey, objectPath, rawSearch, context);
+  return parseObjectShape(schema, parentKey, objectPath, rawSearch, context, options);
 }
 
 function hasDeclaredObjectValues(

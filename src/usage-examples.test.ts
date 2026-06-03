@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { href, matches, doesNotMatch, parsed as basicParsed } from '../examples/basic-usage.js';
 import {
+  commaParsed,
+  commaSuffix,
   compactDefaults,
   fullPath,
   preserved,
   rejectedUnknown,
+  repeatedSuffix,
   searchOnlySuffix,
+  state,
   suffix,
 } from '../examples/search-filters.js';
 import { requestLikeState, requestState, safeRequest } from '../examples/server-request.js';
@@ -52,6 +56,32 @@ describe('usage examples', () => {
     expect(preserved.unknownSearch).toEqual({ debug: 'true' });
     expect(rejectedUnknown.success).toBe(false);
     expect(searchOnlySuffix).toBe('?page=2');
+    expect(commaSuffix).toBe('?tags=sale%2Cleather');
+    expect(repeatedSuffix).toBe('?tags=sale&tags=leather');
+    expect(commaParsed).toEqual({
+      success: true,
+      data: {
+        hash: undefined,
+        params: {},
+        pathname: '/products',
+        search: {
+          tags: ['sale', 'leather'],
+        },
+      },
+    });
+
+    expect(state).toEqual({
+      hash: undefined,
+      params: {},
+      pathname: '/products',
+      search: {
+        q: 'shoes',
+        inStock: true,
+        page: 2,
+        sort: 'popular',
+        tags: ['sale', 'leather'],
+      },
+    });
   });
 
   it('executes the server request example', () => {

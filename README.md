@@ -232,7 +232,29 @@ SearchUrl.build({
 // '/search?q=url&page=2&active=true&tags=ts&tags=router&sort=newest'
 ```
 
-Arrays serialize as repeated params by default. `buildSearch` supports `{ arrayFormat: 'comma' }` for comma-separated arrays.
+Arrays parse and serialize as repeated params by default. Pass `{ arrayFormat: 'comma' }` to `url(...)`, `parse`, `safeParse`, `parseRequest`, `build`, or `buildSearch` to use comma-separated arrays.
+
+```ts
+const TagUrl = url(
+  {
+    path: '/search',
+    search: {
+      tags: array(string()).optional(),
+    },
+  },
+  { arrayFormat: 'comma' },
+);
+
+TagUrl.parse('/search?tags=ts%2Crouter').search.tags;
+// ['ts', 'router']
+
+TagUrl.build({ search: { tags: ['ts', 'router'] } });
+// '/search?tags=ts%2Crouter'
+
+TagUrl.build({ search: { tags: ['ts', 'router'] } }, { arrayFormat: 'repeat' });
+// '/search?tags=ts&tags=router'
+```
+
 
 ## Unknown search params
 

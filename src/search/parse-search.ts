@@ -24,13 +24,18 @@ export function parseSearch(
     return rawSearch;
   }
 
-  return parseSchemaSearch(rawSearch, options.schema, options.unknownSearch ?? 'strip');
+  return parseSchemaSearch(rawSearch, options.schema, options);
 }
 
 function parseSchemaSearch(
   rawSearch: RawSearchParams,
   schema: RuntimeSearchSchema,
-  unknownSearch: NonNullable<ParseSearchOptions['unknownSearch']>,
+  options: ParseSearchOptions,
 ): SearchParseResult<Record<string, unknown>> {
-  return parseCompiledSearch(rawSearch, compileSearchSchema(schema), unknownSearch);
+  return parseCompiledSearch(
+    rawSearch,
+    compileSearchSchema(schema),
+    options.unknownSearch ?? 'strip',
+    options.arrayFormat ? { arrayFormat: options.arrayFormat } : {},
+  );
 }

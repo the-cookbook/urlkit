@@ -66,7 +66,7 @@ function patchSchemaSearch(
 ): string {
   const compiled = compileSearchSchema(schema);
   const schemaKeys = compiled.keys;
-  const currentParsed = parsePartialSchemaSearch(parseRawSearch(current), schema);
+  const currentParsed = parsePartialSchemaSearch(parseRawSearch(current), schema, options);
   const mergedSearch: Record<string, unknown> = { ...currentParsed.search };
   const unknownSearch: Record<string, RawSearchValue> = {
     ...copyRawSearchParams(currentParsed.unknownSearch),

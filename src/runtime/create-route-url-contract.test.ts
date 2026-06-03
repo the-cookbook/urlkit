@@ -127,9 +127,28 @@ describe('createRouteUrlContract', () => {
   it('keeps route concepts outside the router-runtime options contract', () => {
     createRouteUrlContract({ path: '/users/{id}' } as const);
 
-    expectType<'params' | never>(
+    expectType<'params' | 'unknownSearch' | 'arrayFormat' | never>(
       {} as keyof import('./contracts.js').CreateRouteUrlContractOptions,
     );
+  });
+
+
+  it('supports contract-level arrayFormat options', () => {
+    const contract = createRouteUrlContract(
+      {
+        path: '/search',
+        search: {
+          tags: {
+            type: 'many',
+            optional: true,
+          },
+        },
+      } as const,
+      { arrayFormat: 'comma' },
+    );
+
+    expect(contract.parse('/search?tags=ts%2Curl').search).toEqual({ tags: ['ts', 'url'] });
+    expect(contract.build({ search: { tags: ['ts', 'url'] } })).toBe('/search?tags=ts%2Curl');
   });
 
   it('throws construction-time descriptor errors for invalid static descriptors', () => {
@@ -165,13 +184,13 @@ describe('createRouteUrlContract', () => {
           q: 'string',
         },
       } as const,
-      { params: 'raw' },
+      { params: 'raw', unknownSearch: 'error' },
     );
 
-    expect(contract.parse('/search?q=urlkit&debug=true').search).toEqual({ q: 'urlkit' });
+    expect(() => contract.parse('/search?q=urlkit&debug=true')).toThrow(UrlKitError);
     expect(
       contract.parse('/search?q=urlkit&debug=true', { unknownSearch: 'preserve' }).unknownSearch,
     ).toEqual({ debug: 'true' });
-    expect(contract.match('/search?q=urlkit&debug=true', { unknownSearch: 'error' })).toBe(false);
+    expect(contract.match('/search?q=urlkit&debug=true')).toBe(false);
   });
 });

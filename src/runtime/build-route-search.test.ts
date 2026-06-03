@@ -67,6 +67,13 @@ describe('router-runtime search helpers', () => {
     >(value);
   });
 
+
+  it('builds static many fields with comma array format', () => {
+    expect(
+      buildSearch({ q: 'urlkit', tags: ['ts', 'url'] }, { schema, arrayFormat: 'comma' }),
+    ).toBe('?q=urlkit&page=1&tags=ts%2Curl&sort=newest');
+  });
+
   it('supports defaults include and omit', () => {
     expect(buildSearch({ q: 'urlkit', page: 1, sort: 'newest' }, { schema })).toBe(
       '?q=urlkit&page=1&sort=newest',

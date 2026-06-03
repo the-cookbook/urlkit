@@ -4,6 +4,8 @@ export type UrlMode = 'path' | 'pathless';
 
 export type UnknownSearchBehavior = 'strip' | 'preserve' | 'error';
 
+export type SearchArrayFormat = 'repeat' | 'comma';
+
 export type UnknownSearchParams = Readonly<Record<string, string | readonly string[]>>;
 
 export type EmptyParams = Readonly<Record<never, never>>;
@@ -22,6 +24,7 @@ export interface UrlRequestInput {
 
 export interface ParseUrlOptions {
   readonly unknownSearch?: UnknownSearchBehavior;
+  readonly arrayFormat?: SearchArrayFormat;
 }
 
 export interface NormalizeUrlOptions {
@@ -30,10 +33,10 @@ export interface NormalizeUrlOptions {
 
 export interface BuildUrlOptions {
   readonly defaults?: 'include' | 'omit';
+  readonly arrayFormat?: SearchArrayFormat;
 }
 
 export interface BuildSearchOptions extends BuildUrlOptions {
-  readonly arrayFormat?: 'repeat' | 'comma';
   readonly sortKeys?: boolean;
 }
 
@@ -121,7 +124,12 @@ export type PathBasedBuildInput<
   ? PathBasedBuildInputWithoutParams<Search, Hash, SearchInput, HashInput>
   : PathBasedBuildInputWithParams<Params, Search, Hash, SearchInput, HashInput>;
 
-export type PathlessBuildInput<Search, Hash, SearchInput = Partial<Search>, HashInput = Hash> = {
+export type PathlessBuildInput<
+  Search,
+  Hash,
+  SearchInput = Partial<Search>,
+  HashInput = Hash,
+> = {
   readonly pathname?: string;
   readonly params?: never;
 } & SearchInputProperty<SearchInput> &
