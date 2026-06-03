@@ -15,6 +15,9 @@
   "type": "module",
   "sideEffects": false,
   "packageManager": "pnpm@9.15.4",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
