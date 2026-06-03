@@ -29,5 +29,5 @@
     "rollup.config.ts",
     "examples/**/*.ts"
   ],
-  "exclude": ["dist", "coverage", "node_modules"]
+  "exclude": ["dist", "coverage", "node_modules", "examples/integrations/**"]
 }

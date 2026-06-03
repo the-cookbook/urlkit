@@ -341,3 +341,51 @@ if (!normalized.success) {
   normalized.error.code;
 }
 ```
+
+## Real-world framework integrations
+
+The repository includes product catalog examples under `examples/integrations/`. They all consume the same shared URLKit contracts and mock product data:
+
+```txt
+examples/integrations/shared
+examples/integrations/nextjs
+examples/integrations/express
+examples/integrations/hono
+examples/integrations/fastify
+examples/integrations/react-router
+examples/integrations/remix
+examples/integrations/tanstack-router
+```
+
+The shared product catalog demonstrates:
+
+- typed search filters with pagination, sorting, booleans, arrays, and object search
+- repeated-key and comma-separated array formats
+- custom PathKit path constraints for product slugs
+- hash links for product detail sections
+- request parsing with `safeParseRequest`
+- route-param normalization with `safeNormalize`
+- canonical href generation with `build`
+
+Example shared contract usage:
+
+```ts
+import { ProductDetailsUrl, ProductFiltersUrl } from '../shared/url-contracts';
+
+const parsed = ProductFiltersUrl.safeParse('/products?tags=sale&tags=leather&page=2');
+
+const nextPageHref = ProductFiltersUrl.build(
+  {
+    search: {
+      tags: ['sale', 'leather'],
+      page: 3,
+    },
+  },
+  { defaults: 'omit' },
+);
+
+const reviewsHref = ProductDetailsUrl.build({
+  params: { slug: 'red-wing-iron-ranger' },
+  hash: 'reviews',
+});
+```

@@ -1,0 +1,5 @@
+{
+  "name": "@cookbook/urlkit-integration-shared",
+  "private": true,
+  "type": "module"
+}

@@ -1,5 +1,5 @@
 ---
-'@cookbook/urlkit': minor
+'@cookbook/urlkit': major
 ---
 
 Initial public release of `@cookbook/urlkit`.
@@ -21,3 +21,7 @@ Included capabilities:
 - Safe parse and safe normalize APIs returning discriminated result objects.
 - Custom PathKit path constraints via `createConstraint`, `registerPathConstraint`, `registerPathConstraints`, and per-contract `pathConstraints`.
 - Public `UrlKitError` with stable error codes for validation and descriptor failures.
+- Real-world framework integration examples for Next.js, Express, Hono, Fastify, React Router, Remix, and TanStack Router.
+- Shared product catalog integration contracts demonstrating typed filters, pagination, product detail routes, hash links, and custom slug constraints.
+- Middleware-style URLKit validation examples for Express, Hono, and Fastify.
+- Example app styling, conditional pagination rendering, and framework-specific module resolution setup.

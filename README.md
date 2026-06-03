@@ -14,8 +14,14 @@ URLKit owns typed URL state: path params, search params, hash fragments, request
 - [Focused examples](./docs/examples.md)
 - [Release readiness notes](./release-readiness.md)
 
+## Real-world framework examples
+
+Full integration examples are available under [`examples/integrations`](./examples/integrations). They show the same product catalog contracts used with Next.js, Express, Hono, Fastify, React Router, Remix, and TanStack Router, including local Express/Hono/Fastify middleware wrappers that accept a URLKit contract plus options.
+
 ## Table of contents
 
+- [Documentation](#documentation)
+- [Real-world framework examples](#real-world-framework-examples)
 - [Installation](#installation)
 - [Quick start](#quick-start)
 - [Why URLKit?](#why-urlkit)
