@@ -1,4 +1,4 @@
-import type { PatchSearchOptions } from '../contracts.js';
+import type { BuildSearchOptions, PatchSearchOptions } from '../contracts.js';
 import type {
   InferRuntimeSearch,
   RawSearchValue,
@@ -89,7 +89,7 @@ function patchSchemaSearch(
   }
 
   return joinSearchStrings(
-    buildSchemaSearch(mergedSearch, schema, options),
+    buildSchemaSearch(mergedSearch, schema, options as BuildSearchOptions),
     buildRawSearch(unknownSearch, options),
   );
 }

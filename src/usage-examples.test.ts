@@ -38,7 +38,7 @@ import {
 describe('usage examples', () => {
   it('executes the basic path-based usage example', () => {
     expect(basicParsed.params.id).toBe(42);
-    expect(href).toBe('/users/42?tab=settings&page=3');
+    expect(href).toBe('/users/42?tab=settings&page=3#show');
     expect(matches).toBe(true);
     expect(doesNotMatch).toBe(false);
   });

@@ -13,6 +13,13 @@ export type InferStaticUrlSearch<Descriptor extends StaticUrlDescriptor> = Descr
   ? InferStaticSearch<SearchDescriptor>
   : {};
 
+export type InferStaticUrlSearchBuildInput<Descriptor extends StaticUrlDescriptor> =
+  Descriptor extends {
+    readonly search: infer SearchDescriptor extends StaticSearchDescriptor;
+  }
+    ? InferStaticSearchBuildInput<SearchDescriptor>
+    : {};
+
 export type InferStaticUrlHash<Descriptor extends StaticUrlDescriptor> = Descriptor extends {
   readonly hash: infer HashDescriptor extends StaticHashDescriptor;
 }
@@ -63,6 +70,22 @@ export type InferStaticSearch<Descriptor extends StaticSearchDescriptor> = Simpl
     readonly [Key in keyof Descriptor as IsOptionalStaticSearchField<Descriptor[Key]> extends true
       ? Key
       : never]?: InferStaticSearchFieldValue<Descriptor[Key]>;
+  }
+>;
+
+export type InferStaticSearchBuildInput<Descriptor extends StaticSearchDescriptor> = Simplify<
+  {
+    readonly [Key in keyof Descriptor as IsRequiredStaticSearchBuildField<
+      Descriptor[Key]
+    > extends true
+      ? Key
+      : never]: InferStaticSearchFieldValue<Descriptor[Key]>;
+  } & {
+    readonly [Key in keyof Descriptor as IsRequiredStaticSearchBuildField<
+      Descriptor[Key]
+    > extends true
+      ? never
+      : Key]?: InferStaticSearchFieldValue<Descriptor[Key]>;
   }
 >;
 
@@ -142,5 +165,13 @@ type IsOptionalStaticSearchField<Field> = Field extends StaticSearchFieldObject
       ? true
       : false
   : false;
+
+type IsRequiredStaticSearchBuildField<Field> = Field extends StaticSearchFieldObject
+  ? 'default' extends keyof Field
+    ? false
+    : Field['optional'] extends true
+      ? false
+      : true
+  : true;
 
 type Simplify<Value> = { readonly [Key in keyof Value]: Value[Key] } & {};

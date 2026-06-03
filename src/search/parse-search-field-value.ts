@@ -1,7 +1,7 @@
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { parseCompiledRuntimeSchemaValue } from '../schema/parse-compiled-runtime-schema-value.js';
 import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
-import type { ObjectSchema } from '../schema/object.js';
+import type { AnyObjectSchema } from '../schema/object.js';
 import type { ArraySchema } from '../schema/array.js';
 import type { CompiledSearchField, RawSearchParams, RawSearchValue } from './contracts.js';
 import { parseArraySearchValue } from './parse-array-search-value.js';
@@ -12,7 +12,7 @@ export function parseSearchFieldValue(
   rawSearch: RawSearchParams,
 ): unknown {
   if (isRuntimeSchemaKind(field.schema, 'object')) {
-    return parseObjectSearchValue(field.schema as ObjectSchema<any>, field.key, rawSearch, {
+    return parseObjectSearchValue(field.schema as AnyObjectSchema, field.key, rawSearch, {
       kind: 'object',
       path: [field.key],
       errorCode: 'invalid-search',

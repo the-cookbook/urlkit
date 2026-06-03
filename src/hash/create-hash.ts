@@ -7,7 +7,14 @@ import type { HashSchema } from './contracts.js';
 export function hash<const Schema extends HashSchema>(
   schema: Schema,
   options?: CreateUrlOptions,
-): UrlContract<'pathless', string, EmptyParams, EmptyParams, InferRuntimeSchemaValue<Schema>> {
+): UrlContract<
+  'pathless',
+  string,
+  EmptyParams,
+  EmptyParams,
+  InferRuntimeSchemaValue<Schema>,
+  EmptyParams
+> {
   return url(
     {
       hash: schema,

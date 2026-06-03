@@ -5,8 +5,14 @@ import { buildCompiledSearch } from '../search/build-compiled-search.js';
 import type { CompiledUrlDescriptor } from './compile-url-descriptor.js';
 import { isUrlState } from './url-state-brand.js';
 
-export function buildCompiledUrl<Mode extends 'path' | 'pathless', Params, Search, Hash>(
-  input: UrlBuildInput<Mode, Params, Search, Hash>,
+export function buildCompiledUrl<
+  Mode extends 'path' | 'pathless',
+  Params,
+  Search,
+  Hash,
+  SearchInput = Partial<Search>,
+>(
+  input: UrlBuildInput<Mode, Params, Search, Hash, SearchInput>,
   compiled: CompiledUrlDescriptor<Mode>,
   options: BuildUrlOptions = {},
 ): string {

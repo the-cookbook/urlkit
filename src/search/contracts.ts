@@ -68,6 +68,18 @@ export interface SearchPatchContext {
   readonly options?: PatchSearchOptions;
 }
 
+export type InferRuntimeSearchBuildInput<Schema extends RuntimeSearchSchema> = Simplify<
+  {
+    readonly [Key in keyof Schema as IsRequiredSearchBuildField<Schema[Key]> extends true
+      ? Key
+      : never]: InferSearchFieldValue<Schema[Key]>;
+  } & {
+    readonly [Key in keyof Schema as IsRequiredSearchBuildField<Schema[Key]> extends true
+      ? never
+      : Key]?: Exclude<InferSearchFieldValue<Schema[Key]>, undefined>;
+  }
+>;
+
 export type InferRuntimeSearch<Schema extends RuntimeSearchSchema> = Simplify<
   {
     readonly [Key in keyof Schema as IsOptionalSearchField<Schema[Key]> extends true
@@ -109,5 +121,25 @@ type IsOptionalSearchField<Field> =
 
 type IsOptionalSchema<Schema extends AnyRuntimeSchemaBuilder> =
   undefined extends InferRuntimeSchemaValue<Schema> ? true : false;
+
+type IsRequiredSearchBuildField<Field> =
+  Field extends RuntimeSearchField<infer Schema>
+    ? 'default' extends keyof Field
+      ? false
+      : Field['optional'] extends true
+        ? false
+        : Field['type'] extends 'many'
+          ? true
+          : IsRequiredSchema<Schema>
+    : Field extends AnyRuntimeSchemaBuilder
+      ? IsRequiredSchema<Field>
+      : false;
+
+type IsRequiredSchema<Schema extends AnyRuntimeSchemaBuilder> =
+  Schema extends RuntimeSchemaBuilder<any, any, any, infer Descriptor>
+    ? Descriptor extends { readonly presence: 'required' }
+      ? true
+      : false
+    : false;
 
 type Simplify<Value> = { readonly [Key in keyof Value]: Value[Key] } & {};

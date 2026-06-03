@@ -88,63 +88,97 @@ export type UrlSafeNormalizeResult<
   | UrlSafeNormalizeSuccess<Mode, Pathname, Params, Search, Hash, Input>
   | UrlSafeParseFailure<ErrorValue>;
 
-export interface PathBasedBuildInputWithParams<Params, Search, Hash> {
+export type PathBasedBuildInputWithParams<Params, Search, Hash, SearchInput = Partial<Search>> = {
   readonly pathname?: never;
   readonly params: Params;
-  readonly search?: Partial<Search>;
   readonly hash?: Hash;
-}
+} & SearchInputProperty<SearchInput>;
 
-export interface PathBasedBuildInputWithoutParams<Search, Hash> {
+export type PathBasedBuildInputWithoutParams<Search, Hash, SearchInput = Partial<Search>> = {
   readonly pathname?: never;
   readonly params?: never | EmptyParams;
-  readonly search?: Partial<Search>;
   readonly hash?: Hash;
-}
+} & SearchInputProperty<SearchInput>;
 
-export type PathBasedBuildInput<Params, Search, Hash> = keyof Params extends never
-  ? PathBasedBuildInputWithoutParams<Search, Hash>
-  : PathBasedBuildInputWithParams<Params, Search, Hash>;
+export type PathBasedBuildInput<
+  Params,
+  Search,
+  Hash,
+  SearchInput = Partial<Search>,
+> = keyof Params extends never
+  ? PathBasedBuildInputWithoutParams<Search, Hash, SearchInput>
+  : PathBasedBuildInputWithParams<Params, Search, Hash, SearchInput>;
 
-export interface PathlessBuildInput<Search, Hash> {
+export type PathlessBuildInput<Search, Hash, SearchInput = Partial<Search>> = {
   readonly pathname?: string;
   readonly params?: never;
-  readonly search?: Partial<Search>;
   readonly hash?: Hash;
-}
+} & SearchInputProperty<SearchInput>;
 
-export type UrlBuildInput<Mode extends UrlMode, Params, Search, Hash> = Mode extends 'path'
-  ? PathBasedBuildInput<Params, Search, Hash>
-  : PathlessBuildInput<Search, Hash>;
+export type UrlBuildInput<
+  Mode extends UrlMode,
+  Params,
+  Search,
+  Hash,
+  SearchInput = Partial<Search>,
+> = Mode extends 'path'
+  ? PathBasedBuildInput<Params, Search, Hash, SearchInput>
+  : PathlessBuildInput<Search, Hash, SearchInput>;
 
-export interface PathBasedNormalizeInputWithParams<Params, Search, Hash> {
+export type PathBasedNormalizeInputWithParams<
+  Params,
+  Search,
+  Hash,
+  SearchInput = Partial<Search>,
+> = {
   readonly pathname?: never;
   readonly params: Params;
-  readonly search?: Partial<Search>;
   readonly hash?: Hash;
-}
+} & SearchInputProperty<SearchInput>;
 
-export interface PathBasedNormalizeInputWithoutParams<Search, Hash> {
+export type PathBasedNormalizeInputWithoutParams<Search, Hash, SearchInput = Partial<Search>> = {
   readonly pathname?: never;
   readonly params?: never | EmptyParams;
-  readonly search?: Partial<Search>;
   readonly hash?: Hash;
-}
+} & SearchInputProperty<SearchInput>;
 
-export type PathBasedNormalizeInput<Params, Search, Hash> = keyof Params extends never
-  ? PathBasedNormalizeInputWithoutParams<Search, Hash>
-  : PathBasedNormalizeInputWithParams<Params, Search, Hash>;
+export type PathBasedNormalizeInput<
+  Params,
+  Search,
+  Hash,
+  SearchInput = Partial<Search>,
+> = keyof Params extends never
+  ? PathBasedNormalizeInputWithoutParams<Search, Hash, SearchInput>
+  : PathBasedNormalizeInputWithParams<Params, Search, Hash, SearchInput>;
 
-export interface PathlessNormalizeInput<Search, Hash> {
+export type PathlessNormalizeInput<Search, Hash, SearchInput = Partial<Search>> = {
   readonly pathname?: string;
   readonly params?: never;
-  readonly search?: Partial<Search>;
   readonly hash?: Hash;
-}
+} & SearchInputProperty<SearchInput>;
 
-export type UrlNormalizeInput<Mode extends UrlMode, Params, Search, Hash> = Mode extends 'path'
-  ? PathBasedNormalizeInput<Params, Search, Hash>
-  : PathlessNormalizeInput<Search, Hash>;
+export type UrlNormalizeInput<
+  Mode extends UrlMode,
+  Params,
+  Search,
+  Hash,
+  SearchInput = Partial<Search>,
+> = Mode extends 'path'
+  ? PathBasedNormalizeInput<Params, Search, Hash, SearchInput>
+  : PathlessNormalizeInput<Search, Hash, SearchInput>;
+
+export type SearchInputProperty<SearchInput> = keyof SearchInput extends never
+  ? { readonly search?: SearchInput }
+  : RequiredKeys<SearchInput> extends never
+    ? { readonly search?: SearchInput }
+    : { readonly search: SearchInput };
+
+export type SearchInputArgument<SearchInput> =
+  RequiredKeys<SearchInput> extends never ? SearchInput | undefined : SearchInput;
+
+type RequiredKeys<Input> = {
+  [Key in keyof Input]-?: EmptyParams extends Pick<Input, Key> ? never : Key;
+}[keyof Input];
 
 export type NormalizeUrlState<
   Mode extends UrlMode,

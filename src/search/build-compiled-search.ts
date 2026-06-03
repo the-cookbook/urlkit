@@ -1,6 +1,6 @@
 import type { BuildSearchOptions } from '../contracts.js';
 import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
-import type { ObjectSchema } from '../schema/object.js';
+import type { AnyObjectSchema } from '../schema/object.js';
 import { appendObjectSearchEntries } from './append-object-search-entries.js';
 import { appendSearchEntry } from './append-search-entry.js';
 import { areSearchValuesEqual } from './are-search-values-equal.js';
@@ -28,7 +28,7 @@ export function buildCompiledSearch(
       appendObjectSearchEntries(
         entries,
         field.key,
-        field.schema as ObjectSchema<any>,
+        field.schema as AnyObjectSchema,
         normalized,
         options,
       );

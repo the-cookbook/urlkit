@@ -1,6 +1,6 @@
 import type { AnyRuntimeSchemaBuilder } from '../schema/contracts.js';
 import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
-import { getObjectSchemaShape, type ObjectSchema } from '../schema/object.js';
+import { getObjectSchemaShape, type AnyObjectSchema } from '../schema/object.js';
 import type { CompiledSearchField, RawSearchParams } from './contracts.js';
 import { joinObjectSearchKey } from './object-search-key.js';
 
@@ -9,14 +9,14 @@ export function hasSearchFieldRawValue(
   rawSearch: RawSearchParams,
 ): boolean {
   if (isRuntimeSchemaKind(field.schema, 'object')) {
-    return hasObjectRawValue(field.schema as ObjectSchema<any>, field.key, rawSearch);
+    return hasObjectRawValue(field.schema as AnyObjectSchema, field.key, rawSearch);
   }
 
   return rawSearch[field.key] !== undefined;
 }
 
 function hasObjectRawValue(
-  schema: ObjectSchema<any>,
+  schema: AnyObjectSchema,
   parentKey: string,
   rawSearch: RawSearchParams,
 ): boolean {
@@ -26,7 +26,7 @@ function hasObjectRawValue(
     const childSearchKey = joinObjectSearchKey(parentKey, key);
 
     if (isRuntimeSchemaKind(childSchema as AnyRuntimeSchemaBuilder, 'object')) {
-      return hasObjectRawValue(childSchema as ObjectSchema<any>, childSearchKey, rawSearch);
+      return hasObjectRawValue(childSchema as AnyObjectSchema, childSearchKey, rawSearch);
     }
 
     return rawSearch[childSearchKey] !== undefined;

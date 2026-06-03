@@ -3,6 +3,7 @@ import { compileStaticSearch } from '../static/compile-static-search.js';
 import type {
   InferStaticUrlHash,
   InferStaticUrlSearch,
+  InferStaticUrlSearchBuildInput,
   StaticUrlDescriptor,
   StaticUrlModeFromDescriptor,
 } from '../static/contracts.js';
@@ -29,14 +30,16 @@ export function createRouteUrlContract<
   RoutePathnameFromDescriptor<Descriptor>,
   RouteParamsFromDescriptor<Descriptor, Options>,
   InferStaticUrlSearch<Descriptor>,
-  InferStaticUrlHash<Descriptor>
+  InferStaticUrlHash<Descriptor>,
+  InferStaticUrlSearchBuildInput<Descriptor>
 > {
   return createUrlContract<
     StaticUrlModeFromDescriptor<Descriptor>,
     RoutePathnameFromDescriptor<Descriptor>,
     RouteParamsFromDescriptor<Descriptor, Options>,
     InferStaticUrlSearch<Descriptor>,
-    InferStaticUrlHash<Descriptor>
+    InferStaticUrlHash<Descriptor>,
+    InferStaticUrlSearchBuildInput<Descriptor>
   >(compileRouteUrlDescriptor(descriptor, options));
 }
 

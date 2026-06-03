@@ -1,7 +1,7 @@
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { compileRuntimeSchema } from '../schema/compile-runtime-schema.js';
 import type { AnyRuntimeSchemaBuilder, RuntimeSchemaValueContext } from '../schema/contracts.js';
-import { getObjectSchemaShape, type ObjectSchema } from '../schema/object.js';
+import { getObjectSchemaShape, type AnyObjectSchema } from '../schema/object.js';
 import { parseRuntimeSchemaValue } from '../schema/parse-runtime-schema-value.js';
 import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
 import { parseArraySearchValue } from './parse-array-search-value.js';
@@ -10,7 +10,7 @@ import { assertNoObjectSearchCollisions } from './assert-object-search-collision
 import { findObjectSearchRawValue } from './find-object-search-raw-value.js';
 
 export function parseObjectSearchValue(
-  schema: ObjectSchema<any>,
+  schema: AnyObjectSchema,
   parentKey: string,
   rawSearch: RawSearchParams,
   context: RuntimeSchemaValueContext,
@@ -34,7 +34,7 @@ export function parseObjectSearchValue(
 }
 
 function parseObjectShape(
-  schema: ObjectSchema<any>,
+  schema: AnyObjectSchema,
   parentKey: string,
   objectPath: readonly string[],
   rawSearch: RawSearchParams,
@@ -75,7 +75,7 @@ function parseChildObjectSearchValue(
 ): unknown {
   if (isRuntimeSchemaKind(schema, 'object')) {
     return parseNestedObjectSearchValue(
-      schema as ObjectSchema<any>,
+      schema as AnyObjectSchema,
       parentKey,
       objectPath,
       rawSearch,
@@ -103,7 +103,7 @@ function parseChildObjectSearchValue(
 }
 
 function parseNestedObjectSearchValue(
-  schema: ObjectSchema<any>,
+  schema: AnyObjectSchema,
   parentKey: string,
   objectPath: readonly string[],
   rawSearch: RawSearchParams,
@@ -126,7 +126,7 @@ function parseNestedObjectSearchValue(
 }
 
 function hasDeclaredObjectValues(
-  schema: ObjectSchema<any>,
+  schema: AnyObjectSchema,
   parentKey: string,
   objectPath: readonly string[],
   rawSearch: RawSearchParams,
@@ -138,7 +138,7 @@ function hasDeclaredObjectValues(
 
     if (isRuntimeSchemaKind(childSchema as AnyRuntimeSchemaBuilder, 'object')) {
       return hasDeclaredObjectValues(
-        childSchema as ObjectSchema<any>,
+        childSchema as AnyObjectSchema,
         parentKey,
         childObjectPath,
         rawSearch,

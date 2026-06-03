@@ -213,11 +213,29 @@ describe('comprehensive TypeScript inference', () => {
     const UserUrl = url({ path: '/users/{id:int}', search: { tab: string().optional() } });
     const SearchUrl = url({ path: '/search', search: { q: string() } });
     const FiltersUrl = url({ search: { page: int().default(1) } });
+    const RequiredSearchUrl = url({
+      path: '/users/{id:int}',
+      search: {
+        tab: string().default('profile'),
+        page: int(),
+      },
+    });
+    const StaticRouteUrl = createRouteUrlContract({
+      path: '/articles/{slug}',
+      search: {
+        page: { value: 'int' },
+        sort: { value: { type: 'enum', values: ['newest', 'popular'] }, default: 'newest' },
+      },
+    } as const);
 
     UserUrl.build({ params: { id: 1 }, search: { tab: 'profile' } });
     SearchUrl.build({ search: { q: 'router' } });
     FiltersUrl.build({ search: { page: 2 } });
     FiltersUrl.build({ pathname: '/products', search: { page: 2 } });
+    RequiredSearchUrl.build({ params: { id: 1 }, search: { page: 1 } });
+    RequiredSearchUrl.buildSearch({ page: 1 });
+    RequiredSearchUrl.replaceSearch('/users/1?page=1', { page: 2 });
+    StaticRouteUrl.build({ params: { slug: 'post-1' }, search: { page: 1 } });
 
     if (false) {
       // @ts-expect-error path params are required for path-based contracts with params.
@@ -228,6 +246,21 @@ describe('comprehensive TypeScript inference', () => {
 
       // @ts-expect-error pathless build rejects params.
       FiltersUrl.build({ params: {} });
+
+      // @ts-expect-error required search fields without defaults must be present in build input.
+      RequiredSearchUrl.build({ params: { id: 1 }, search: { tab: 'settings' } });
+
+      // @ts-expect-error required search fields make the search object itself required.
+      RequiredSearchUrl.build({ params: { id: 1 } });
+
+      // @ts-expect-error buildSearch requires required fields without defaults.
+      RequiredSearchUrl.buildSearch({ tab: 'settings' });
+
+      // @ts-expect-error replaceSearch requires complete required search state.
+      RequiredSearchUrl.replaceSearch('/users/1?page=1', { tab: 'settings' });
+
+      // @ts-expect-error static descriptors also enforce required search fields in build input.
+      StaticRouteUrl.build({ params: { slug: 'post-1' }, search: { sort: 'popular' } });
 
       expectType<
         UrlBuildInput<'path', { readonly id: number }, { readonly tab?: string }, undefined>
@@ -246,6 +279,13 @@ describe('comprehensive TypeScript inference', () => {
     const UserUrl = url({ path: '/users/{id:int}', search: { tab: string().optional() } });
     const SearchUrl = url({ path: '/search', search: { q: string() } });
     const FiltersUrl = url({ search: { page: int().default(1) } });
+    const RequiredSearchUrl = url({
+      path: '/users/{id:int}',
+      search: {
+        tab: string().default('profile'),
+        page: int(),
+      },
+    });
 
     const pathlessState = FiltersUrl.parse('/products?page=2');
     const literalState = FiltersUrl.normalize({ pathname: '/products', search: { page: 2 } });
@@ -256,6 +296,7 @@ describe('comprehensive TypeScript inference', () => {
     UserUrl.normalize({ params: { id: 1 }, search: { tab: 'profile' } });
     SearchUrl.normalize({ search: { q: 'router' } });
     FiltersUrl.normalize({ pathname: '/products', search: { page: 2 } });
+    RequiredSearchUrl.normalize({ params: { id: 1 }, search: { page: 1 } });
 
     if (false) {
       // @ts-expect-error path-based normalize accepts params, not pathname.
@@ -266,6 +307,12 @@ describe('comprehensive TypeScript inference', () => {
 
       // @ts-expect-error pathless normalize rejects params.
       FiltersUrl.normalize({ params: {} });
+
+      // @ts-expect-error required search fields without defaults must be present in normalize input.
+      RequiredSearchUrl.normalize({ params: { id: 1 }, search: { tab: 'settings' } });
+
+      // @ts-expect-error required search fields make the normalize search object itself required.
+      RequiredSearchUrl.normalize({ params: { id: 1 } });
 
       expectType<
         UrlNormalizeInput<'path', { readonly id: number }, { readonly tab?: string }, undefined>

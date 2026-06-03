@@ -1,9 +1,13 @@
-import type { InferRuntimeSearch, RuntimeSearchSchema, SearchBuildOptions } from './contracts.js';
+import type {
+  InferRuntimeSearchBuildInput,
+  RuntimeSearchSchema,
+  SearchBuildOptions,
+} from './contracts.js';
 import { buildSearch } from './build-search.js';
 
 export function replaceSearch<const Schema extends RuntimeSearchSchema>(
   current: string | URLSearchParams,
-  next: Partial<InferRuntimeSearch<Schema>>,
+  next: InferRuntimeSearchBuildInput<Schema>,
   options: SearchBuildOptions<Schema> & { readonly schema: Schema },
 ): string;
 export function replaceSearch(

@@ -1,10 +1,14 @@
-import type { BuildSearchOptions } from '../contracts.js';
-import type { InferRuntimeSearch, RuntimeSearchSchema, SearchBuildOptions } from './contracts.js';
+import type { BuildSearchOptions, SearchInputArgument } from '../contracts.js';
+import type {
+  InferRuntimeSearchBuildInput,
+  RuntimeSearchSchema,
+  SearchBuildOptions,
+} from './contracts.js';
 import { buildRawSearch } from './build-raw-search.js';
 import { buildSchemaSearch } from './build-schema-search.js';
 
 export function buildSearch<const Schema extends RuntimeSearchSchema>(
-  input: Partial<InferRuntimeSearch<Schema>> | undefined,
+  input: SearchInputArgument<InferRuntimeSearchBuildInput<Schema>>,
   options: SearchBuildOptions<Schema> & { readonly schema: Schema },
 ): string;
 export function buildSearch(input?: Record<string, unknown>, options?: BuildSearchOptions): string;

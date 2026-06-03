@@ -106,14 +106,21 @@ export interface RuntimeSchemaInternals<
   readonly toDescriptor: () => Descriptor;
 }
 
+declare const runtimeSchemaTypeSymbol: unique symbol;
+
 export interface RuntimeSchemaBuilder<
   Value,
   Kind extends string = string,
   Options extends RuntimeSchemaOptions = RuntimeSchemaOptions,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options> =
     NormalizedRuntimeSchemaDescriptor<Kind, Options>,
 > {
+  readonly [runtimeSchemaTypeSymbol]?: {
+    readonly value: Value;
+    readonly kind: Kind;
+    readonly options: Options;
+    readonly descriptor: Descriptor;
+  };
   readonly optional: () => RuntimeSchemaBuilder<
     Value | undefined,
     Kind,
@@ -146,9 +153,7 @@ export type InferRuntimeSchemaValue<Schema> =
   Schema extends RuntimeSchemaBuilder<infer Value> ? Value : never;
 
 export type InferRuntimeSchemaDescriptor<Schema> =
-  Schema extends RuntimeSchemaBuilder<unknown, string, RuntimeSchemaOptions, infer Descriptor>
-    ? Descriptor
-    : never;
+  Schema extends RuntimeSchemaBuilder<any, any, any, infer Descriptor> ? Descriptor : never;
 
 export interface RuntimeSchemaSafeSuccess<Value> {
   readonly success: true;

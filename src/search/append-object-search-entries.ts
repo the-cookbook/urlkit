@@ -1,7 +1,7 @@
 import type { BuildSearchOptions } from '../contracts.js';
 import type { AnyRuntimeSchemaBuilder } from '../schema/contracts.js';
 import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
-import { type ObjectSchema, getObjectSchemaShape } from '../schema/object.js';
+import { getObjectSchemaShape, type AnyObjectSchema } from '../schema/object.js';
 import { serializeRuntimeSchemaValue } from '../schema/serialize-runtime-schema-value.js';
 import { serializeArrayRuntimeSchemaValue } from '../schema/array.js';
 import type { SearchEntry } from './search-entries.js';
@@ -11,7 +11,7 @@ import { joinObjectSearchKey } from './object-search-key.js';
 export function appendObjectSearchEntries(
   entries: SearchEntry[],
   parentKey: string,
-  schema: ObjectSchema<any>,
+  schema: AnyObjectSchema,
   value: unknown,
   options: BuildSearchOptions = {},
 ): void {
@@ -32,7 +32,7 @@ export function appendObjectSearchEntries(
     appendObjectChildSearchEntry(
       entries,
       childKey,
-      childSchema as AnyRuntimeSchemaBuilder,
+      childSchema as AnyObjectSchema,
       childValue,
       options,
     );
@@ -47,7 +47,7 @@ function appendObjectChildSearchEntry(
   options: BuildSearchOptions,
 ): void {
   if (isRuntimeSchemaKind(schema, 'object')) {
-    appendObjectSearchEntries(entries, key, schema as ObjectSchema<any>, value, options);
+    appendObjectSearchEntries(entries, key, schema as AnyObjectSchema, value, options);
     return;
   }
 

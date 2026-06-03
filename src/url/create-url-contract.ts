@@ -7,6 +7,7 @@ import type {
   ParseRequestOptions,
   ParseUrlOptions,
   PatchSearchOptions,
+  SearchInputArgument,
   UrlBuildInput,
   UrlNormalizeInput,
   UrlRequestInput,
@@ -41,10 +42,11 @@ export function createUrlContract<
   Params = Mode extends 'path' ? Record<string, string | number> : EmptyParams,
   Search = Record<string, unknown>,
   Hash = string | undefined,
+  SearchInput = Partial<Search>,
 >(
   descriptor: NormalizedUrlDescriptor<Mode>,
   options: CreateUrlContractOptions = {},
-): UrlContract<Mode, Pathname, Params, Search, Hash> {
+): UrlContract<Mode, Pathname, Params, Search, Hash, SearchInput> {
   const compiled = compileUrlDescriptor(descriptor);
   const unknownSearch = options.unknownSearch ?? 'strip';
 
@@ -112,7 +114,7 @@ export function createUrlContract<
         });
       }
     },
-    normalize<const Input extends UrlNormalizeInput<Mode, Params, Search, Hash>>(
+    normalize<const Input extends UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput>>(
       input: Input,
       options?: NormalizeUrlOptions,
     ): NormalizeUrlState<Mode, Pathname, Params, Search, Hash, Input> {
@@ -122,7 +124,7 @@ export function createUrlContract<
         options?.unknownSearch ?? unknownSearch,
       );
     },
-    safeNormalize<const Input extends UrlNormalizeInput<Mode, Params, Search, Hash>>(
+    safeNormalize<const Input extends UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput>>(
       input: Input,
       options?: NormalizeUrlOptions,
     ): UrlSafeNormalizeResult<Mode, Pathname, Params, Search, Hash, Input> {
@@ -144,11 +146,13 @@ export function createUrlContract<
       }
     },
     build(
-      input: UrlBuildInput<Mode, Params, Search, Hash> | UrlState<Pathname, Params, Search, Hash>,
+      input:
+        | UrlBuildInput<Mode, Params, Search, Hash, SearchInput>
+        | UrlState<Pathname, Params, Search, Hash>,
       options?: BuildUrlOptions,
     ): string {
-      return buildCompiledUrl<Mode, Params, Search, Hash>(
-        input as UrlBuildInput<Mode, Params, Search, Hash>,
+      return buildCompiledUrl<Mode, Params, Search, Hash, SearchInput>(
+        input as UrlBuildInput<Mode, Params, Search, Hash, SearchInput>,
         compiled,
         options,
       );
@@ -175,9 +179,9 @@ export function createUrlContract<
         ? (parseHash(input, compiled.hash.descriptor) as Hash)
         : (parseHash(input) as Hash);
     },
-    buildSearch(search: Partial<Search>, options?: BuildSearchOptions): string {
+    buildSearch(search: SearchInputArgument<SearchInput>, options?: BuildSearchOptions): string {
       if (compiled.search) {
-        return buildCompiledSearch(search, compiled.search, options);
+        return buildCompiledSearch(search as Record<string, unknown>, compiled.search, options);
       }
 
       return '';
@@ -190,12 +194,8 @@ export function createUrlContract<
     withSearch(input: string | URL, search: Partial<Search>, options?: PatchSearchOptions): string {
       return patchCompiledUrlSearch(input, search, compiled, options);
     },
-    replaceSearch(
-      input: string | URL,
-      search: Partial<Search>,
-      options?: BuildSearchOptions,
-    ): string {
-      return replaceCompiledUrlSearch(input, search, compiled, options);
+    replaceSearch(input: string | URL, search: SearchInput, options?: BuildSearchOptions): string {
+      return replaceCompiledUrlSearch(input, search as Record<string, unknown>, compiled, options);
     },
     omitSearch(input: string | URL, keys: readonly string[], options?: BuildSearchOptions): string {
       return omitCompiledUrlSearch(input, keys, compiled, options);
@@ -205,5 +205,12 @@ export function createUrlContract<
     },
   };
 
-  return Object.freeze(contract) as unknown as UrlContract<Mode, Pathname, Params, Search, Hash>;
+  return Object.freeze(contract) as unknown as UrlContract<
+    Mode,
+    Pathname,
+    Params,
+    Search,
+    Hash,
+    SearchInput
+  >;
 }

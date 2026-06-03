@@ -1,11 +1,15 @@
-import type { BuildSearchOptions, PatchSearchOptions } from '../contracts.js';
+import type { BuildSearchOptions, PatchSearchOptions, SearchInputArgument } from '../contracts.js';
 import { buildSearch as buildRuntimeSearch } from '../search/build-search.js';
 import { omitSearch as omitRuntimeSearch } from '../search/omit-search.js';
 import { patchSearch as patchRuntimeSearch } from '../search/patch-search.js';
 import { pickSearch as pickRuntimeSearch } from '../search/pick-search.js';
 import { replaceSearch as replaceRuntimeSearch } from '../search/replace-search.js';
 import { compileCachedStaticSearch } from './compile-cached-static-search.js';
-import type { InferStaticSearch, StaticSearchDescriptor } from '../static/contracts.js';
+import type {
+  InferStaticSearch,
+  InferStaticSearchBuildInput,
+  StaticSearchDescriptor,
+} from '../static/contracts.js';
 
 export interface BuildRouteSearchOptions<
   SearchDescriptor = StaticSearchDescriptor,
@@ -20,7 +24,7 @@ export interface PatchRouteSearchOptions<
 }
 
 export function buildSearch<const SearchDescriptor extends StaticSearchDescriptor>(
-  input: Partial<InferStaticSearch<SearchDescriptor>> | undefined,
+  input: SearchInputArgument<InferStaticSearchBuildInput<SearchDescriptor>>,
   options: BuildRouteSearchOptions<SearchDescriptor> & { readonly schema: SearchDescriptor },
 ): string;
 export function buildSearch(input?: Record<string, unknown>, options?: BuildSearchOptions): string;
@@ -65,7 +69,7 @@ export function patchSearch(
 
 export function replaceSearch<const SearchDescriptor extends StaticSearchDescriptor>(
   current: string | URLSearchParams,
-  next: Partial<InferStaticSearch<SearchDescriptor>>,
+  next: InferStaticSearchBuildInput<SearchDescriptor>,
   options: BuildRouteSearchOptions<SearchDescriptor> & { readonly schema: SearchDescriptor },
 ): string;
 export function replaceSearch(

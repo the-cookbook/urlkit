@@ -26,12 +26,14 @@ export interface ObjectSchemaOptions extends RuntimeSchemaOptions {
   readonly shape: Readonly<Record<string, NormalizedRuntimeSchemaDescriptor>>;
 }
 
-export interface ObjectSchema<Shape extends ObjectSchemaShape> extends RuntimeSchemaBuilder<
-  InferObjectShape<Shape>,
-  'object',
-  ObjectSchemaOptions,
-  RequiredRuntimeSchemaDescriptor<'object', ObjectSchemaOptions>
-> {}
+export interface ObjectSchema<
+  Shape extends ObjectSchemaShape,
+  Value = InferObjectShape<Shape>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<'object', ObjectSchemaOptions> =
+    RequiredRuntimeSchemaDescriptor<'object', ObjectSchemaOptions>,
+> extends RuntimeSchemaBuilder<Value, 'object', ObjectSchemaOptions, Descriptor> {}
+
+export type AnyObjectSchema = ObjectSchema<any, any, any>;
 
 export type InferObjectShape<Shape extends ObjectSchemaShape> = Simplify<
   {
@@ -71,21 +73,25 @@ export function object<const Shape extends ObjectSchemaShape>(shape: Shape): Obj
   return withObjectShape(builder, shape);
 }
 
-function withObjectShape<Shape extends ObjectSchemaShape>(
-  builder: AnyRuntimeSchemaBuilder,
+function withObjectShape<
+  Shape extends ObjectSchemaShape,
+  Value,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<'object', ObjectSchemaOptions>,
+>(
+  builder: RuntimeSchemaBuilder<Value, 'object', ObjectSchemaOptions, Descriptor>,
   shape: Shape,
-): ObjectSchema<Shape> {
+): ObjectSchema<Shape, Value, Descriptor> {
   const wrapped = {
-    [runtimeSchemaSymbol]: (builder as RuntimeSchemaBuilderWithInternals<any, any, any, any>)[
-      runtimeSchemaSymbol
-    ],
+    [runtimeSchemaSymbol]: (
+      builder as RuntimeSchemaBuilderWithInternals<Value, 'object', ObjectSchemaOptions, Descriptor>
+    )[runtimeSchemaSymbol],
 
     optional: () => withObjectShape(builder.optional(), shape),
 
     required: () => withObjectShape(builder.required(), shape),
 
-    default: (value: InferObjectShape<Shape>) => withObjectShape(builder.default(value), shape),
-  } as unknown as ObjectSchema<Shape>;
+    default: (value: NonNullable<Value>) => withObjectShape(builder.default(value), shape),
+  } as unknown as ObjectSchema<Shape, Value, Descriptor>;
 
   objectShapes.set(wrapped, shape);
 
@@ -93,7 +99,7 @@ function withObjectShape<Shape extends ObjectSchemaShape>(
 }
 
 export function getObjectSchemaShape<Shape extends ObjectSchemaShape>(
-  schema: ObjectSchema<Shape>,
+  schema: ObjectSchema<Shape, any, any>,
 ): Shape {
   const shape = objectShapes.get(schema);
 

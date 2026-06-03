@@ -6,6 +6,7 @@ import type {
   ParamsFromRuntimeDescriptor,
   PathnameFromRuntimeDescriptor,
   RuntimeUrlDescriptor,
+  SearchBuildInputFromRuntimeDescriptor,
   SearchFromRuntimeDescriptor,
   UrlContract,
   UrlModeFromRuntimeDescriptor,
@@ -19,13 +20,15 @@ export function url<const Descriptor extends RuntimeUrlDescriptor>(
   PathnameFromRuntimeDescriptor<Descriptor>,
   ParamsFromRuntimeDescriptor<Descriptor>,
   SearchFromRuntimeDescriptor<Descriptor>,
-  HashFromRuntimeDescriptor<Descriptor>
+  HashFromRuntimeDescriptor<Descriptor>,
+  SearchBuildInputFromRuntimeDescriptor<Descriptor>
 > {
   return createUrlContract<
     UrlModeFromRuntimeDescriptor<Descriptor>,
     PathnameFromRuntimeDescriptor<Descriptor>,
     ParamsFromRuntimeDescriptor<Descriptor>,
     SearchFromRuntimeDescriptor<Descriptor>,
-    HashFromRuntimeDescriptor<Descriptor>
+    HashFromRuntimeDescriptor<Descriptor>,
+    SearchBuildInputFromRuntimeDescriptor<Descriptor>
   >(compileRuntimeUrlDescriptor(descriptor), options);
 }

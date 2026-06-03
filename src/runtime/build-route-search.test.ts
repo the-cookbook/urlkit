@@ -77,9 +77,9 @@ describe('router-runtime search helpers', () => {
   });
 
   it('throws invalid-search for invalid enum values', () => {
-    expect(() =>
-      buildSearch({ q: 'urlkit', sort: 'oldest' } as Record<string, unknown>, { schema }),
-    ).toThrow(UrlKitError);
+    expect(() => buildSearch({ q: 'urlkit', sort: 'oldest' } as never, { schema })).toThrow(
+      UrlKitError,
+    );
   });
 
   it('patchSearch preserves existing unknown params by default', () => {
