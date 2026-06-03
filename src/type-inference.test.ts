@@ -220,6 +220,18 @@ describe('comprehensive TypeScript inference', () => {
         page: int(),
       },
     });
+    const RequiredHashUrl = url({
+      path: '/docs',
+      hash: enumOf(['overview', 'comments'] as const),
+    });
+    const OptionalHashUrl = url({
+      path: '/docs',
+      hash: enumOf(['overview', 'comments'] as const).optional(),
+    });
+    const DefaultHashUrl = url({
+      path: '/docs',
+      hash: enumOf(['overview', 'comments'] as const).default('overview'),
+    });
     const StaticRouteUrl = createRouteUrlContract({
       path: '/articles/{slug}',
       search: {
@@ -233,6 +245,12 @@ describe('comprehensive TypeScript inference', () => {
     FiltersUrl.build({ search: { page: 2 } });
     FiltersUrl.build({ pathname: '/products', search: { page: 2 } });
     RequiredSearchUrl.build({ params: { id: 1 }, search: { page: 1 } });
+    RequiredHashUrl.build({ hash: 'overview' });
+    RequiredHashUrl.buildHash('overview');
+    OptionalHashUrl.build({});
+    OptionalHashUrl.buildHash();
+    DefaultHashUrl.build({});
+    DefaultHashUrl.buildHash();
     RequiredSearchUrl.buildSearch({ page: 1 });
     RequiredSearchUrl.replaceSearch('/users/1?page=1', { page: 2 });
     StaticRouteUrl.build({ params: { slug: 'post-1' }, search: { page: 1 } });
@@ -252,6 +270,12 @@ describe('comprehensive TypeScript inference', () => {
 
       // @ts-expect-error required search fields make the search object itself required.
       RequiredSearchUrl.build({ params: { id: 1 } });
+
+      // @ts-expect-error required hash fields without defaults must be present in build input.
+      RequiredHashUrl.build({});
+
+      // @ts-expect-error buildHash requires required hash values without defaults.
+      RequiredHashUrl.buildHash();
 
       // @ts-expect-error buildSearch requires required fields without defaults.
       RequiredSearchUrl.buildSearch({ tab: 'settings' });
@@ -286,6 +310,18 @@ describe('comprehensive TypeScript inference', () => {
         page: int(),
       },
     });
+    const RequiredHashUrl = url({
+      path: '/docs',
+      hash: enumOf(['overview', 'comments'] as const),
+    });
+    const OptionalHashUrl = url({
+      path: '/docs',
+      hash: enumOf(['overview', 'comments'] as const).optional(),
+    });
+    const DefaultHashUrl = url({
+      path: '/docs',
+      hash: enumOf(['overview', 'comments'] as const).default('overview'),
+    });
 
     const pathlessState = FiltersUrl.parse('/products?page=2');
     const literalState = FiltersUrl.normalize({ pathname: '/products', search: { page: 2 } });
@@ -297,6 +333,9 @@ describe('comprehensive TypeScript inference', () => {
     SearchUrl.normalize({ search: { q: 'router' } });
     FiltersUrl.normalize({ pathname: '/products', search: { page: 2 } });
     RequiredSearchUrl.normalize({ params: { id: 1 }, search: { page: 1 } });
+    RequiredHashUrl.normalize({ hash: 'overview' });
+    OptionalHashUrl.normalize({});
+    DefaultHashUrl.normalize({});
 
     if (false) {
       // @ts-expect-error path-based normalize accepts params, not pathname.
@@ -313,6 +352,9 @@ describe('comprehensive TypeScript inference', () => {
 
       // @ts-expect-error required search fields make the normalize search object itself required.
       RequiredSearchUrl.normalize({ params: { id: 1 } });
+
+      // @ts-expect-error required hash fields without defaults must be present in normalize input.
+      RequiredHashUrl.normalize({});
 
       expectType<
         UrlNormalizeInput<'path', { readonly id: number }, { readonly tab?: string }, undefined>

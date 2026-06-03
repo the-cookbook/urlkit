@@ -59,6 +59,26 @@ describe('matchCompiledUrl', () => {
     expect(matchCompiledUrl('/search?q=router', compiled, 'strip')).toBe(true);
   });
 
+  it('applies hash presence consistently for required, optional, and defaulted hashes', () => {
+    const required = compileRuntime({
+      path: '/docs',
+      hash: enumOf(['overview', 'results']),
+    });
+    const optional = compileRuntime({
+      path: '/docs',
+      hash: enumOf(['overview', 'results']).optional(),
+    });
+    const defaulted = compileRuntime({
+      path: '/docs',
+      hash: enumOf(['overview', 'results']).default('overview'),
+    });
+
+    expect(matchCompiledUrl('/docs', required, 'strip')).toBe(false);
+    expect(matchCompiledUrl('/docs#overview', required, 'strip')).toBe(true);
+    expect(matchCompiledUrl('/docs', optional, 'strip')).toBe(true);
+    expect(matchCompiledUrl('/docs', defaulted, 'strip')).toBe(true);
+  });
+
   it('returns false for invalid search and invalid hash values', () => {
     const compiled = compileRuntime({
       path: '/search',

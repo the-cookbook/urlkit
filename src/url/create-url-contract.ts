@@ -43,10 +43,11 @@ export function createUrlContract<
   Search = Record<string, unknown>,
   Hash = string | undefined,
   SearchInput = Partial<Search>,
+  HashInput = Hash,
 >(
   descriptor: NormalizedUrlDescriptor<Mode>,
   options: CreateUrlContractOptions = {},
-): UrlContract<Mode, Pathname, Params, Search, Hash, SearchInput> {
+): UrlContract<Mode, Pathname, Params, Search, Hash, SearchInput, HashInput> {
   const compiled = compileUrlDescriptor(descriptor);
   const unknownSearch = options.unknownSearch ?? 'strip';
 
@@ -114,7 +115,9 @@ export function createUrlContract<
         });
       }
     },
-    normalize<const Input extends UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput>>(
+    normalize<
+      const Input extends UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput, HashInput>,
+    >(
       input: Input,
       options?: NormalizeUrlOptions,
     ): NormalizeUrlState<Mode, Pathname, Params, Search, Hash, Input> {
@@ -124,7 +127,9 @@ export function createUrlContract<
         options?.unknownSearch ?? unknownSearch,
       );
     },
-    safeNormalize<const Input extends UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput>>(
+    safeNormalize<
+      const Input extends UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput, HashInput>,
+    >(
       input: Input,
       options?: NormalizeUrlOptions,
     ): UrlSafeNormalizeResult<Mode, Pathname, Params, Search, Hash, Input> {
@@ -147,12 +152,12 @@ export function createUrlContract<
     },
     build(
       input:
-        | UrlBuildInput<Mode, Params, Search, Hash, SearchInput>
+        | UrlBuildInput<Mode, Params, Search, Hash, SearchInput, HashInput>
         | UrlState<Pathname, Params, Search, Hash>,
       options?: BuildUrlOptions,
     ): string {
-      return buildCompiledUrl<Mode, Params, Search, Hash, SearchInput>(
-        input as UrlBuildInput<Mode, Params, Search, Hash, SearchInput>,
+      return buildCompiledUrl<Mode, Params, Search, Hash, SearchInput, HashInput>(
+        input as UrlBuildInput<Mode, Params, Search, Hash, SearchInput, HashInput>,
         compiled,
         options,
       );
@@ -211,6 +216,7 @@ export function createUrlContract<
     Params,
     Search,
     Hash,
-    SearchInput
+    SearchInput,
+    HashInput
   >;
 }

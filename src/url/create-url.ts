@@ -2,6 +2,7 @@ import { createUrlContract } from './create-url-contract.js';
 import { compileRuntimeUrlDescriptor } from './compile-runtime-url-descriptor.js';
 import type {
   CreateUrlOptions,
+  HashBuildInputFromRuntimeDescriptor,
   HashFromRuntimeDescriptor,
   ParamsFromRuntimeDescriptor,
   PathnameFromRuntimeDescriptor,
@@ -21,7 +22,8 @@ export function url<const Descriptor extends RuntimeUrlDescriptor>(
   ParamsFromRuntimeDescriptor<Descriptor>,
   SearchFromRuntimeDescriptor<Descriptor>,
   HashFromRuntimeDescriptor<Descriptor>,
-  SearchBuildInputFromRuntimeDescriptor<Descriptor>
+  SearchBuildInputFromRuntimeDescriptor<Descriptor>,
+  HashBuildInputFromRuntimeDescriptor<Descriptor>
 > {
   return createUrlContract<
     UrlModeFromRuntimeDescriptor<Descriptor>,
@@ -29,6 +31,7 @@ export function url<const Descriptor extends RuntimeUrlDescriptor>(
     ParamsFromRuntimeDescriptor<Descriptor>,
     SearchFromRuntimeDescriptor<Descriptor>,
     HashFromRuntimeDescriptor<Descriptor>,
-    SearchBuildInputFromRuntimeDescriptor<Descriptor>
+    SearchBuildInputFromRuntimeDescriptor<Descriptor>,
+    HashBuildInputFromRuntimeDescriptor<Descriptor>
   >(compileRuntimeUrlDescriptor(descriptor), options);
 }

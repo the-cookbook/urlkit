@@ -55,8 +55,8 @@ describe('hash', () => {
     expect(SectionHash.build({ hash: 'overview' })).toBe('#overview');
     expect(SectionHash.buildHash('overview')).toBe('#overview');
     expect(() => SectionHash.parse('/docs')).toThrow(UrlKitError);
-    expect(() => SectionHash.build({})).toThrow(UrlKitError);
-    expect(() => SectionHash.buildHash(undefined)).toThrow(UrlKitError);
+    expect(() => SectionHash.build({} as never)).toThrow(UrlKitError);
+    expect(() => SectionHash.buildHash(undefined as never)).toThrow(UrlKitError);
   });
 
   it('supports default hash and default include/omit behavior', () => {

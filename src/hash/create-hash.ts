@@ -1,7 +1,11 @@
 import type { EmptyParams } from '../contracts.js';
 import type { InferRuntimeSchemaValue } from '../schema/contracts.js';
 import { url } from '../url/create-url.js';
-import type { CreateUrlOptions, UrlContract } from '../url/contracts.js';
+import type {
+  CreateUrlOptions,
+  HashBuildInputFromRuntimeSchema,
+  UrlContract,
+} from '../url/contracts.js';
 import type { HashSchema } from './contracts.js';
 
 export function hash<const Schema extends HashSchema>(
@@ -13,12 +17,21 @@ export function hash<const Schema extends HashSchema>(
   EmptyParams,
   EmptyParams,
   InferRuntimeSchemaValue<Schema>,
-  EmptyParams
+  EmptyParams,
+  HashBuildInputFromRuntimeSchema<Schema>
 > {
   return url(
     {
       hash: schema,
     },
     options,
-  );
+  ) as UrlContract<
+    'pathless',
+    string,
+    EmptyParams,
+    EmptyParams,
+    InferRuntimeSchemaValue<Schema>,
+    EmptyParams,
+    HashBuildInputFromRuntimeSchema<Schema>
+  >;
 }

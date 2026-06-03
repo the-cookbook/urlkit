@@ -1,4 +1,5 @@
 import type {
+  BuildHashArguments,
   BuildSearchOptions,
   BuildUrlOptions,
   EmptyParams,
@@ -24,7 +25,7 @@ import type {
   InferRuntimeSearchBuildInput,
   RuntimeSearchSchema,
 } from '../search/contracts.js';
-import type { InferRuntimeSchemaValue } from '../schema/contracts.js';
+import type { InferRuntimeSchemaDescriptor, InferRuntimeSchemaValue } from '../schema/contracts.js';
 
 export interface NormalizedUrlDescriptor<Mode extends UrlMode = UrlMode> {
   readonly mode: Mode;
@@ -53,6 +54,7 @@ export interface UrlContract<
   Search,
   Hash,
   SearchInput = Partial<Search>,
+  HashInput = Hash,
 > {
   readonly pattern: Mode extends 'path' ? string : undefined;
 
@@ -73,19 +75,23 @@ export interface UrlContract<
     options?: ParseRequestOptions,
   ): UrlSafeParseResult<Pathname, Params, Search, Hash>;
 
-  normalize<const Input extends UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput>>(
-    input: Input & UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput>,
+  normalize<
+    const Input extends UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput, HashInput>,
+  >(
+    input: Input & UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput, HashInput>,
     options?: NormalizeUrlOptions,
   ): NormalizeUrlState<Mode, Pathname, Params, Search, Hash, Input>;
 
-  safeNormalize<const Input extends UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput>>(
-    input: Input & UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput>,
+  safeNormalize<
+    const Input extends UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput, HashInput>,
+  >(
+    input: Input & UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput, HashInput>,
     options?: NormalizeUrlOptions,
   ): UrlSafeNormalizeResult<Mode, Pathname, Params, Search, Hash, Input>;
 
   build(
     input:
-      | UrlBuildInput<Mode, Params, Search, Hash, SearchInput>
+      | UrlBuildInput<Mode, Params, Search, Hash, SearchInput, HashInput>
       | UrlState<Pathname, Params, Search, Hash>,
     options?: BuildUrlOptions,
   ): string;
@@ -102,7 +108,7 @@ export interface UrlContract<
 
   buildSearch(search: SearchInputArgument<SearchInput>, options?: BuildSearchOptions): string;
 
-  buildHash(hash?: Hash, options?: BuildUrlOptions): string;
+  buildHash(...args: BuildHashArguments<HashInput>): string;
 
   withSearch(input: string | URL, search: Partial<Search>, options?: PatchSearchOptions): string;
 
@@ -161,6 +167,19 @@ export type HashFromRuntimeDescriptor<Descriptor> = Descriptor extends {
     ? InferRuntimeSchemaValue<Schema>
     : never
   : undefined;
+
+export type HashBuildInputFromRuntimeDescriptor<Descriptor> = Descriptor extends {
+  readonly hash: infer Schema;
+}
+  ? Schema extends HashSchema
+    ? HashBuildInputFromRuntimeSchema<Schema>
+    : never
+  : undefined;
+
+export type HashBuildInputFromRuntimeSchema<Schema extends HashSchema> =
+  InferRuntimeSchemaDescriptor<Schema> extends { readonly presence: 'required' }
+    ? InferRuntimeSchemaValue<Schema>
+    : InferRuntimeSchemaValue<Schema> | undefined;
 
 export type RawParamsFromPattern<Pattern extends string> = Simplify<ExtractRawPathParams<Pattern>>;
 

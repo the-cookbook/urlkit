@@ -11,8 +11,9 @@ export function buildCompiledUrl<
   Search,
   Hash,
   SearchInput = Partial<Search>,
+  HashInput = Hash,
 >(
-  input: UrlBuildInput<Mode, Params, Search, Hash, SearchInput>,
+  input: UrlBuildInput<Mode, Params, Search, Hash, SearchInput, HashInput>,
   compiled: CompiledUrlDescriptor<Mode>,
   options: BuildUrlOptions = {},
 ): string {

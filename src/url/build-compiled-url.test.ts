@@ -180,6 +180,27 @@ describe('buildCompiledUrl', () => {
     ).toBe('/search?q=router');
   });
 
+  it('rejects omitted required hash values', () => {
+    const compiled = compileRuntime({
+      path: '/docs',
+      hash: enumOf(['overview', 'comments']),
+    });
+
+    expect(() => buildCompiledUrl({}, compiled)).toThrow(UrlKitError);
+    expect(() => buildCompiledUrl({}, compiled)).toThrow('Required hash is missing.');
+    expect(buildCompiledUrl({ hash: 'overview' }, compiled)).toBe('/docs#overview');
+  });
+
+  it('builds omitted defaulted hash values', () => {
+    const compiled = compileRuntime({
+      path: '/docs',
+      hash: enumOf(['overview', 'comments']).default('overview'),
+    });
+
+    expect(buildCompiledUrl({}, compiled)).toBe('/docs#overview');
+    expect(buildCompiledUrl({}, compiled, { defaults: 'omit' })).toBe('/docs');
+  });
+
   it('rejects undeclared hash values', () => {
     const compiled = compileRuntime({ path: '/docs' });
 

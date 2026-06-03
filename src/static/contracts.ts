@@ -26,6 +26,13 @@ export type InferStaticUrlHash<Descriptor extends StaticUrlDescriptor> = Descrip
   ? InferStaticHash<HashDescriptor>
   : undefined;
 
+export type InferStaticUrlHashBuildInput<Descriptor extends StaticUrlDescriptor> =
+  Descriptor extends {
+    readonly hash: infer HashDescriptor extends StaticHashDescriptor;
+  }
+    ? InferStaticHashBuildInput<HashDescriptor>
+    : undefined;
+
 export type StaticSearchDescriptor = Readonly<Record<string, StaticSearchField>>;
 
 export type StaticSearchField = StaticSearchValue | StaticSearchFieldObject;
@@ -126,6 +133,29 @@ type InferStaticStringHash<Descriptor extends StaticStringHashDescriptor> =
 type InferStaticEnumHash<Descriptor extends StaticEnumHashDescriptor> =
   'default' extends keyof Descriptor
     ? Descriptor['values'][number]
+    : Descriptor['optional'] extends true
+      ? Descriptor['values'][number] | undefined
+      : Descriptor['values'][number];
+
+export type InferStaticHashBuildInput<Descriptor extends StaticHashDescriptor> =
+  Descriptor extends readonly string[]
+    ? Descriptor[number] | undefined
+    : Descriptor extends StaticStringHashDescriptor
+      ? InferStaticStringHashBuildInput<Descriptor>
+      : Descriptor extends StaticEnumHashDescriptor
+        ? InferStaticEnumHashBuildInput<Descriptor>
+        : never;
+
+type InferStaticStringHashBuildInput<Descriptor extends StaticStringHashDescriptor> =
+  'default' extends keyof Descriptor
+    ? string | undefined
+    : Descriptor['optional'] extends true
+      ? string | undefined
+      : string;
+
+type InferStaticEnumHashBuildInput<Descriptor extends StaticEnumHashDescriptor> =
+  'default' extends keyof Descriptor
+    ? Descriptor['values'][number] | undefined
     : Descriptor['optional'] extends true
       ? Descriptor['values'][number] | undefined
       : Descriptor['values'][number];

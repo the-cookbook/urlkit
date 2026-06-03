@@ -15,7 +15,7 @@ const parsed = UserUrl.parse('/users/42?tab=settings&page=2#show');
 // parsed.params.id === 42
 // parsed.search.tab === 'settings'
 // parsed.search.page === 2
-// parsed.hash === undefined
+// parsed.hash === 'show'
 
 const href = UserUrl.build({
   params: { id: parsed.params.id },
@@ -23,7 +23,7 @@ const href = UserUrl.build({
   hash: 'show',
 });
 
-// href === '/users/42?tab=settings&page=3'
+// href === '/users/42?tab=settings&page=3#show'
 
 const matches = UserUrl.match('/users/42?tab=settings&page=2#show');
 const doesNotMatch = UserUrl.match('/projects/42?tab=settings&page=2#open');
