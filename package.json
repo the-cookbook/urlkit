@@ -4,13 +4,13 @@
   "description": "Framework-agnostic typed URL contract library for parsing, validating, normalizing, matching, and building URL state.",
   "license": "MIT",
   "author": "The Cookbook",
-  "homepage": "https://github.com/the-cookbook/cookbook-urlkit#readme",
+  "homepage": "https://github.com/the-cookbook/urlkit#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/the-cookbook/cookbook-urlkit.git"
+    "url": "https://github.com/the-cookbook/urlkit.git"
   },
   "bugs": {
-    "url": "https://github.com/the-cookbook/cookbook-urlkit/issues"
+    "url": "https://github.com/the-cookbook/urlkit/issues"
   },
   "type": "module",
   "sideEffects": false,
