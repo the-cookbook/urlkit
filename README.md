@@ -8,6 +8,42 @@ URLKit owns typed URL state: path params, search params, hash fragments, request
 
 `@cookbook/urlkit` is currently version `0.0.0`. The implementation is covered by type, unit, integration, documentation-example, and build checks, but the package should be treated as pre-1.0 until its public API is released.
 
+## Documentation
+
+- [Full API reference](./docs/api.md)
+- [Focused examples](./docs/examples.md)
+- [Release readiness notes](./release-readiness.md)
+
+## Table of contents
+
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Why URLKit?](#why-urlkit)
+- [Package exports](#package-exports)
+- [Core concepts](#core-concepts)
+  - [`parse`, `normalize`, `build`, and `match`](#parse-normalize-build-and-match)
+  - [`UrlState`](#urlstate)
+  - [Path-based vs pathless contracts](#path-based-vs-pathless-contracts)
+- [Path-based URL contracts](#path-based-url-contracts)
+  - [Custom path constraints](#custom-path-constraints)
+- [Pathless URL contracts](#pathless-url-contracts)
+  - [Search-only helper](#search-only-helper)
+  - [Hash-only helper](#hash-only-helper)
+- [Search params](#search-params)
+- [Unknown search params](#unknown-search-params)
+- [Defaults behavior](#defaults-behavior)
+- [Dates](#dates)
+- [Object search](#object-search)
+- [Hash](#hash)
+- [Safe APIs](#safe-apis)
+- [Request parsing](#request-parsing)
+- [Static descriptors](#static-descriptors)
+- [Router-runtime usage](#router-runtime-usage)
+- [Error handling](#error-handling)
+- [TypeScript inference](#typescript-inference)
+- [Framework boundary](#framework-boundary)
+- [Testing and development](#testing-and-development)
+
 ## Installation
 
 ```sh
@@ -271,7 +307,7 @@ SearchUrl.build({
 // '/search?q=url&page=2&active=true&tags=ts&tags=router&sort=newest'
 ```
 
-Arrays parse and serialize as repeated params by default. Pass `{ arrayFormat: 'comma' }` to `url(...)`, `parse`, `safeParse`, `parseRequest`, `build`, or `buildSearch` to use comma-separated arrays.
+Arrays parse and serialize as repeated params by default. Pass `{ arrayFormat: 'comma' }` to `url(...)`, `parse`, `safeParse`, `parseRequest`, `safeParseRequest`, `match`, `build`, `parseSearch`, or `buildSearch` to use comma-separated arrays. Per-call options override the contract-level default, so `{ arrayFormat: 'repeat' }` can force repeated keys on a comma-configured contract.
 
 ```ts
 const TagUrl = url(
@@ -663,13 +699,3 @@ npm run build
 ```
 
 No lint script is currently configured in `package.json`.
-
-## Documentation
-
-- [Full API reference](./docs/api.md)
-- [Focused examples](./docs/examples.md)
-- [Release readiness notes](./release-readiness.md)
-
-## Spec compliance gaps
-
-No spec/implementation gaps are currently documented.
