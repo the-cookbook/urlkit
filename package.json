@@ -34,6 +34,8 @@
     "README.md"
   ],
   "scripts": {
+    "prepack": "npm run build",
+    "prepare": "husky",
     "clean": "rm -rf dist coverage",
     "build": "pnpm run clean && rollup -c && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
@@ -44,10 +46,12 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepack": "npm run build",
-    "prepare": "husky"
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm run typecheck && pnpm test && pnpm run build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@commitlint/cli": "21.0.2",
     "@commitlint/config-conventional": "21.0.2",
     "@eslint/js": "10.0.1",
