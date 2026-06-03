@@ -1,5 +1,10 @@
 # @cookbook/urlkit
 
+[![npm version](https://img.shields.io/npm/v/@cookbook/urlkit.svg)](https://www.npmjs.com/package/@cookbook/urlkit)
+[![npm downloads](https://img.shields.io/npm/dm/@cookbook/urlkit.svg)](https://www.npmjs.com/package/@cookbook/urlkit)
+[![Bundle size](https://img.shields.io/bundlephobia/minzip/@cookbook/urlkit)](https://bundlephobia.com/package/@cookbook/urlkit)
+[![CI](https://github.com/the-cookbook/urlkit/actions/workflows/ci.yml/badge.svg)](https://github.com/the-cookbook/urlkit/actions/workflows/ci.yml)
+
 Framework-agnostic typed URL contracts for parsing, validating, normalizing, matching, and building URL state.
 
 URLKit owns typed URL state: path params, search params, hash fragments, request parsing, URL normalization, matching, and href building. It sits between `@cookbook/pathkit` and higher-level router packages, but it does not define routes, route IDs, route trees, loaders, middleware, React hooks, components, or framework adapters.
