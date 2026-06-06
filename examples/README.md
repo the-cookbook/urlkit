@@ -17,17 +17,17 @@ npm run build
 
 ## Example files
 
-| File                                                         | Demonstrates                                                                                                                             |
-| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| [`basic-usage.ts`](./basic-usage.ts)                         | Path-based `url()`, path params, search params, `parse`, `build`, and `match`.                                                           |
-| [`search-filters.ts`](./search-filters.ts)                   | Pathless contracts, enums, arrays, comma array format, booleans, defaults, suffix building, full-path building, unknown search behavior. |
-| [`custom-path-constraints.ts`](./custom-path-constraints.ts) | Global and per-contract PathKit custom path constraints through URLKit.                                                                  |
-| [`server-request.ts`](./server-request.ts)                   | `parseRequest`, `safeParseRequest`, web-standard `Request`, request-like `{ url: string }`, and `baseUrl`.                               |
-| [`router-runtime.ts`](./router-runtime.ts)                   | `createRouteUrlContract`, raw params by default, parsed params opt-in, and router-runtime search helpers.                                |
-| [`static-descriptor.ts`](./static-descriptor.ts)             | Static URL/search/hash descriptors that remain analyzable by router tooling.                                                             |
-| [`object-search.ts`](./object-search.ts)                     | Declared object search fields, nested parsing/building, dot notation, escaped keys, and collision-safe parsing.                          |
-| [`date-search.ts`](./date-search.ts)                         | `date()`, `dateTime()`, unix seconds, unix milliseconds, custom format strings, and custom runtime date codecs.                          |
-| [`error-handling.ts`](./error-handling.ts)                   | `UrlKitError`, `safeParse`, `safeNormalize`, error-code checks, and default include/omit behavior.                                       |
+| File                                                         | Demonstrates                                                                                                                                    |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`basic-usage.ts`](./basic-usage.ts)                         | Path-based `url()`, path params, search params, `parse`, `build`, and `match`.                                                                  |
+| [`search-filters.ts`](./search-filters.ts)                   | Pathless contracts, enums, arrays, comma array format, booleans, defaults, suffix building, full-path building, unknown search behavior.        |
+| [`custom-path-constraints.ts`](./custom-path-constraints.ts) | Global and per-contract PathKit custom path constraints through URLKit.                                                                         |
+| [`server-request.ts`](./server-request.ts)                   | `parseRequest`, `safeParseRequest`, web-standard `Request`, request-like `{ url: string }`, and `baseUrl`.                                      |
+| [`router-runtime.ts`](./router-runtime.ts)                   | `createRouteUrlContract`, raw params by default, parsed params opt-in, router-runtime search helpers, and static date/date-time format strings. |
+| [`static-descriptor.ts`](./static-descriptor.ts)             | Static URL/search/hash descriptors that remain analyzable by router tooling.                                                                    |
+| [`object-search.ts`](./object-search.ts)                     | Declared object search fields, nested parsing/building, dot notation, escaped keys, and collision-safe parsing.                                 |
+| [`date-search.ts`](./date-search.ts)                         | `date()`, `dateTime()`, unix seconds, unix milliseconds, custom format strings, and custom runtime date codecs.                                 |
+| [`error-handling.ts`](./error-handling.ts)                   | `UrlKitError`, `safeParse`, `safeNormalize`, error-code checks, and default include/omit behavior.                                              |
 
 ## Framework integration examples
 

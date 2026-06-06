@@ -1,5 +1,10 @@
 import { UrlKitError } from '../errors/url-kit-error.js';
-import type { StaticSearchField, StaticSearchFieldObject, StaticSearchValue } from './contracts.js';
+import type {
+  StaticDirectSearchField,
+  StaticSearchField,
+  StaticSearchFieldObject,
+  StaticResolvedSearchValue,
+} from './contracts.js';
 
 export function isStaticSearchFieldObject(
   field: StaticSearchField,
@@ -10,19 +15,38 @@ export function isStaticSearchFieldObject(
 
   return (
     'value' in field ||
-    'optional' in field ||
-    'default' in field ||
     field.type === 'one' ||
-    field.type === 'many'
+    field.type === 'many' ||
+    (!('type' in field) && ('optional' in field || 'default' in field))
   );
 }
 
-export function normalizeStaticSearchFieldValue(field: StaticSearchField): StaticSearchValue {
+export function isStaticDirectSearchField(
+  field: StaticSearchField,
+): field is StaticDirectSearchField {
+  return isRecord(field) && isStaticDirectSearchFieldType(field.type);
+}
+
+export function normalizeStaticSearchFieldValue(
+  field: StaticSearchField,
+): StaticResolvedSearchValue {
   if (isStaticSearchFieldObject(field)) {
     return field.value ?? 'string';
   }
 
   return field;
+}
+
+export function hasStaticSearchFieldDefault(field: StaticSearchField): boolean {
+  return isRecord(field) && Object.prototype.hasOwnProperty.call(field, 'default');
+}
+
+export function getStaticSearchFieldDefault(field: StaticSearchField): unknown {
+  return isRecord(field) ? field.default : undefined;
+}
+
+export function isStaticSearchFieldOptional(field: StaticSearchField): boolean {
+  return isRecord(field) && field.optional === true;
 }
 
 export function normalizeStaticSearchFieldType(
@@ -40,6 +64,10 @@ export function normalizeStaticSearchFieldType(
   throw new UrlKitError('invalid-descriptor', 'Static search field type must be "one" or "many".', {
     path,
   });
+}
+
+function isStaticDirectSearchFieldType(input: unknown): boolean {
+  return input === 'date' || input === 'date-time' || input === 'enum';
 }
 
 function isRecord(input: unknown): input is Record<string, unknown> {

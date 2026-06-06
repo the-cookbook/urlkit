@@ -24,7 +24,11 @@ import {
 import { requestLikeState, requestState, safeRequest } from '../examples/server-request.js';
 import {
   builtSearch,
+  invalidRawState,
   omittedSearch,
+  partialHash,
+  partialRawState,
+  partiallyParsedSearch,
   parsedSearch,
   parsedState,
   patchedSearch,
@@ -104,8 +108,33 @@ describe('usage examples', () => {
   it('executes the router-runtime example', () => {
     expect(rawState.params.id).toBe('42');
     expect(parsedState.params.id).toBe(42);
-    expect(parsedSearch).toEqual({ page: 2, ref: 'email', tag: ['ts', 'url'] });
-    expect(builtSearch).toBe('?page=3&ref=newsletter&tag=ts&tag=url');
+    expect(parsedSearch).toEqual({
+      page: 2,
+      ref: 'email',
+      tag: ['ts', 'url'],
+      publishedOn: new Date('2026-06-02T00:00:00.000Z'),
+      scheduledAt: new Date('2026-06-02T12:30:05.000Z'),
+    });
+    expect(partiallyParsedSearch).toEqual({
+      page: 2,
+      ref: 'email',
+      tag: ['ts', 'url'],
+      publishedOn: new Date('2026-06-02T00:00:00.000Z'),
+    });
+    expect(invalidRawState.success).toBe(false);
+    expect(partialRawState.success).toBe(true);
+    if (partialRawState.success) {
+      expect(partialRawState.data.search).toEqual({
+        page: 2,
+        ref: 'email',
+        tag: ['ts', 'url'],
+        publishedOn: new Date('2026-06-02T00:00:00.000Z'),
+      });
+    }
+    expect(partialHash).toBeUndefined();
+    expect(builtSearch).toBe(
+      '?page=3&ref=newsletter&tag=ts&tag=url&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05',
+    );
     expect(patchedSearch).toBe('?page=4&ref=email&tag=ts');
     expect(replacedSearch).toBe('?page=1');
     expect(omittedSearch).toBe('?page=2&tag=ts');

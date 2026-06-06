@@ -28,6 +28,10 @@ describe('url', () => {
     expect(UserUrl.parsePathname('/users/42')).toEqual({ id: 42 });
     expect(UserUrl.buildPath({ id: 42 })).toBe('/users/42');
     expect(UserUrl.parseSearch('?tab=settings&page=2')).toEqual({ tab: 'settings', page: 2 });
+    expect(UserUrl.parseSearch('/users/42?tab=settings&page=2#activity')).toEqual({
+      tab: 'settings',
+      page: 2,
+    });
     expect(UserUrl.parseHash('#activity')).toBe('activity');
 
     if (false) {

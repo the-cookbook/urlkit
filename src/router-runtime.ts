@@ -19,3 +19,4 @@ export type { ParseSearchOptions } from './runtime/parse-route-search.js';
 export { buildHash } from './hash/build-hash.js';
 export { normalizeHash } from './hash/normalize-hash.js';
 export { parseHash } from './hash/parse-hash.js';
+export type { ParseHashOptions } from './hash/contracts.js';

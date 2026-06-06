@@ -414,7 +414,7 @@ const Reports = search({
 | `date({ format: 'unix-seconds' })`            | Finite integer seconds.                |
 | `date({ format: 'unix-ms' })`                 | Finite integer milliseconds.           |
 
-Custom date and date-time format strings are available only in runtime-builder schemas. Supported tokens are `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`, and `SSS`. Static date defaults use serialized values, not `Date` instances.
+Custom date and date-time format strings are available in runtime-builder schemas and static router descriptors. Supported tokens are `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`, and `SSS`. Static date defaults use serialized values, not `Date` instances. Static descriptors may use format strings, but not custom `{ parse, serialize }` codecs.
 
 ```ts
 const CustomDate = search({
@@ -591,6 +591,16 @@ const routeDescriptor = {
   search: {
     ref: { type: 'one', optional: true },
     page: { value: 'int', default: 1 },
+    publishedOn: {
+      type: 'date',
+      format: 'dd-MM-yyyy',
+      optional: true,
+    },
+    scheduledAt: {
+      type: 'date-time',
+      format: 'dd-MM-yyyy HH:mm:ss',
+      optional: true,
+    },
   },
   hash: ['comments', 'share'],
 } as const;
@@ -600,10 +610,22 @@ const ArticleUrl = createRouteUrlContract(routeDescriptor);
 ArticleUrl.parse('/articles/post-1?ref=email#comments');
 // Router-runtime params default to raw strings.
 
-const parsed = parseSearch('?page=2', { schema: routeDescriptor.search });
-const next = buildSearch({ page: 3 }, { schema: routeDescriptor.search });
+const parsed = parseSearch('?page=2&publishedOn=02-06-2026', {
+  schema: routeDescriptor.search,
+});
+const partial = ArticleUrl.parseSearch(
+  '/articles/post-1?page=2&publishedOn=02-06-2026&scheduledAt=foo',
+  {
+    invalidSearch: 'omit',
+  },
+);
+const next = buildSearch(
+  { page: 3, scheduledAt: new Date('2026-06-02T12:30:05.000Z') },
+  { schema: routeDescriptor.search },
+);
 const patched = patchSearch('?page=2&ref=email', { page: 3 }, { schema: routeDescriptor.search });
 const section = parseHash('#comments', routeDescriptor.hash);
+const missingSection = parseHash('#overview', routeDescriptor.hash, { invalidHash: 'omit' });
 ```
 
 Additional router-runtime helpers:
@@ -618,7 +640,7 @@ import {
 } from '@cookbook/urlkit/router-runtime';
 ```
 
-Use `{ params: 'parsed' }` with `createRouteUrlContract` when a router wants URLKit to parse `int` and `number` path params to numbers.
+Use `{ params: 'parsed' }` with `createRouteUrlContract` when a router wants URLKit to parse numeric PathKit constraints such as `int`, `decimal`, and `range` to numbers.
 
 ## Error handling
 

@@ -42,6 +42,26 @@ describe('normalizeStaticSearchDefault', () => {
     ).toEqual(new Date('2026-01-01T10:30:00.000Z'));
   });
 
+  it('normalizes static custom formatted date defaults', () => {
+    expect(
+      normalizeStaticSearchDefault(
+        'one',
+        { type: 'date', format: 'dd-MM-yyyy' },
+        '02-06-2026',
+        path,
+      ),
+    ).toEqual(new Date('2026-06-02T00:00:00.000Z'));
+
+    expect(
+      normalizeStaticSearchDefault(
+        'one',
+        { type: 'date-time', format: 'dd-MM-yyyy HH:mm:ss' },
+        '02-06-2026 12:30:05',
+        path,
+      ),
+    ).toEqual(new Date('2026-06-02T12:30:05.000Z'));
+  });
+
   it('normalizes unix defaults from finite integer numbers', () => {
     expect(normalizeStaticSearchDefault('one', 'unix-seconds', 1_704_067_200, path)).toEqual(
       new Date('2024-01-01T00:00:00.000Z'),

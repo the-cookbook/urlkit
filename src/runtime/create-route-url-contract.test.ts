@@ -125,6 +125,73 @@ describe('createRouteUrlContract', () => {
     expectType<{ readonly slug: string }>(state.params);
   });
 
+  it('supports static date and date-time format strings in route contracts', () => {
+    const contract = createRouteUrlContract({
+      path: '/reports',
+      search: {
+        from: {
+          type: 'date',
+          format: 'dd-MM-yyyy',
+          optional: true,
+        },
+        startsAt: {
+          type: 'date-time',
+          format: 'dd-MM-yyyy HH:mm:ss',
+          optional: true,
+        },
+      },
+    } as const);
+
+    const state = contract.parse('/reports?from=02-06-2026&startsAt=02-06-2026+12%3A30%3A05');
+
+    expect(state.search).toEqual({
+      from: new Date('2026-06-02T00:00:00.000Z'),
+      startsAt: new Date('2026-06-02T12:30:05.000Z'),
+    });
+    expect(
+      contract.build({
+        search: {
+          from: new Date('2026-06-03T00:00:00.000Z'),
+          startsAt: new Date('2026-06-03T12:30:05.000Z'),
+        },
+      }),
+    ).toBe('/reports?from=03-06-2026&startsAt=03-06-2026+12%3A30%3A05');
+    expectType<{ readonly from?: Date; readonly startsAt?: Date }>(state.search);
+  });
+
+  it('supports partial invalid optional search parsing in route contracts', () => {
+    const contract = createRouteUrlContract({
+      path: '/reports',
+      search: {
+        page: { value: 'int', default: 1 },
+        publishedOn: {
+          type: 'date',
+          format: 'dd-MM-yyyy',
+          optional: true,
+        },
+        scheduledAt: {
+          type: 'date-time',
+          format: 'dd-MM-yyyy HH:mm:ss',
+          optional: true,
+        },
+      },
+    } as const);
+
+    const strict = contract.safeParse('/reports?page=2&publishedOn=02-06-2026&scheduledAt=foo');
+    const partial = contract.safeParse('/reports?page=2&publishedOn=02-06-2026&scheduledAt=foo', {
+      invalidSearch: 'omit',
+    });
+
+    expect(strict.success).toBe(false);
+    expect(partial.success).toBe(true);
+    if (partial.success) {
+      expect(partial.data.search).toEqual({
+        page: 2,
+        publishedOn: new Date('2026-06-02T00:00:00.000Z'),
+      });
+    }
+  });
+
   it('supports pathless descriptors', () => {
     const contract = createRouteUrlContract({
       search: {

@@ -307,14 +307,30 @@ const ArticleUrl = createRouteUrlContract({
   search: {
     ref: { type: 'one', optional: true },
     page: { value: 'int', default: 1 },
+    publishedOn: {
+      type: 'date',
+      format: 'dd-MM-yyyy',
+      optional: true,
+    },
+    scheduledAt: {
+      type: 'date-time',
+      format: 'dd-MM-yyyy HH:mm:ss',
+      optional: true,
+    },
   },
   hash: ['comments', 'share'],
 } as const);
 
-ArticleUrl.parse('/articles/post-1?ref=email#comments');
+ArticleUrl.parse(
+  '/articles/post-1?ref=email&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05#comments',
+);
+
+ArticleUrl.safeParse('/articles/post-1?ref=email&publishedOn=02-06-2026&scheduledAt=foo#comments', {
+  invalidSearch: 'omit',
+});
 ```
 
-Router-runtime params default to raw strings. Use `{ params: 'parsed' }` to parse `int` and `number` path params.
+Router-runtime params default to raw strings. Use `{ params: 'parsed' }` to parse numeric PathKit constraints such as `int`, `decimal`, and `range`.
 
 ## `parseRequest` and `safeParseRequest`
 

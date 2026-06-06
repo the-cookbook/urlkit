@@ -504,14 +504,14 @@ UserUrl.buildPath({ id: 42 });
 
 ## Search helpers
 
-| Method                                   | Purpose                                                          | Notes                                                    |
-| ---------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------- |
-| `parseSearch(input, options?)`           | Parse search params through the contract schema.                 | Returns typed `Search`. Unknowns follow `unknownSearch`. |
-| `buildSearch(search, options?)`          | Build a search suffix from typed partial search.                 | Returns `''` or `'?...'`.                                |
-| `withSearch(input, search, options?)`    | Patch a URL while preserving existing unknown params by default. | Keeps path/hash.                                         |
-| `replaceSearch(input, search, options?)` | Replace URL search with new typed search.                        | Removes unknown params.                                  |
-| `omitSearch(input, keys, options?)`      | Remove selected search keys.                                     | Keeps path/hash.                                         |
-| `pickSearch(input, keys, options?)`      | Keep selected search keys.                                       | Keeps path/hash.                                         |
+| Method                                   | Purpose                                                                                                        | Notes                                                    |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `parseSearch(input, options?)`           | Parse search params through the contract schema. String input may be a search suffix, serialized path, or URL. | Returns typed `Search`. Unknowns follow `unknownSearch`. |
+| `buildSearch(search, options?)`          | Build a search suffix from typed partial search.                                                               | Returns `''` or `'?...'`.                                |
+| `withSearch(input, search, options?)`    | Patch a URL while preserving existing unknown params by default.                                               | Keeps path/hash.                                         |
+| `replaceSearch(input, search, options?)` | Replace URL search with new typed search.                                                                      | Removes unknown params.                                  |
+| `omitSearch(input, keys, options?)`      | Remove selected search keys.                                                                                   | Keeps path/hash.                                         |
+| `pickSearch(input, keys, options?)`      | Keep selected search keys.                                                                                     | Keeps path/hash.                                         |
 
 ```ts
 UserUrl.withSearch('/users/42?page=1#activity', { page: 2 });
@@ -590,6 +590,7 @@ interface RegisterPathConstraintOptions {
 interface ParseUrlOptions {
   readonly unknownSearch?: UnknownSearchBehavior;
   readonly arrayFormat?: SearchArrayFormat;
+  readonly invalidSearch?: 'error' | 'omit';
 }
 
 interface NormalizeUrlOptions {
@@ -749,6 +750,16 @@ const search = {
     default: 'newest',
   },
   startsAt: { value: 'date-time', optional: true },
+  publishedOn: {
+    type: 'date',
+    format: 'dd-MM-yyyy',
+    optional: true,
+  },
+  scheduledAt: {
+    type: 'date-time',
+    format: 'dd-MM-yyyy HH:mm:ss',
+    optional: true,
+  },
 } as const;
 ```
 
@@ -763,9 +774,10 @@ Supported static values:
 - `unix-seconds`
 - `unix-ms`
 - `{ type: 'date', format: ... }`
+- `{ type: 'date-time', format: ... }`
 - `{ type: 'enum', values: [...] }`
 
-Static date defaults must be serialized values, not `Date` instances.
+Static date and date-time formats may use built-in static formats or strict format strings such as `dd-MM-yyyy` and `dd-MM-yyyy HH:mm:ss`. Static descriptors do not support runtime `{ parse, serialize }` codecs. Static date defaults must be serialized values, not `Date` instances.
 
 ## `compileStaticHash`
 
@@ -866,12 +878,13 @@ UserUrl.parse('/users/42').params.id;
 
 ## Router-runtime `parseSearch`
 
-| Item                  | Details                                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------------------ |
-| Signature with schema | `parseSearch(input, { schema, unknownSearch?, arrayFormat? }): InferStaticSearch<typeof schema>` |
-| Fallback signature    | `parseSearch(input, options?): RawSearchParams`                                                  |
-| Purpose               | Parse raw or static-schema search. `arrayFormat: 'comma'` splits declared array fields.          |
-| Throws                | `invalid-search` / `missing-search` for schema validation failures.                              |
+| Item                  | Details                                                                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signature with schema | `parseSearch(input, { schema, unknownSearch?, arrayFormat?, invalidSearch? }): InferStaticSearch<typeof schema>`                                      |
+| Fallback signature    | `parseSearch(input, options?): RawSearchParams`                                                                                                       |
+| Purpose               | Parse raw or static-schema search. String input may be a search suffix, serialized path, or URL. `arrayFormat: 'comma'` splits declared array fields. |
+| Invalid fields        | Defaults to strict `invalidSearch: 'error'`. Use `invalidSearch: 'omit'` to omit invalid optional/defaulted declared fields.                          |
+| Throws                | `invalid-search` / `missing-search` for strict schema validation failures.                                                                            |
 
 ```ts
 parseSearch('?page=2', {
@@ -888,6 +901,28 @@ parseSearch('?tags=ts%2Crouter', {
   arrayFormat: 'comma',
 });
 // { tags: ['ts', 'router'] }
+
+parseSearch('?from=02-06-2026&startsAt=02-06-2026+12%3A30%3A05', {
+  schema: {
+    from: { type: 'date', format: 'dd-MM-yyyy', optional: true },
+    startsAt: {
+      type: 'date-time',
+      format: 'dd-MM-yyyy HH:mm:ss',
+      optional: true,
+    },
+  },
+});
+// { from: Date, startsAt: Date }
+
+parseSearch('/articles/1?page=2&publishedOn=02-06-2026&startsAt=foo', {
+  schema: {
+    page: { value: 'int', default: 1 },
+    publishedOn: { type: 'date', format: 'dd-MM-yyyy', optional: true },
+    startsAt: { type: 'date-time', format: 'dd-MM-yyyy HH:mm:ss', optional: true },
+  },
+  invalidSearch: 'omit',
+});
+// { page: 2, publishedOn: Date }
 
 parseSearch('?filter.role=admin');
 // { 'filter.role': 'admin' }
@@ -908,10 +943,18 @@ const schema = {
   page: { value: 'int', default: 1 },
   q: { value: 'string', optional: true },
   tags: { type: 'many', optional: true },
+  startsAt: {
+    type: 'date-time',
+    format: 'dd-MM-yyyy HH:mm:ss',
+    optional: true,
+  },
 } as const;
 
-buildSearch({ page: 2, tags: ['ts', 'router'] }, { schema, arrayFormat: 'comma' });
-// '?page=2&tags=ts%2Crouter'
+buildSearch(
+  { page: 2, tags: ['ts', 'router'], startsAt: new Date('2026-06-02T12:30:05.000Z') },
+  { schema, arrayFormat: 'comma' },
+);
+// '?page=2&tags=ts%2Crouter&startsAt=02-06-2026+12%3A30%3A05'
 
 patchSearch('?page=1&debug=true', { page: 2 }, { schema });
 // '?page=2&debug=true'
@@ -924,14 +967,17 @@ replaceSearch('?page=1&debug=true', { page: 2 }, { schema });
 
 These delegate to the same hash implementation used by contracts.
 
-| Function        | Signature                                          | Purpose                          |
-| --------------- | -------------------------------------------------- | -------------------------------- |
-| `parseHash`     | `parseHash(input, descriptor?)`                    | Parse a hash fragment.           |
-| `buildHash`     | `buildHash(hash?, descriptorOrOptions?, options?)` | Build a hash fragment.           |
-| `normalizeHash` | `normalizeHash(input, descriptor?)`                | Normalize structured hash input. |
+| Function        | Signature                                          | Purpose                                                                                                |
+| --------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `parseHash`     | `parseHash(input, descriptor?, options?)`          | Parse a hash fragment. Use `invalidHash: 'omit'` to treat invalid optional/defaulted hashes as absent. |
+| `buildHash`     | `buildHash(hash?, descriptorOrOptions?, options?)` | Build a hash fragment.                                                                                 |
+| `normalizeHash` | `normalizeHash(input, descriptor?)`                | Normalize structured hash input.                                                                       |
 
 ```ts
 parseHash('#comments', ['comments', 'share'] as const);
+parseHash('#overview', ['comments', 'share'] as const, { invalidHash: 'omit' });
+// undefined
+
 buildHash('comments', ['comments', 'share'] as const);
 normalizeHash('comments', ['comments', 'share'] as const);
 ```

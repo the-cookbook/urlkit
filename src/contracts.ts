@@ -5,6 +5,10 @@ export type UrlMode = 'path' | 'pathless';
 
 export type UnknownSearchBehavior = 'strip' | 'preserve' | 'error';
 
+export type InvalidSearchBehavior = 'error' | 'omit';
+
+export type InvalidHashBehavior = 'error' | 'omit';
+
 export type SearchArrayFormat = 'repeat' | 'comma';
 
 export type UnknownSearchParams = Readonly<Record<string, string | readonly string[]>>;
@@ -32,6 +36,7 @@ export interface UrlRequestInput {
 export interface ParseUrlOptions {
   readonly unknownSearch?: UnknownSearchBehavior;
   readonly arrayFormat?: SearchArrayFormat;
+  readonly invalidSearch?: InvalidSearchBehavior;
 }
 
 export interface NormalizeUrlOptions {

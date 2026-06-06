@@ -1,5 +1,6 @@
 import { boolean } from '../schema/boolean.js';
 import { date } from '../schema/date.js';
+import { dateTime } from '../schema/date-time.js';
 import { enumOf } from '../schema/enum-of.js';
 import { int } from '../schema/int.js';
 import { number } from '../schema/number.js';
@@ -7,9 +8,18 @@ import type { AnyRuntimeSchemaBuilder } from '../schema/contracts.js';
 import { string } from '../schema/string.js';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import type { RuntimeSearchField, RuntimeSearchSchema } from '../search/contracts.js';
-import type { StaticSearchDescriptor, StaticSearchField, StaticSearchValue } from './contracts.js';
+import type {
+  StaticDateFormat,
+  StaticDateTimeFormat,
+  StaticSearchDescriptor,
+  StaticSearchField,
+  StaticResolvedSearchValue,
+} from './contracts.js';
 import {
+  getStaticSearchFieldDefault,
+  hasStaticSearchFieldDefault,
   isStaticSearchFieldObject,
+  isStaticSearchFieldOptional,
   normalizeStaticSearchFieldType,
   normalizeStaticSearchFieldValue,
 } from './static-search-field-kind.js';
@@ -37,23 +47,36 @@ function createStaticSearchField(key: string, field: StaticSearchField): Runtime
     ? normalizeStaticSearchFieldType(field.type, path)
     : 'one';
   const valueDescriptor = normalizeStaticSearchFieldValue(field);
+
+  if (isStaticSearchFieldObject(field) && isStaticDateLikeValue(valueDescriptor)) {
+    throw new UrlKitError(
+      'invalid-descriptor',
+      'Static date and date-time search fields must use the direct { type, format, optional } form.',
+      { path },
+    );
+  }
+
   const value = createStaticSearchValueSchema(valueDescriptor, path);
-  const hasDefault =
-    isStaticSearchFieldObject(field) && Object.prototype.hasOwnProperty.call(field, 'default');
+  const hasDefault = hasStaticSearchFieldDefault(field);
   const defaultValue = hasDefault
-    ? normalizeStaticSearchDefault(fieldType, valueDescriptor, field.default, path)
+    ? normalizeStaticSearchDefault(
+        fieldType,
+        valueDescriptor,
+        getStaticSearchFieldDefault(field),
+        path,
+      )
     : undefined;
 
   return Object.freeze({
     type: fieldType,
     value,
-    ...(isStaticSearchFieldObject(field) && field.optional ? { optional: true } : {}),
+    ...(isStaticSearchFieldOptional(field) ? { optional: true } : {}),
     ...(hasDefault ? { default: defaultValue } : {}),
   });
 }
 
 function createStaticSearchValueSchema(
-  value: StaticSearchValue,
+  value: StaticResolvedSearchValue,
   path: readonly string[],
 ): AnyRuntimeSchemaBuilder {
   if (value === 'string') {
@@ -92,6 +115,10 @@ function createStaticSearchValueSchema(
     return date({ format: value.format ?? 'date' });
   }
 
+  if (isStaticDateTimeValue(value)) {
+    return dateTime({ format: value.format ?? 'date-time' });
+  }
+
   if (isStaticEnumValue(value)) {
     return enumOf(value.values);
   }
@@ -101,11 +128,22 @@ function createStaticSearchValueSchema(
   });
 }
 
+function isStaticDateLikeValue(input: unknown): boolean {
+  return isStaticDateValue(input) || isStaticDateTimeValue(input);
+}
+
 function isStaticDateValue(input: unknown): input is {
   readonly type: 'date';
-  readonly format?: 'date' | 'date-time' | 'unix-seconds' | 'unix-ms';
+  readonly format?: StaticDateFormat;
 } {
   return isRecord(input) && input.type === 'date';
+}
+
+function isStaticDateTimeValue(input: unknown): input is {
+  readonly type: 'date-time';
+  readonly format?: StaticDateTimeFormat;
+} {
+  return isRecord(input) && input.type === 'date-time';
 }
 
 function isStaticEnumValue(

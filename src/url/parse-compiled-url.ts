@@ -11,7 +11,7 @@ export function parseCompiledUrl<Pathname, Params, Search, Hash>(
   input: string | URL,
   compiled: CompiledUrlDescriptor,
   unknownSearch: UnknownSearchBehavior,
-  options: Pick<ParseUrlOptions, 'arrayFormat'> = {},
+  options: Pick<ParseUrlOptions, 'arrayFormat' | 'invalidSearch'> = {},
 ): UrlState<Pathname, Params, Search, Hash> {
   const parsedUrl = parseUrl(input);
   const params = parseUrlParams<Params>(parsedUrl.pathname, compiled);
@@ -46,7 +46,7 @@ function parseUrlSearch<Search>(
   searchParams: URLSearchParams,
   compiled: CompiledUrlDescriptor,
   unknownSearch: UnknownSearchBehavior,
-  options: Pick<ParseUrlOptions, 'arrayFormat'>,
+  options: Pick<ParseUrlOptions, 'arrayFormat' | 'invalidSearch'>,
 ): Pick<UrlState<string, {}, Search, undefined>, 'search' | 'unknownSearch'> {
   const rawSearch = parseRawSearch(searchParams);
 

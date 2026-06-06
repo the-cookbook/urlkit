@@ -12,6 +12,13 @@ import { parseCompiledSearch } from './parse-compiled-search.js';
 export function parseSearch(input: string | URLSearchParams): RawSearchParams;
 export function parseSearch<const Schema extends RuntimeSearchSchema>(
   input: string | URLSearchParams,
+  options: ParseSearchOptions<Schema> & {
+    readonly schema: Schema;
+    readonly invalidSearch: 'omit';
+  },
+): SearchParseResult<Partial<InferRuntimeSearch<Schema>>>;
+export function parseSearch<const Schema extends RuntimeSearchSchema>(
+  input: string | URLSearchParams,
   options: ParseSearchOptions<Schema> & { readonly schema: Schema },
 ): SearchParseResult<InferRuntimeSearch<Schema>>;
 export function parseSearch(
@@ -36,6 +43,9 @@ function parseSchemaSearch(
     rawSearch,
     compileSearchSchema(schema),
     options.unknownSearch ?? 'strip',
-    options.arrayFormat ? { arrayFormat: options.arrayFormat } : {},
+    {
+      ...(options.arrayFormat ? { arrayFormat: options.arrayFormat } : {}),
+      ...(options.invalidSearch ? { invalidSearch: options.invalidSearch } : {}),
+    },
   );
 }

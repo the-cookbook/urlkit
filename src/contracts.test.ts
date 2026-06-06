@@ -3,6 +3,8 @@ import type {
   BuildSearchOptions,
   BuildUrlOptions,
   EmptyParams,
+  InvalidHashBehavior,
+  InvalidSearchBehavior,
   NormalizeUrlState,
   ParseRequestOptions,
   PatchSearchOptions,
@@ -23,6 +25,8 @@ import type {
 describe('shared contracts', () => {
   it('models common URL state and options', () => {
     const mode: UrlMode = 'path';
+    const invalidSearch: InvalidSearchBehavior = 'omit';
+    const invalidHash: InvalidHashBehavior = 'omit';
     const state: UrlState<'/users/1', { id: number }, { tab?: string }, string | undefined> = {
       pathname: '/users/1',
       params: { id: 1 },
@@ -47,10 +51,13 @@ describe('shared contracts', () => {
     const requestOptions: ParseRequestOptions = {
       unknownSearch: 'strip',
       arrayFormat: 'comma',
+      invalidSearch: 'omit',
       baseUrl: 'https://example.com',
     };
 
     expect(mode).toBe('path');
+    expect(invalidSearch).toBe('omit');
+    expect(invalidHash).toBe('omit');
     expect(state.pathname).toBe('/users/1');
     expect(unknownSearch.debug).toBe('true');
     expect(patchOptions.removeNull).toBe(true);

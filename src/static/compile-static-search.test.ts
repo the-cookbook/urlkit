@@ -62,14 +62,54 @@ describe('compileStaticSearch', () => {
     });
   });
 
-  it('supports static date object values', () => {
-    const schema = compileStaticSearch({
-      created: { value: { type: 'date', format: 'date-time' }, optional: true },
-    });
+  it('rejects nested date and date-time value descriptors', () => {
+    expect(() =>
+      compileStaticSearch({
+        created: { value: { type: 'date', format: 'dd-MM-yyyy' }, optional: true },
+      } as never),
+    ).toThrow('Static date and date-time search fields must use the direct');
 
-    expect(parseSearch('?created=2026-01-01T10:30:00.000Z', { schema }).search).toEqual({
-      created: new Date('2026-01-01T10:30:00.000Z'),
+    expect(() =>
+      compileStaticSearch({
+        startsAt: { value: { type: 'date-time', format: 'dd-MM-yyyy HH:mm:ss' }, optional: true },
+      } as never),
+    ).toThrow('Static date and date-time search fields must use the direct');
+  });
+
+  it('supports static date and date-time format strings', () => {
+    const descriptor = {
+      from: {
+        type: 'date',
+        format: 'dd-MM-yyyy',
+        default: '02-06-2026',
+      },
+      startsAt: {
+        type: 'date-time',
+        format: 'dd-MM-yyyy HH:mm:ss',
+        optional: true,
+      },
+    } as const;
+    const schema = compileStaticSearch(descriptor);
+
+    expect(parseSearch('', { schema }).search).toEqual({
+      from: new Date('2026-06-02T00:00:00.000Z'),
     });
+    expect(parseSearch('?startsAt=02-06-2026+12%3A30%3A05', { schema }).search).toEqual({
+      from: new Date('2026-06-02T00:00:00.000Z'),
+      startsAt: new Date('2026-06-02T12:30:05.000Z'),
+    });
+    expect(
+      buildSearch(
+        {
+          from: new Date('2026-06-03T00:00:00.000Z'),
+          startsAt: new Date('2026-06-03T12:30:05.000Z'),
+        },
+        { schema },
+      ),
+    ).toBe('?from=03-06-2026&startsAt=03-06-2026+12%3A30%3A05');
+    expectType<{ readonly from: Date; readonly startsAt?: Date }>(
+      {} as InferStaticSearch<typeof descriptor>,
+    );
   });
 
   it('validates defaults at compile time', () => {
@@ -89,6 +129,20 @@ describe('compileStaticSearch', () => {
     );
     expect(() =>
       compileStaticSearch({ dt: { value: 'date-time', default: '2026-01-01T10:30:00+02:00' } }),
+    ).toThrow(UrlKitError);
+    expect(() =>
+      compileStaticSearch({
+        customDate: { type: 'date', format: 'dd-MM-yyyy', default: '2026-06-02' },
+      }),
+    ).toThrow(UrlKitError);
+    expect(() =>
+      compileStaticSearch({
+        customDateTime: {
+          type: 'date-time',
+          format: 'dd-MM-yyyy HH:mm:ss',
+          default: '02-06-2026',
+        },
+      }),
     ).toThrow(UrlKitError);
     expect(() =>
       compileStaticSearch({ seconds: { value: 'unix-seconds', default: '1704067200' } }),

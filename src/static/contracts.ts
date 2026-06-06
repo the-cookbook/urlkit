@@ -41,7 +41,12 @@ export type InferStaticUrlHashBuildInput<Descriptor extends StaticUrlDescriptor>
 
 export type StaticSearchDescriptor = Readonly<Record<string, StaticSearchField>>;
 
-export type StaticSearchField = StaticSearchValue | StaticSearchFieldObject;
+export type StaticSearchField =
+  | StaticSearchValue
+  | StaticSearchFieldObject
+  | StaticDateSearchField
+  | StaticDateTimeSearchField
+  | StaticEnumSearchField;
 
 export interface StaticSearchFieldObject {
   readonly type?: 'one' | 'many';
@@ -49,6 +54,26 @@ export interface StaticSearchFieldObject {
   readonly value?: StaticSearchValue;
   readonly default?: unknown;
 }
+
+export interface StaticDateSearchField extends StaticDateSearchValue {
+  readonly optional?: boolean;
+  readonly default?: unknown;
+}
+
+export interface StaticDateTimeSearchField extends StaticDateTimeSearchValue {
+  readonly optional?: boolean;
+  readonly default?: unknown;
+}
+
+export interface StaticEnumSearchField extends StaticEnumSearchValue {
+  readonly optional?: boolean;
+  readonly default?: unknown;
+}
+
+export type StaticDirectSearchField =
+  | StaticDateSearchField
+  | StaticDateTimeSearchField
+  | StaticEnumSearchField;
 
 export type StaticSearchValue =
   | 'string'
@@ -59,15 +84,26 @@ export type StaticSearchValue =
   | 'date-time'
   | 'unix-seconds'
   | 'unix-ms'
-  | StaticDateSearchValue
   | StaticEnumSearchValue;
+
+export type StaticResolvedSearchValue =
+  | StaticSearchValue
+  | StaticDateSearchValue
+  | StaticDateTimeSearchValue;
 
 export interface StaticDateSearchValue {
   readonly type: 'date';
   readonly format?: StaticDateFormat;
 }
 
-export type StaticDateFormat = 'date' | 'date-time' | 'unix-seconds' | 'unix-ms';
+export interface StaticDateTimeSearchValue {
+  readonly type: 'date-time';
+  readonly format?: StaticDateTimeFormat;
+}
+
+export type BuiltInStaticDateFormat = 'date' | 'date-time' | 'unix-seconds' | 'unix-ms';
+export type StaticDateFormat = BuiltInStaticDateFormat | string;
+export type StaticDateTimeFormat = 'date-time' | string;
 
 export interface StaticEnumSearchValue {
   readonly type: 'enum';
@@ -170,13 +206,37 @@ type InferStaticSearchFieldValue<Field> = Field extends StaticSearchFieldObject
   ? Field['type'] extends 'many'
     ? readonly InferStaticSearchValue<StaticFieldObjectValue<Field>>[]
     : InferStaticSearchValue<StaticFieldObjectValue<Field>>
-  : InferStaticSearchValue<Field>;
+  : Field extends StaticDirectSearchField
+    ? InferStaticSearchValue<StaticDirectSearchFieldValue<Field>>
+    : InferStaticSearchValue<Field>;
 
 type StaticFieldObjectValue<Field extends StaticSearchFieldObject> = Field extends {
   readonly value: infer Value;
 }
   ? Value
   : 'string';
+
+type StaticDirectSearchFieldValue<Field extends StaticDirectSearchField> =
+  Field extends StaticDateSearchField
+    ? StaticDateSearchValueOf<Field>
+    : Field extends StaticDateTimeSearchField
+      ? StaticDateTimeSearchValueOf<Field>
+      : Field extends StaticEnumSearchField
+        ? StaticEnumSearchValueOf<Field>
+        : never;
+
+type StaticDateSearchValueOf<Field extends StaticDateSearchField> = {
+  readonly type: 'date';
+} & Pick<Field, Extract<keyof Field, 'format'>>;
+
+type StaticDateTimeSearchValueOf<Field extends StaticDateTimeSearchField> = {
+  readonly type: 'date-time';
+} & Pick<Field, Extract<keyof Field, 'format'>>;
+
+interface StaticEnumSearchValueOf<Field extends StaticEnumSearchField> {
+  readonly type: 'enum';
+  readonly values: Field['values'];
+}
 
 type InferStaticSearchValue<Value> = Value extends 'string'
   ? string
@@ -188,13 +248,15 @@ type InferStaticSearchValue<Value> = Value extends 'string'
         ? boolean
         : Value extends 'date' | 'date-time' | 'unix-seconds' | 'unix-ms'
           ? Date
-          : Value extends StaticDateSearchValue
+          : Value extends StaticDateSearchValue | StaticDateTimeSearchValue
             ? Date
             : Value extends StaticEnumSearchValue
               ? Value['values'][number]
               : never;
 
-type IsOptionalStaticSearchField<Field> = Field extends StaticSearchFieldObject
+type IsOptionalStaticSearchField<Field> = Field extends
+  | StaticSearchFieldObject
+  | StaticDirectSearchField
   ? 'default' extends keyof Field
     ? false
     : Field['optional'] extends true
@@ -202,7 +264,9 @@ type IsOptionalStaticSearchField<Field> = Field extends StaticSearchFieldObject
       : false
   : false;
 
-type IsRequiredStaticSearchBuildField<Field> = Field extends StaticSearchFieldObject
+type IsRequiredStaticSearchBuildField<Field> = Field extends
+  | StaticSearchFieldObject
+  | StaticDirectSearchField
   ? 'default' extends keyof Field
     ? false
     : Field['optional'] extends true

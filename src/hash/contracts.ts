@@ -1,4 +1,4 @@
-import type { BuildUrlOptions } from '../contracts.js';
+import type { BuildUrlOptions, InvalidHashBehavior } from '../contracts.js';
 import type { StaticHashDescriptor } from '../static/contracts.js';
 import type {
   NormalizedRuntimeSchemaDescriptor,
@@ -25,6 +25,10 @@ export interface CompiledHashDescriptor<Hash = unknown> {
   readonly normalize: (input: unknown) => Hash;
   readonly serialize: (input: unknown) => string | undefined;
   readonly isDefault: (input: unknown) => boolean;
+}
+
+export interface ParseHashOptions {
+  readonly invalidHash?: InvalidHashBehavior;
 }
 
 export type BuildHashOptions = BuildUrlOptions;

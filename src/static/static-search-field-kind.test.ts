@@ -16,12 +16,20 @@ describe('static search field kind helpers', () => {
     expect(isStaticSearchFieldObject({ default: 'x' })).toBe(true);
     expect(isStaticSearchFieldObject({ type: 'enum', values: ['a'] })).toBe(false);
     expect(isStaticSearchFieldObject({ type: 'date' })).toBe(false);
+    expect(isStaticSearchFieldObject({ type: 'date', optional: true })).toBe(false);
     expect(isStaticSearchFieldObject('string')).toBe(false);
   });
 
   it('defaults field object values to string', () => {
     expect(normalizeStaticSearchFieldValue({ type: 'many' })).toBe('string');
     expect(normalizeStaticSearchFieldValue({ value: 'int' })).toBe('int');
+    expect(
+      normalizeStaticSearchFieldValue({ type: 'date', format: 'dd-MM-yyyy', optional: true }),
+    ).toEqual({
+      type: 'date',
+      format: 'dd-MM-yyyy',
+      optional: true,
+    });
     expect(normalizeStaticSearchFieldValue('boolean')).toBe('boolean');
   });
 

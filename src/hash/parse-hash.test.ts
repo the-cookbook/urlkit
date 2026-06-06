@@ -73,6 +73,21 @@ describe('parseHash', () => {
     }
   });
 
+  it('can omit invalid optional enum hash values without rejecting the call', () => {
+    const descriptor = enumOf(['comments', 'share'] as const).optional();
+
+    expect(parseHash('#overview', descriptor, { invalidHash: 'omit' })).toBeUndefined();
+    expect(
+      parseHash('#overview', ['comments', 'share'] as const, { invalidHash: 'omit' }),
+    ).toBeUndefined();
+  });
+
+  it('keeps required invalid hash values strict even with invalidHash omit', () => {
+    const descriptor = enumOf(['comments', 'share'] as const);
+
+    expect(() => parseHash('#overview', descriptor, { invalidHash: 'omit' })).toThrow(UrlKitError);
+  });
+
   it('supports static enum shorthand as optional hash', () => {
     expect(parseHash('#comments', ['comments', 'share'] as const)).toBe('comments');
     expect(parseHash(undefined, ['comments', 'share'] as const)).toBeUndefined();

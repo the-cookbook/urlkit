@@ -7,7 +7,7 @@ export function matchCompiledUrl(
   input: string | URL,
   compiled: CompiledUrlDescriptor,
   unknownSearch: UnknownSearchBehavior,
-  options: Pick<ParseUrlOptions, 'arrayFormat'> = {},
+  options: Pick<ParseUrlOptions, 'arrayFormat' | 'invalidSearch'> = {},
 ): boolean {
   try {
     parseCompiledUrl(input, compiled, unknownSearch, options);

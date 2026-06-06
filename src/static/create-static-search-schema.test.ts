@@ -48,8 +48,8 @@ describe('createStaticSearchSchema', () => {
 
   it('creates built-in date schemas from static date descriptors', () => {
     const schema = createStaticSearchSchema({
-      dateOnly: { value: { type: 'date' } },
-      unix: { value: { type: 'date', format: 'unix-seconds' }, default: 1_704_067_200 },
+      dateOnly: { type: 'date' },
+      unix: { type: 'date', format: 'unix-seconds', default: 1_704_067_200 },
     });
 
     const dateOnly = schema.dateOnly as RuntimeSearchField | undefined;
@@ -60,12 +60,30 @@ describe('createStaticSearchSchema', () => {
     expect(unix?.default).toEqual(new Date('2024-01-01T00:00:00.000Z'));
   });
 
+  it('creates custom formatted date schemas from static descriptors', () => {
+    const schema = createStaticSearchSchema({
+      from: { type: 'date', format: 'dd-MM-yyyy', default: '02-06-2026' },
+      at: { type: 'date-time', format: 'dd-MM-yyyy HH:mm:ss', optional: true },
+    });
+
+    const from = schema.from as RuntimeSearchField | undefined;
+    const at = schema.at as RuntimeSearchField | undefined;
+
+    expect(compileRuntimeSchema(from!.value).options.format).toBe('dd-MM-yyyy');
+    expect(compileRuntimeSchema(at!.value).options.format).toBe('dd-MM-yyyy HH:mm:ss');
+    expect(from?.default).toEqual(new Date('2026-06-02T00:00:00.000Z'));
+    expect(at?.optional).toBe(true);
+  });
+
   it('rejects invalid descriptors', () => {
     expect(() => createStaticSearchSchema(null as never)).toThrow(UrlKitError);
     expect(() => createStaticSearchSchema({ bad: 'uuid' as never })).toThrow(UrlKitError);
     expect(() => createStaticSearchSchema({ bad: { value: 'uuid' as never } })).toThrow(
       UrlKitError,
     );
+    expect(() =>
+      createStaticSearchSchema({ bad: { value: { type: 'date', format: 'dd-MM-yyyy' } } } as never),
+    ).toThrow(UrlKitError);
     expect(() => createStaticSearchSchema({ bad: { type: 'enum', values: [] } })).toThrow(
       UrlKitError,
     );

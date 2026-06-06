@@ -1,4 +1,8 @@
-import type { SearchArrayFormat, UnknownSearchBehavior } from '../contracts.js';
+import type {
+  InvalidSearchBehavior,
+  SearchArrayFormat,
+  UnknownSearchBehavior,
+} from '../contracts.js';
 import { parseSearch as parseRuntimeSearch } from '../search/parse-search.js';
 import type { RawSearchParams } from '../search/contracts.js';
 import { compileCachedStaticSearch } from './compile-cached-static-search.js';
@@ -8,8 +12,16 @@ export interface ParseSearchOptions<SearchDescriptor = StaticSearchDescriptor> {
   readonly schema?: SearchDescriptor;
   readonly unknownSearch?: UnknownSearchBehavior;
   readonly arrayFormat?: SearchArrayFormat;
+  readonly invalidSearch?: InvalidSearchBehavior;
 }
 
+export function parseSearch<const SearchDescriptor extends StaticSearchDescriptor>(
+  input: string | URLSearchParams,
+  options: ParseSearchOptions<SearchDescriptor> & {
+    readonly schema: SearchDescriptor;
+    readonly invalidSearch: 'omit';
+  },
+): Partial<InferStaticSearch<SearchDescriptor>>;
 export function parseSearch<const SearchDescriptor extends StaticSearchDescriptor>(
   input: string | URLSearchParams,
   options: ParseSearchOptions<SearchDescriptor> & { readonly schema: SearchDescriptor },
@@ -30,5 +42,6 @@ export function parseSearch(
     schema: compileCachedStaticSearch(options.schema),
     ...(options.unknownSearch ? { unknownSearch: options.unknownSearch } : {}),
     ...(options.arrayFormat ? { arrayFormat: options.arrayFormat } : {}),
+    ...(options.invalidSearch ? { invalidSearch: options.invalidSearch } : {}),
   }).search;
 }

@@ -58,6 +58,67 @@ describe('router-runtime public exports', () => {
     expectType<{ readonly page: number; readonly sort: 'newest' | 'popular' }>(parsed);
   });
 
+  it('supports custom formatted static date descriptors through the public entry', () => {
+    const schema = {
+      from: {
+        type: 'date',
+        format: 'dd-MM-yyyy',
+        optional: true,
+      },
+      at: {
+        type: 'date-time',
+        format: 'dd-MM-yyyy HH:mm:ss',
+        optional: true,
+      },
+    } as const;
+
+    const parsed = parseSearch('?from=02-06-2026&at=02-06-2026+12%3A30%3A05', { schema });
+
+    expect(parsed).toEqual({
+      from: new Date('2026-06-02T00:00:00.000Z'),
+      at: new Date('2026-06-02T12:30:05.000Z'),
+    });
+    expect(buildSearch(parsed, { schema })).toBe('?from=02-06-2026&at=02-06-2026+12%3A30%3A05');
+    expectType<{ readonly from?: Date; readonly at?: Date }>(parsed);
+  });
+
+  it('can omit invalid optional parsed search fields through the public entry', () => {
+    const schema = {
+      page: { value: 'int', default: 1 },
+      publishedOn: {
+        type: 'date',
+        format: 'dd-MM-yyyy',
+        optional: true,
+      },
+      scheduledAt: {
+        type: 'date-time',
+        format: 'dd-MM-yyyy HH:mm:ss',
+        optional: true,
+      },
+    } as const;
+
+    expect(() =>
+      parseSearch('?page=2&publishedOn=02-06-2026&scheduledAt=foo', { schema }),
+    ).toThrow();
+
+    const parsed = parseSearch('?page=2&publishedOn=02-06-2026&scheduledAt=foo', {
+      schema,
+      invalidSearch: 'omit',
+    });
+
+    expect(parsed).toEqual({
+      page: 2,
+      publishedOn: new Date('2026-06-02T00:00:00.000Z'),
+    });
+    expectType<
+      Partial<{
+        readonly page: number;
+        readonly publishedOn?: Date;
+        readonly scheduledAt?: Date;
+      }>
+    >(parsed);
+  });
+
   it('returns flat raw search through the public fallback overload', () => {
     expect(parseSearch('?filter.role=admin&tag=a&tag=b')).toEqual({
       'filter.role': 'admin',
@@ -67,6 +128,8 @@ describe('router-runtime public exports', () => {
 
   it('exposes hash helpers through the public entry', () => {
     expect(parseHash('#comments', ['comments', 'share'])).toBe('comments');
+    expect(() => parseHash('#overview', ['comments', 'share'])).toThrow();
+    expect(parseHash('#overview', ['comments', 'share'], { invalidHash: 'omit' })).toBeUndefined();
     expect(normalizeHash('comments', ['comments', 'share'])).toBe('comments');
     expect(buildHash('share', ['comments', 'share'])).toBe('#share');
   });

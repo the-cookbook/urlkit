@@ -1,13 +1,18 @@
+import { parseDateFormatString } from '../date/date-format-string.js';
 import { parseDate } from '../date/parse-date.js';
 import { parseDateTime } from '../date/parse-date-time.js';
 import { parseUnixMs } from '../date/parse-unix-ms.js';
 import { parseUnixSeconds } from '../date/parse-unix-seconds.js';
 import { UrlKitError } from '../errors/url-kit-error.js';
-import type { StaticDateFormat, StaticSearchValue } from './contracts.js';
+import type {
+  BuiltInStaticDateFormat,
+  StaticDateFormat,
+  StaticResolvedSearchValue,
+} from './contracts.js';
 
 export function normalizeStaticSearchDefault(
   fieldType: 'one' | 'many',
-  valueDescriptor: StaticSearchValue,
+  valueDescriptor: StaticResolvedSearchValue,
   defaultValue: unknown,
   path: readonly string[],
 ): unknown {
@@ -27,7 +32,7 @@ export function normalizeStaticSearchDefault(
 }
 
 function normalizeSingleStaticSearchDefault(
-  valueDescriptor: StaticSearchValue,
+  valueDescriptor: StaticResolvedSearchValue,
   defaultValue: unknown,
   path: readonly string[],
 ): unknown {
@@ -95,6 +100,24 @@ function normalizeSingleStaticSearchDefault(
     return normalizeStaticDateDefault(defaultValue, 'unix-ms', path);
   }
 
+  if (isStaticDateValue(valueDescriptor)) {
+    return normalizeStaticDateDefault(defaultValue, valueDescriptor.format ?? 'date', path);
+  }
+
+  if (kind === 'date-time-format') {
+    if (!isStaticDateTimeValue(valueDescriptor)) {
+      throw new UrlKitError('invalid-descriptor', 'Static date-time descriptor is invalid.', {
+        path,
+      });
+    }
+
+    return normalizeStaticDateTimeDefault(
+      defaultValue,
+      valueDescriptor.format ?? 'date-time',
+      path,
+    );
+  }
+
   if (isStaticEnumValue(valueDescriptor)) {
     if (typeof defaultValue === 'string' && valueDescriptor.values.includes(defaultValue)) {
       return defaultValue;
@@ -153,13 +176,48 @@ function normalizeStaticDateDefault(
     return parseDateTime(defaultValue, { code: 'invalid-descriptor', path });
   }
 
-  return parseDate(defaultValue, { code: 'invalid-descriptor', path });
+  if (format === 'date') {
+    return parseDate(defaultValue, { code: 'invalid-descriptor', path });
+  }
+
+  return parseDateFormatString(defaultValue, format, 'date', { code: 'invalid-descriptor', path });
+}
+
+function normalizeStaticDateTimeDefault(
+  defaultValue: unknown,
+  format: StaticDateFormat,
+  path: readonly string[],
+): Date {
+  if (typeof defaultValue !== 'string') {
+    throw new UrlKitError(
+      'invalid-descriptor',
+      'Static date-time search default must be a serialized string.',
+      { path },
+    );
+  }
+
+  if (format === 'date-time') {
+    return parseDateTime(defaultValue, { code: 'invalid-descriptor', path });
+  }
+
+  if (isBuiltInStaticDateFormat(format)) {
+    throw new UrlKitError(
+      'invalid-descriptor',
+      'Static date-time search format must be "date-time" or a supported date-time format string.',
+      { path },
+    );
+  }
+
+  return parseDateFormatString(defaultValue, format, 'date-time', {
+    code: 'invalid-descriptor',
+    path,
+  });
 }
 
 function resolveStaticSearchValueKind(
-  value: StaticSearchValue,
+  value: StaticResolvedSearchValue,
   path: readonly string[],
-): StaticDateFormat | 'string' | 'number' | 'int' | 'boolean' | 'enum' {
+): StaticDateFormat | 'string' | 'number' | 'int' | 'boolean' | 'enum' | 'date-time-format' {
   if (typeof value === 'string') {
     if (
       value === 'string' ||
@@ -183,6 +241,10 @@ function resolveStaticSearchValueKind(
     return value.format ?? 'date';
   }
 
+  if (isStaticDateTimeValue(value)) {
+    return 'date-time-format';
+  }
+
   if (isStaticEnumValue(value)) {
     return 'enum';
   }
@@ -196,6 +258,18 @@ function isStaticDateValue(
   input: unknown,
 ): input is { readonly type: 'date'; readonly format?: StaticDateFormat } {
   return isRecord(input) && input.type === 'date';
+}
+
+function isStaticDateTimeValue(
+  input: unknown,
+): input is { readonly type: 'date-time'; readonly format?: StaticDateFormat } {
+  return isRecord(input) && input.type === 'date-time';
+}
+
+function isBuiltInStaticDateFormat(input: StaticDateFormat): input is BuiltInStaticDateFormat {
+  return (
+    input === 'date' || input === 'date-time' || input === 'unix-seconds' || input === 'unix-ms'
+  );
 }
 
 function isStaticEnumValue(

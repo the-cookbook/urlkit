@@ -24,6 +24,8 @@ import type {
   BuildUrlOptions,
   DateFormatCodec,
   EmptyParams,
+  InvalidHashBehavior,
+  InvalidSearchBehavior,
   NormalizeUrlOptions,
   ParseRequestOptions,
   ParseUrlOptions,
@@ -75,10 +77,16 @@ describe('main public exports', () => {
   it('exports user-facing contracts', () => {
     expectType<UrlMode>('path');
     expectType<UnknownSearchBehavior>('strip');
+    expectType<InvalidSearchBehavior>('omit');
+    expectType<InvalidHashBehavior>('omit');
     expectType<SearchArrayFormat>('comma');
     expectType<UnknownSearchParams>({ debug: 'true', tag: ['a', 'b'] });
     expectType<EmptyParams>({});
-    expectType<ParseUrlOptions>({ unknownSearch: 'preserve', arrayFormat: 'comma' });
+    expectType<ParseUrlOptions>({
+      unknownSearch: 'preserve',
+      arrayFormat: 'comma',
+      invalidSearch: 'omit',
+    });
     expectType<NormalizeUrlOptions>({ unknownSearch: 'error' });
     expectType<BuildUrlOptions>({ defaults: 'omit', arrayFormat: 'comma' });
     expectType<BuildSearchOptions>({ defaults: 'include', arrayFormat: 'repeat', sortKeys: true });

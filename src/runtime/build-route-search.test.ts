@@ -73,6 +73,31 @@ describe('router-runtime search helpers', () => {
     ).toBe('?q=urlkit&page=1&tags=ts%2Curl&sort=newest');
   });
 
+  it('builds router-safe static date and date-time format strings', () => {
+    const formattedSchema = {
+      from: {
+        type: 'date',
+        format: 'dd-MM-yyyy',
+        optional: true,
+      },
+      startsAt: {
+        type: 'date-time',
+        format: 'dd-MM-yyyy HH:mm:ss',
+        optional: true,
+      },
+    } as const;
+
+    expect(
+      buildSearch(
+        {
+          from: new Date('2026-06-02T00:00:00.000Z'),
+          startsAt: new Date('2026-06-02T12:30:05.000Z'),
+        },
+        { schema: formattedSchema },
+      ),
+    ).toBe('?from=02-06-2026&startsAt=02-06-2026+12%3A30%3A05');
+  });
+
   it('supports defaults include and omit', () => {
     expect(buildSearch({ q: 'urlkit', page: 1, sort: 'newest' }, { schema })).toBe(
       '?q=urlkit&page=1&sort=newest',

@@ -1,6 +1,7 @@
 import type {
   BuildSearchOptions,
   PatchSearchOptions,
+  InvalidSearchBehavior,
   SearchArrayFormat,
   UnknownSearchBehavior,
   UnknownSearchParams,
@@ -33,6 +34,7 @@ export interface ParseSearchOptions<SearchDescriptor = unknown> {
   readonly schema?: SearchDescriptor;
   readonly unknownSearch?: UnknownSearchBehavior;
   readonly arrayFormat?: SearchArrayFormat;
+  readonly invalidSearch?: InvalidSearchBehavior;
 }
 
 export interface SearchBuildOptions<SearchDescriptor = unknown> extends BuildSearchOptions {
@@ -68,6 +70,7 @@ export interface SearchBuildContext {
 
 export interface SearchParseOptions {
   readonly arrayFormat?: SearchArrayFormat;
+  readonly invalidSearch?: InvalidSearchBehavior;
 }
 
 export interface SearchPatchContext {
