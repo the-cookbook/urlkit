@@ -122,19 +122,18 @@ describe('spec API examples', () => {
     const searchRouteUrlDescriptor = {
       path: '/search',
       search: {
-        q: 'string',
+        q: { type: 'string' },
         page: {
-          value: 'int',
+          type: 'int',
           default: 1,
         },
         tags: {
-          type: 'many',
+          type: 'string',
+          many: true,
         },
         sort: {
-          value: {
-            type: 'enum',
-            values: ['relevance', 'newest', 'popular'],
-          },
+          type: 'enum',
+          values: ['relevance', 'newest', 'popular'],
           default: 'relevance',
         },
       },
@@ -175,15 +174,16 @@ describe('spec API examples', () => {
         path: '/articles/{slug:regex([a-z0-9-]+)}',
         search: {
           ref: {
-            type: 'one',
+            type: 'string',
             optional: true,
           },
           filters: {
-            type: 'many',
+            type: 'string',
+            many: true,
             optional: true,
           },
         },
-        hash: ['comments', 'share'],
+        hash: { type: 'enum', values: ['comments', 'share'], optional: true },
       },
       {
         params: 'raw',
@@ -215,8 +215,8 @@ describe('spec API examples', () => {
     expect(
       parseRouteSearch('?ref=email&filters=react', {
         schema: {
-          ref: { type: 'one', optional: true },
-          filters: { type: 'many', optional: true },
+          ref: { type: 'string', optional: true },
+          filters: { type: 'string', many: true, optional: true },
         },
       }),
     ).toEqual({ ref: 'email', filters: ['react'] });

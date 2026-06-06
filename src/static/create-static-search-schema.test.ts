@@ -10,11 +10,11 @@ const expectType = <Value>(_value: Value): void => undefined;
 describe('createStaticSearchSchema', () => {
   it('creates runtime-compatible schema fields from static descriptors', () => {
     const schema = createStaticSearchSchema({
-      q: 'string',
-      page: { value: 'int', default: 1 },
-      tags: { type: 'many' },
-      sort: { value: { type: 'enum', values: ['newest', 'popular'] }, default: 'newest' },
-      startsAt: { value: 'date-time', optional: true },
+      q: { type: 'string' },
+      page: { type: 'int', default: 1 },
+      tags: { type: 'string', many: true },
+      sort: { type: 'enum', values: ['newest', 'popular'], default: 'newest' },
+      startsAt: { type: 'date-time', optional: true },
     } as const);
 
     expectType<Readonly<Record<string, unknown>>>(schema);
@@ -35,8 +35,8 @@ describe('createStaticSearchSchema', () => {
     expect(compiled.fields.find((field) => field.key === 'sort')?.defaultValue).toBe('newest');
   });
 
-  it('defaults field value to string and field type to one', () => {
-    const schema = createStaticSearchSchema({ ref: { optional: true } });
+  it('defaults field type to one', () => {
+    const schema = createStaticSearchSchema({ ref: { type: 'string', optional: true } });
     const field = schema.ref;
 
     const runtimeField = field as RuntimeSearchField | undefined;
@@ -78,17 +78,17 @@ describe('createStaticSearchSchema', () => {
   it('rejects invalid descriptors', () => {
     expect(() => createStaticSearchSchema(null as never)).toThrow(UrlKitError);
     expect(() => createStaticSearchSchema({ bad: 'uuid' as never })).toThrow(UrlKitError);
-    expect(() => createStaticSearchSchema({ bad: { value: 'uuid' as never } })).toThrow(
+    expect(() => createStaticSearchSchema({ bad: { value: 'uuid' } } as never)).toThrow(
+      UrlKitError,
+    );
+    expect(() => createStaticSearchSchema({ bad: { value: 'date' } } as never)).toThrow(
+      UrlKitError,
+    );
+    expect(() => createStaticSearchSchema({ bad: { type: 'enum', values: [] } } as never)).toThrow(
       UrlKitError,
     );
     expect(() =>
-      createStaticSearchSchema({ bad: { value: { type: 'date', format: 'dd-MM-yyyy' } } } as never),
+      createStaticSearchSchema({ bad: { type: 'many', default: 'x' } } as never),
     ).toThrow(UrlKitError);
-    expect(() => createStaticSearchSchema({ bad: { type: 'enum', values: [] } })).toThrow(
-      UrlKitError,
-    );
-    expect(() => createStaticSearchSchema({ bad: { type: 'many', default: 'x' } })).toThrow(
-      UrlKitError,
-    );
   });
 });

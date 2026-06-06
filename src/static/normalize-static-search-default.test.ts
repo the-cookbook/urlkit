@@ -33,12 +33,12 @@ describe('normalizeStaticSearchDefault', () => {
   });
 
   it('normalizes serialized date defaults to Date values', () => {
-    expect(normalizeStaticSearchDefault('one', 'date', '2026-06-02', path)).toEqual(
+    expect(normalizeStaticSearchDefault('one', { type: 'date' }, '2026-06-02', path)).toEqual(
       new Date('2026-06-02T00:00:00.000Z'),
     );
 
     expect(
-      normalizeStaticSearchDefault('one', 'date-time', '2026-01-01T10:30:00.000Z', path),
+      normalizeStaticSearchDefault('one', { type: 'date-time' }, '2026-01-01T10:30:00.000Z', path),
     ).toEqual(new Date('2026-01-01T10:30:00.000Z'));
   });
 
@@ -63,18 +63,33 @@ describe('normalizeStaticSearchDefault', () => {
   });
 
   it('normalizes unix defaults from finite integer numbers', () => {
-    expect(normalizeStaticSearchDefault('one', 'unix-seconds', 1_704_067_200, path)).toEqual(
-      new Date('2024-01-01T00:00:00.000Z'),
-    );
+    expect(
+      normalizeStaticSearchDefault(
+        'one',
+        { type: 'date', format: 'unix-seconds' },
+        1_704_067_200,
+        path,
+      ),
+    ).toEqual(new Date('2024-01-01T00:00:00.000Z'));
 
-    expect(normalizeStaticSearchDefault('one', 'unix-ms', 1_704_067_200_000, path)).toEqual(
-      new Date('2024-01-01T00:00:00.000Z'),
-    );
+    expect(
+      normalizeStaticSearchDefault(
+        'one',
+        { type: 'date', format: 'unix-ms' },
+        1_704_067_200_000,
+        path,
+      ),
+    ).toEqual(new Date('2024-01-01T00:00:00.000Z'));
   });
 
   it('rejects Date instances for static date defaults', () => {
     expect(() =>
-      normalizeStaticSearchDefault('one', 'date', new Date('2026-06-02T00:00:00.000Z'), path),
+      normalizeStaticSearchDefault(
+        'one',
+        { type: 'date' },
+        new Date('2026-06-02T00:00:00.000Z'),
+        path,
+      ),
     ).toThrow(UrlKitError);
   });
 
@@ -85,22 +100,32 @@ describe('normalizeStaticSearchDefault', () => {
     ).toThrow(UrlKitError);
     expect(() => normalizeStaticSearchDefault('one', 'int', 1.5, path)).toThrow(UrlKitError);
     expect(() => normalizeStaticSearchDefault('one', 'boolean', 'true', path)).toThrow(UrlKitError);
-    expect(() => normalizeStaticSearchDefault('one', 'date', '2026-02-31', path)).toThrow(
+    expect(() => normalizeStaticSearchDefault('one', { type: 'date' }, '2026-02-31', path)).toThrow(
       UrlKitError,
     );
     expect(() =>
-      normalizeStaticSearchDefault('one', 'date-time', '2026-01-01T10:30:00+02:00', path),
+      normalizeStaticSearchDefault('one', { type: 'date-time' }, '2026-01-01T10:30:00+02:00', path),
     ).toThrow(UrlKitError);
-    expect(() => normalizeStaticSearchDefault('one', 'unix-seconds', 1.5, path)).toThrow(
-      UrlKitError,
-    );
-    expect(() => normalizeStaticSearchDefault('one', 'unix-ms', '1704067200000', path)).toThrow(
-      UrlKitError,
-    );
+    expect(() =>
+      normalizeStaticSearchDefault('one', { type: 'date', format: 'unix-seconds' }, 1.5, path),
+    ).toThrow(UrlKitError);
+    expect(() =>
+      normalizeStaticSearchDefault(
+        'one',
+        { type: 'date', format: 'unix-ms' },
+        '1704067200000',
+        path,
+      ),
+    ).toThrow(UrlKitError);
   });
 
   it('validates many defaults as arrays and normalizes every item', () => {
-    const value = normalizeStaticSearchDefault('many', 'date', ['2026-06-02', '2026-06-03'], path);
+    const value = normalizeStaticSearchDefault(
+      'many',
+      { type: 'date' },
+      ['2026-06-02', '2026-06-03'],
+      path,
+    );
 
     expect(value).toEqual([
       new Date('2026-06-02T00:00:00.000Z'),

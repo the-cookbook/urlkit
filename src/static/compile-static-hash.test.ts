@@ -16,22 +16,8 @@ const expectInvalidDescriptor = (callback: () => unknown): void => {
 };
 
 describe('compileStaticHash', () => {
-  it('compiles readonly string array shorthand as optional enum hash', () => {
-    const descriptor = ['comments', 'share'] as const;
-
-    expect(compileStaticHash(descriptor)).toEqual({
-      kind: 'enum',
-      presence: 'optional',
-      values: ['comments', 'share'],
-    });
-  });
-
-  it('copies and freezes enum shorthand values', () => {
-    const descriptor = ['comments', 'share'] as const;
-    const compiled = compileStaticHash(descriptor);
-
-    expect(compiled.values).not.toBe(descriptor);
-    expect(Object.isFrozen(compiled.values)).toBe(true);
+  it('rejects readonly string array shorthand', () => {
+    expectInvalidDescriptor(() => compileStaticHash(['comments', 'share'] as never));
   });
 
   it('compiles string hash descriptors', () => {
@@ -72,20 +58,15 @@ describe('compileStaticHash', () => {
     });
   });
 
-  it('uses defaults instead of optional presence when both are present', () => {
-    expect(
+  it('rejects optional presence combined with defaults', () => {
+    expectInvalidDescriptor(() =>
       compileStaticHash({
         type: 'enum',
         values: ['overview', 'comments'],
         optional: true,
         default: 'overview',
-      }),
-    ).toEqual({
-      kind: 'enum',
-      presence: 'defaulted',
-      values: ['overview', 'comments'],
-      defaultValue: 'overview',
-    });
+      } as never),
+    );
   });
 
   it('rejects invalid static enum defaults', () => {
@@ -95,7 +76,7 @@ describe('compileStaticHash', () => {
   });
 
   it('rejects invalid hash descriptors', () => {
-    expectInvalidDescriptor(() => compileStaticHash([]));
+    expectInvalidDescriptor(() => compileStaticHash([] as never));
     expectInvalidDescriptor(() => compileStaticHash(null as never));
     expectInvalidDescriptor(() => compileStaticHash('comments' as never));
     expectInvalidDescriptor(() => compileStaticHash({} as never));

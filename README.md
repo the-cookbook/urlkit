@@ -124,6 +124,8 @@ import { createRouteUrlContract } from '@cookbook/urlkit/router-runtime';
 
 `parse` intentionally does **not** accept structured objects. Use `normalize` for structured state.
 
+`match` returns `false` for expected URL validation failures. It does not hide unexpected non-URLKit dependency or implementation errors; those errors are rethrown so delegated failures, including PathKit failures, remain visible.
+
 ### `UrlState`
 
 Parsed and normalized state always includes `pathname`, `params`, `search`, and `hash`. Optional hashes are represented as `undefined`; the `hash` property itself is still present.
@@ -541,9 +543,10 @@ Good:
 
 ```ts
 const searchDescriptor = {
-  page: { value: 'int', default: 1 },
+  page: { type: 'int', default: 1 },
   sort: {
-    value: { type: 'enum', values: ['newest', 'popular'] },
+    type: 'enum',
+    values: ['newest', 'popular'],
     default: 'newest',
   },
 } as const;
@@ -567,7 +570,7 @@ import { compileStaticUrl } from '@cookbook/urlkit/static';
 const ProductUrl = compileStaticUrl({
   path: '/products/{id:int}',
   search: searchDescriptor,
-  hash: ['details', 'reviews'],
+  hash: { type: 'enum', values: ['details', 'reviews'], optional: true },
 });
 
 ProductUrl.parse('/products/42?sort=popular#details');
@@ -589,8 +592,8 @@ import {
 const routeDescriptor = {
   path: '/articles/{slug:regex([a-z0-9-]+)}',
   search: {
-    ref: { type: 'one', optional: true },
-    page: { value: 'int', default: 1 },
+    ref: { type: 'string', optional: true },
+    page: { type: 'int', default: 1 },
     publishedOn: {
       type: 'date',
       format: 'dd-MM-yyyy',
@@ -602,7 +605,7 @@ const routeDescriptor = {
       optional: true,
     },
   },
-  hash: ['comments', 'share'],
+  hash: { type: 'enum', values: ['comments', 'share'], optional: true },
 } as const;
 
 const ArticleUrl = createRouteUrlContract(routeDescriptor);

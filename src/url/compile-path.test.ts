@@ -10,26 +10,69 @@ const expectUrlKitError = (
   callback: () => unknown,
   code: UrlKitError['code'],
   path: readonly string[],
-): void => {
+): UrlKitError => {
   try {
     callback();
   } catch (error) {
     expect(error).toBeInstanceOf(UrlKitError);
-    expect((error as UrlKitError).code).toBe(code);
-    expect((error as UrlKitError).path).toEqual(path);
-    return;
+    const urlKitError = error as UrlKitError;
+    expect(urlKitError.code).toBe(code);
+    expect(urlKitError.path).toEqual(path);
+    return urlKitError;
   }
 
   throw new Error(`Expected ${code}.`);
 };
 
+const expectCause = (error: UrlKitError, cause?: unknown): void => {
+  if (cause !== undefined) {
+    expect(error.cause).toBe(cause);
+    return;
+  }
+
+  expect(error.cause).toBeDefined();
+};
+
 describe('compilePath', () => {
-  it('wraps invalid PathKit pattern errors as invalid descriptors', () => {
-    expectUrlKitError(() => compilePath('/users/{'), 'invalid-descriptor', ['path']);
+  it('wraps invalid PathKit pattern errors while preserving the original cause', () => {
+    const error = expectUrlKitError(() => compilePath('/users/{'), 'invalid-descriptor', ['path']);
+
+    expectCause(error);
+    expect(error.message).toContain('Path pattern is invalid');
   });
 
-  it('wraps invalid regex constraints as invalid descriptors', () => {
-    expectUrlKitError(() => compilePath('/users/{id:regex([)}'), 'invalid-descriptor', ['path']);
+  it('wraps invalid regex constraints while preserving the original cause', () => {
+    const error = expectUrlKitError(
+      () => compilePath('/users/{id:regex([)}'),
+      'invalid-descriptor',
+      ['path'],
+    );
+
+    expectCause(error);
+  });
+
+  it('wraps custom constraint compilation errors while preserving the original cause', () => {
+    const compileError = new Error('Slug constraint could not compile.');
+    const slug = createConstraint({
+      parse() {},
+      verify() {},
+      toRegExp() {
+        throw compileError;
+      },
+    });
+
+    const error = expectUrlKitError(
+      () =>
+        compilePath('/posts/{slug:urlkitslugverify(required)}', {
+          pathConstraints: {
+            urlkitslugverify: slug,
+          },
+        }),
+      'invalid-descriptor',
+      ['path'],
+    );
+
+    expectCause(error, compileError);
   });
 
   it('parses static paths', () => {
@@ -112,16 +155,76 @@ describe('compilePath', () => {
     );
   });
 
-  it('throws missing-param when building without required params', () => {
-    const path = compilePath('/users/{id:int}');
+  it('wraps custom PathKit parse errors while preserving the original cause', () => {
+    const parseError = new Error('Slug contains invalid characters.');
+    const slug = createConstraint({
+      parse() {
+        throw parseError;
+      },
+      verify() {},
+      toRegExp() {
+        return '[a-z0-9-]+';
+      },
+    });
 
-    expectUrlKitError(() => path.buildPath({} as never), 'missing-param', ['params', 'id']);
+    const path = compilePath('/posts/{slug:urlkitslugparse}', {
+      pathConstraints: {
+        urlkitslugparse: slug,
+      },
+    });
+
+    const error = expectUrlKitError(() => path.parsePathname('/posts/post-1'), 'invalid-param', [
+      'params',
+      'slug',
+    ]);
+
+    expectCause(error, parseError);
   });
 
-  it('throws invalid-param when building invalid params', () => {
+  it('wraps custom PathKit build errors while preserving the original cause', () => {
+    const parseError = new Error('Slug contains invalid characters.');
+    const slug = createConstraint({
+      parse() {
+        throw parseError;
+      },
+      verify() {},
+      toRegExp() {
+        return '[a-z0-9-]+';
+      },
+    });
+
+    const path = compilePath('/posts/{slug:urlkitslugbuild}', {
+      pathConstraints: {
+        urlkitslugbuild: slug,
+      },
+    });
+
+    const error = expectUrlKitError(() => path.buildPath({ slug: 'post-1' }), 'invalid-param', [
+      'params',
+    ]);
+
+    expectCause(error, parseError);
+  });
+
+  it('throws missing-param when building without required params and preserves the PathKit cause', () => {
     const path = compilePath('/users/{id:int}');
 
-    expectUrlKitError(() => path.buildPath({ id: 'abc' } as never), 'invalid-param', ['params']);
+    const error = expectUrlKitError(() => path.buildPath({} as never), 'missing-param', [
+      'params',
+      'id',
+    ]);
+
+    expectCause(error);
+  });
+
+  it('throws invalid-param when building invalid params and preserves the PathKit cause', () => {
+    const path = compilePath('/users/{id:int}');
+
+    const error = expectUrlKitError(() => path.buildPath({ id: 'abc' } as never), 'invalid-param', [
+      'params',
+    ]);
+
+    expectCause(error);
   });
 
   it('throws invalid-param when pathname shape matches but param constraints fail', () => {

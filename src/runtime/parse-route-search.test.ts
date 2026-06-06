@@ -5,28 +5,27 @@ import { parseSearch } from './parse-route-search.js';
 const expectType = <Value>(_value: Value): void => undefined;
 
 const schema = {
-  q: 'string',
+  q: { type: 'string' },
   page: {
-    value: 'int',
+    type: 'int',
     default: 1,
   },
   tags: {
-    type: 'many',
+    type: 'string',
+    many: true,
     optional: true,
   },
   active: {
-    value: 'boolean',
+    type: 'boolean',
     optional: true,
   },
   sort: {
-    value: {
-      type: 'enum',
-      values: ['newest', 'popular'],
-    },
+    type: 'enum',
+    values: ['newest', 'popular'],
     default: 'newest',
   },
   startsAt: {
-    value: 'date-time',
+    type: 'date-time',
     optional: true,
   },
 } as const;
@@ -100,9 +99,9 @@ describe('router-runtime parseSearch', () => {
 
   it('can omit invalid optional declared fields without rejecting the full search', () => {
     const formattedSchema = {
-      page: { value: 'int', default: 1 },
-      ref: { type: 'one', optional: true },
-      tag: { type: 'many', value: 'string', optional: true },
+      page: { type: 'int', default: 1 },
+      ref: { type: 'string', optional: true },
+      tag: { type: 'string', many: true, optional: true },
       publishedOn: {
         type: 'date',
         format: 'dd-MM-yyyy',
@@ -144,7 +143,7 @@ describe('router-runtime parseSearch', () => {
   });
 
   it('keeps required invalid declared fields strict even with invalidSearch omit', () => {
-    const requiredSchema = { active: 'boolean' } as const;
+    const requiredSchema = { active: { type: 'boolean' } } as const;
 
     expect(() =>
       parseSearch('?active=1', { schema: requiredSchema, invalidSearch: 'omit' }),

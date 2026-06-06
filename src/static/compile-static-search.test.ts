@@ -9,13 +9,13 @@ import type { InferStaticSearch } from './contracts.js';
 const expectType = <Value>(_value: Value): void => undefined;
 
 describe('compileStaticSearch', () => {
-  it('supports shorthand fields and parses schema-based search', () => {
+  it('supports object fields and parses schema-based search', () => {
     const descriptor = {
-      q: 'string',
-      page: { value: 'int', default: 1 },
-      score: { value: 'number', optional: true },
-      active: { value: 'boolean' },
-      sort: { value: { type: 'enum', values: ['newest', 'popular'] }, default: 'newest' },
+      q: { type: 'string' },
+      page: { type: 'int', default: 1 },
+      score: { type: 'number', optional: true },
+      active: { type: 'boolean' },
+      sort: { type: 'enum', values: ['newest', 'popular'], default: 'newest' },
     } as const;
 
     const schema = compileStaticSearch(descriptor);
@@ -33,8 +33,8 @@ describe('compileStaticSearch', () => {
 
   it('supports one and many fields', () => {
     const schema = compileStaticSearch({
-      tag: { type: 'many', value: 'string', default: ['react'] },
-      q: { type: 'one' },
+      tag: { type: 'string', many: true, default: ['react'] },
+      q: { type: 'string' },
     });
 
     expect(parseSearch('?q=router&tag=ts&tag=url', { schema }).search).toEqual({
@@ -46,12 +46,12 @@ describe('compileStaticSearch', () => {
     );
   });
 
-  it('supports all static date shorthand formats', () => {
+  it('supports all static date descriptor formats', () => {
     const schema = compileStaticSearch({
-      d: { value: 'date', default: '2026-06-02' },
-      dt: { value: 'date-time', default: '2026-01-01T10:30:00.000Z' },
-      seconds: { value: 'unix-seconds', default: 1_704_067_200 },
-      ms: { value: 'unix-ms', default: 1_704_067_200_000 },
+      d: { type: 'date', default: '2026-06-02' },
+      dt: { type: 'date-time', default: '2026-01-01T10:30:00.000Z' },
+      seconds: { type: 'date', format: 'unix-seconds', default: 1_704_067_200 },
+      ms: { type: 'date', format: 'unix-ms', default: 1_704_067_200_000 },
     });
 
     expect(parseSearch('', { schema }).search).toEqual({
@@ -62,18 +62,16 @@ describe('compileStaticSearch', () => {
     });
   });
 
-  it('rejects nested date and date-time value descriptors', () => {
+  it('rejects old direct and shorthand static search value forms', () => {
+    expect(() => compileStaticSearch({ q: 'string' } as never)).toThrow(
+      'Static search field must use the object form',
+    );
+    expect(() => compileStaticSearch({ q: { type: 'many' } } as never)).toThrow(
+      'Static search field type is invalid.',
+    );
     expect(() =>
-      compileStaticSearch({
-        created: { value: { type: 'date', format: 'dd-MM-yyyy' }, optional: true },
-      } as never),
-    ).toThrow('Static date and date-time search fields must use the direct');
-
-    expect(() =>
-      compileStaticSearch({
-        startsAt: { value: { type: 'date-time', format: 'dd-MM-yyyy HH:mm:ss' }, optional: true },
-      } as never),
-    ).toThrow('Static date and date-time search fields must use the direct');
+      compileStaticSearch({ created: { value: 'date', optional: true } } as never),
+    ).toThrow('Static search field must define a type.');
   });
 
   it('supports static date and date-time format strings', () => {
@@ -113,22 +111,24 @@ describe('compileStaticSearch', () => {
   });
 
   it('validates defaults at compile time', () => {
-    expect(() => compileStaticSearch({ q: { value: 'string', default: 1 } })).toThrow(UrlKitError);
-    expect(() => compileStaticSearch({ n: { value: 'number', default: Number.NaN } })).toThrow(
+    expect(() => compileStaticSearch({ q: { type: 'string', default: 1 } })).toThrow(UrlKitError);
+    expect(() => compileStaticSearch({ n: { type: 'number', default: Number.NaN } })).toThrow(
       UrlKitError,
     );
-    expect(() => compileStaticSearch({ i: { value: 'int', default: 1.1 } })).toThrow(UrlKitError);
-    expect(() => compileStaticSearch({ b: { value: 'boolean', default: 'true' } })).toThrow(
+    expect(() => compileStaticSearch({ i: { type: 'int', default: 1.1 } })).toThrow(UrlKitError);
+    expect(() => compileStaticSearch({ b: { type: 'boolean', default: 'true' } })).toThrow(
       UrlKitError,
     );
-    expect(() => compileStaticSearch({ d: { value: 'date', default: new Date() } })).toThrow(
+    expect(() => compileStaticSearch({ d: { type: 'date', default: new Date() } })).toThrow(
       UrlKitError,
     );
-    expect(() => compileStaticSearch({ d: { value: 'date', default: '2026-13-01' } })).toThrow(
+    expect(() => compileStaticSearch({ d: { type: 'date', default: '2026-13-01' } })).toThrow(
       UrlKitError,
     );
     expect(() =>
-      compileStaticSearch({ dt: { value: 'date-time', default: '2026-01-01T10:30:00+02:00' } }),
+      compileStaticSearch({
+        dt: { type: 'date-time', default: '2026-01-01T10:30:00+02:00' },
+      }),
     ).toThrow(UrlKitError);
     expect(() =>
       compileStaticSearch({
@@ -145,21 +145,23 @@ describe('compileStaticSearch', () => {
       }),
     ).toThrow(UrlKitError);
     expect(() =>
-      compileStaticSearch({ seconds: { value: 'unix-seconds', default: '1704067200' } }),
+      compileStaticSearch({
+        seconds: { type: 'date', format: 'unix-seconds', default: '1704067200' },
+      }),
     ).toThrow(UrlKitError);
-    expect(() => compileStaticSearch({ tags: { type: 'many', default: 'react' } })).toThrow(
-      UrlKitError,
-    );
+    expect(() =>
+      compileStaticSearch({ tags: { type: 'string', many: true, default: 'react' } } as never),
+    ).toThrow(UrlKitError);
     expect(() =>
       compileStaticSearch({
-        sort: { value: { type: 'enum', values: ['newest'] }, default: 'popular' },
+        sort: { type: 'enum', values: ['newest'], default: 'popular' },
       }),
     ).toThrow(UrlKitError);
   });
 
   it('throws invalid-descriptor for invalid descriptors', () => {
     try {
-      compileStaticSearch({ q: { value: 'int', default: '1' } });
+      compileStaticSearch({ q: { type: 'int', default: '1' } });
     } catch (error) {
       expect(error).toBeInstanceOf(UrlKitError);
       expect((error as UrlKitError).code).toBe('invalid-descriptor');
@@ -172,15 +174,56 @@ describe('compileStaticSearch', () => {
 
   it('returns a schema that compiles to deterministic field descriptors', () => {
     const schema = compileStaticSearch({
-      filters: { type: 'many' },
-      page: { value: 'int', default: 1 },
+      filters: { type: 'string', many: true },
+      page: { type: 'int', default: 1 },
     });
 
     const compiled = compileSearchSchema(schema);
 
     expect(compiled.fields).toMatchObject([
       { key: 'filters', type: 'many', presence: 'required' },
-      { key: 'page', type: 'one', presence: 'defaulted', defaultValue: 1 },
+      { key: 'page', presence: 'defaulted', defaultValue: 1 },
     ]);
+  });
+
+  it('rejects runtime date codecs in static date and date-time search formats', () => {
+    const codec = {
+      parse: (value: string) => new Date(value),
+      serialize: (value: Date) => value.toISOString(),
+    };
+
+    expect(() =>
+      compileStaticSearch({
+        from: {
+          type: 'date',
+          format: codec,
+        },
+      } as never),
+    ).toThrow('Static date search format must be a string.');
+
+    expect(() =>
+      compileStaticSearch({
+        from: {
+          type: 'date-time',
+          format: codec,
+        },
+      } as never),
+    ).toThrow('Static date-time search format must be a string.');
+
+    try {
+      compileStaticSearch({
+        from: {
+          type: 'date',
+          format: codec,
+        },
+      } as never);
+    } catch (error) {
+      expect(error).toBeInstanceOf(UrlKitError);
+      expect((error as UrlKitError).code).toBe('invalid-descriptor');
+      expect((error as UrlKitError).path).toEqual(['search', 'from', 'format']);
+      return;
+    }
+
+    throw new Error('Expected static date codec format to be rejected.');
   });
 });

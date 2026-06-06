@@ -12,13 +12,12 @@ import type {
   StaticDateFormat,
   StaticDateTimeFormat,
   StaticSearchDescriptor,
-  StaticSearchField,
-  StaticResolvedSearchValue,
+  StaticSearchValue,
 } from './contracts.js';
 import {
+  assertStaticSearchField,
   getStaticSearchFieldDefault,
   hasStaticSearchFieldDefault,
-  isStaticSearchFieldObject,
   isStaticSearchFieldOptional,
   normalizeStaticSearchFieldType,
   normalizeStaticSearchFieldValue,
@@ -41,21 +40,12 @@ export function createStaticSearchSchema(descriptor: StaticSearchDescriptor): Ru
   return Object.freeze(schema);
 }
 
-function createStaticSearchField(key: string, field: StaticSearchField): RuntimeSearchField {
+function createStaticSearchField(key: string, field: unknown): RuntimeSearchField {
   const path = ['search', key];
-  const fieldType = isStaticSearchFieldObject(field)
-    ? normalizeStaticSearchFieldType(field.type, path)
-    : 'one';
-  const valueDescriptor = normalizeStaticSearchFieldValue(field);
+  assertStaticSearchField(field, path);
 
-  if (isStaticSearchFieldObject(field) && isStaticDateLikeValue(valueDescriptor)) {
-    throw new UrlKitError(
-      'invalid-descriptor',
-      'Static date and date-time search fields must use the direct { type, format, optional } form.',
-      { path },
-    );
-  }
-
+  const fieldType = normalizeStaticSearchFieldType(field.many, path);
+  const valueDescriptor = normalizeStaticSearchFieldValue(field, path);
   const value = createStaticSearchValueSchema(valueDescriptor, path);
   const hasDefault = hasStaticSearchFieldDefault(field);
   const defaultValue = hasDefault
@@ -76,7 +66,7 @@ function createStaticSearchField(key: string, field: StaticSearchField): Runtime
 }
 
 function createStaticSearchValueSchema(
-  value: StaticResolvedSearchValue,
+  value: StaticSearchValue,
   path: readonly string[],
 ): AnyRuntimeSchemaBuilder {
   if (value === 'string') {
@@ -95,22 +85,6 @@ function createStaticSearchValueSchema(
     return boolean();
   }
 
-  if (value === 'date') {
-    return date({ format: 'date' });
-  }
-
-  if (value === 'date-time') {
-    return date({ format: 'date-time' });
-  }
-
-  if (value === 'unix-seconds') {
-    return date({ format: 'unix-seconds' });
-  }
-
-  if (value === 'unix-ms') {
-    return date({ format: 'unix-ms' });
-  }
-
   if (isStaticDateValue(value)) {
     return date({ format: value.format ?? 'date' });
   }
@@ -126,10 +100,6 @@ function createStaticSearchValueSchema(
   throw new UrlKitError('invalid-descriptor', 'Static search value descriptor is invalid.', {
     path,
   });
-}
-
-function isStaticDateLikeValue(input: unknown): boolean {
-  return isStaticDateValue(input) || isStaticDateTimeValue(input);
 }
 
 function isStaticDateValue(input: unknown): input is {

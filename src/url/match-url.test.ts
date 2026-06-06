@@ -3,7 +3,7 @@ import { enumOf } from '../schema/enum-of.js';
 import { int } from '../schema/int.js';
 import { string } from '../schema/string.js';
 import { compileRuntimeUrlDescriptor } from './compile-runtime-url-descriptor.js';
-import { compileUrlDescriptor } from './compile-url-descriptor.js';
+import { compileUrlDescriptor, type CompiledUrlDescriptor } from './compile-url-descriptor.js';
 import type { RuntimeUrlDescriptor } from './contracts.js';
 import { url } from './create-url.js';
 import { matchCompiledUrl } from './match-url.js';
@@ -138,6 +138,25 @@ describe('matchCompiledUrl', () => {
 
     expect(() => matchCompiledUrl({ params: { id: 1 } } as never, compiled, 'strip')).not.toThrow();
     expect(matchCompiledUrl({ params: { id: 1 } } as never, compiled, 'strip')).toBe(false);
+  });
+
+  it('rethrows unexpected non-UrlKit errors instead of hiding delegated failures', () => {
+    const unexpected = new Error('Unexpected delegated path failure.');
+    const compiled = {
+      mode: 'path',
+      pattern: '/broken',
+      path: {
+        pattern: '/broken',
+        parsePathname() {
+          throw unexpected;
+        },
+        buildPath() {
+          return '/broken';
+        },
+      },
+    } as unknown as CompiledUrlDescriptor<'path'>;
+
+    expect(() => matchCompiledUrl('/broken', compiled, 'strip')).toThrow(unexpected);
   });
 });
 

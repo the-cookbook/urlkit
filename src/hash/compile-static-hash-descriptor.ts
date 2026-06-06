@@ -10,11 +10,11 @@ export function compileStaticHashDescriptor(
   descriptor: StaticHashDescriptor,
 ): NormalizedHashDescriptor<string | undefined> {
   if (Array.isArray(descriptor)) {
-    return Object.freeze({
-      kind: 'enum',
-      presence: 'optional',
-      values: normalizeEnumValues(descriptor),
-    });
+    throw new UrlKitError(
+      'invalid-descriptor',
+      'Hash descriptor array shorthand is not supported. Use { type: "enum", values, optional: true }.',
+      { path: ['hash'] },
+    );
   }
 
   if (isStaticStringHashDescriptor(descriptor)) {
@@ -27,7 +27,7 @@ export function compileStaticHashDescriptor(
 
   throw new UrlKitError(
     'invalid-descriptor',
-    'Hash descriptor must be a string, enum, or enum shorthand descriptor.',
+    'Hash descriptor must be an object descriptor with type "string" or "enum".',
     {
       path: ['hash'],
     },
@@ -38,9 +38,10 @@ function compileStaticStringHashDescriptor(
   descriptor: StaticStringHashDescriptor,
 ): NormalizedHashDescriptor<string | undefined> {
   assertOptionalFlag(descriptor.optional);
+  assertOptionalWithoutDefault(descriptor);
 
   if (
-    'default' in descriptor &&
+    Object.prototype.hasOwnProperty.call(descriptor, 'default') &&
     descriptor.default !== undefined &&
     typeof descriptor.default !== 'string'
   ) {
@@ -64,6 +65,7 @@ function compileStaticEnumHashDescriptor(
   descriptor: StaticEnumHashDescriptor,
 ): NormalizedHashDescriptor<string | undefined> {
   assertOptionalFlag(descriptor.optional);
+  assertOptionalWithoutDefault(descriptor);
 
   const values = normalizeEnumValues(descriptor.values);
 
@@ -91,6 +93,19 @@ function compileStaticEnumHashDescriptor(
   });
 }
 
+function assertOptionalWithoutDefault(descriptor: {
+  readonly optional?: true;
+  readonly default?: unknown;
+}): void {
+  if (descriptor.optional === true && Object.prototype.hasOwnProperty.call(descriptor, 'default')) {
+    throw new UrlKitError(
+      'invalid-descriptor',
+      'Hash descriptor cannot combine optional: true with a default.',
+      { path: ['hash'] },
+    );
+  }
+}
+
 function normalizeEnumValues(values: readonly string[]): readonly string[] {
   if (!Array.isArray(values) || !values.length) {
     throw new UrlKitError('invalid-descriptor', 'Enum hash values must be a non-empty array.', {
@@ -110,8 +125,8 @@ function normalizeEnumValues(values: readonly string[]): readonly string[] {
 }
 
 function assertOptionalFlag(optional: unknown): void {
-  if (optional !== undefined && typeof optional !== 'boolean') {
-    throw new UrlKitError('invalid-descriptor', 'Hash optional flag must be a boolean.', {
+  if (optional !== undefined && optional !== true) {
+    throw new UrlKitError('invalid-descriptor', 'Hash optional flag must be true when present.', {
       path: ['hash'],
     });
   }

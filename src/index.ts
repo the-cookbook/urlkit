@@ -19,3 +19,12 @@ export * from './url/contracts.js';
 export * from './url/create-url.js';
 export * from './search/create-search.js';
 export * from './hash/create-hash.js';
+export { createRouteUrlContract } from './runtime/create-route-url-contract.js';
+export type { RouteUrlContract } from './runtime/create-route-url-contract.js';
+export type { CreateRouteUrlContractOptions } from './runtime/contracts.js';
+export type {
+  StaticUrlDescriptor,
+  StaticSearchDescriptor,
+  StaticSearchField,
+  StaticHashDescriptor,
+} from './static/contracts.js';

@@ -1,4 +1,5 @@
 import {
+  UrlKitError,
   buildSearch,
   createRouteUrlContract,
   omitSearch,
@@ -7,14 +8,30 @@ import {
   patchSearch,
   pickSearch,
   replaceSearch,
+  type RouteUrlContract,
+  type StaticUrlDescriptor,
 } from '@cookbook/urlkit/router-runtime';
 
-const articleRouteUrl = {
+export const articleRouteUrlDescriptor = {
   path: '/articles/{id:int}',
   search: {
-    page: { value: 'int', default: 1 },
-    ref: { type: 'one', optional: true },
-    tag: { type: 'many', value: 'string', optional: true },
+    category: { type: 'string' },
+    page: { type: 'int', default: 1 },
+    ref: { type: 'string', optional: true },
+    tag: { type: 'string', many: true, optional: true },
+    sort: {
+      type: 'enum',
+      values: ['newest', 'popular'],
+      default: 'newest',
+    },
+    featured: {
+      type: 'boolean',
+      optional: true,
+    },
+    score: {
+      type: 'number',
+      optional: true,
+    },
     publishedOn: {
       type: 'date',
       format: 'dd-MM-yyyy',
@@ -26,111 +43,305 @@ const articleRouteUrl = {
       optional: true,
     },
   },
-  hash: ['comments', 'share'],
-} as const;
+  hash: {
+    type: 'enum',
+    values: ['comments', 'share'],
+    optional: true,
+  },
+} as const satisfies StaticUrlDescriptor;
 
-const ArticleUrlRawParams = createRouteUrlContract(articleRouteUrl);
-const rawState = ArticleUrlRawParams.parse('/articles/42?page=2&ref=email#comments');
+export const ArticleUrlRawParams: RouteUrlContract<typeof articleRouteUrlDescriptor> =
+  createRouteUrlContract(articleRouteUrlDescriptor);
 
-// Router-runtime defaults to raw params for router compatibility.
-// rawState.params.id === '42'
+export const ArticleUrlParsedParams = createRouteUrlContract(articleRouteUrlDescriptor, {
+  params: 'parsed',
+});
 
-const ArticleUrlParsedParams = createRouteUrlContract(articleRouteUrl, { params: 'parsed' });
-const parsedState = ArticleUrlParsedParams.parse('/articles/42?page=2&ref=email#comments');
+export const rawState = ArticleUrlRawParams.parse(
+  '/articles/42?category=engineering&page=2&ref=email&tag=ts&tag=url&sort=popular&featured=true&score=9.5&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05#comments',
+);
 
-// parsedState.params.id === 42
+export const parsedState = ArticleUrlParsedParams.parse(
+  '/articles/42?category=engineering&page=2&ref=email#comments',
+);
 
-const parsedSearch = parseSearch(
-  '?page=2&ref=email&tag=ts&tag=url&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05',
+export const parsedArticleUrl = ArticleUrlParsedParams.parse(
+  '/articles/42?category=engineering&page=2&ref=newsletter&tag=ts&tag=urlkit&sort=popular&featured=true&score=9.5&publishedOn=06-06-2026&scheduledAt=06-06-2026%2010%3A30%3A00#comments',
+);
+
+export const safeParsedArticleUrl = ArticleUrlParsedParams.safeParse(
+  '/articles/42?category=engineering&page=2#comments',
+);
+
+export const articleRequest = new Request(
+  'https://example.com/articles/42?category=engineering&page=2&tag=ts#comments',
+);
+
+export const parsedArticleRequest = ArticleUrlParsedParams.parseRequest(articleRequest);
+export const safeParsedArticleRequest = ArticleUrlParsedParams.safeParseRequest(articleRequest);
+
+export const normalizedArticleUrl = ArticleUrlParsedParams.normalize({
+  params: { id: 42 },
+  search: {
+    category: 'engineering',
+    page: 2,
+    ref: 'newsletter',
+    tag: ['ts', 'urlkit'],
+    sort: 'popular',
+    featured: true,
+    score: 9.5,
+    publishedOn: new Date('2026-06-06T00:00:00.000Z'),
+    scheduledAt: new Date('2026-06-06T10:30:00.000Z'),
+  },
+  hash: 'comments',
+});
+
+export const safeNormalizedArticleUrl = ArticleUrlParsedParams.safeNormalize({
+  params: { id: 42 },
+  search: {
+    category: 'engineering',
+    page: 2,
+    sort: 'popular',
+  },
+  hash: 'share',
+});
+
+export const builtArticleUrl = ArticleUrlParsedParams.build({
+  params: { id: 42 },
+  search: {
+    category: 'engineering',
+    page: 2,
+    ref: 'newsletter',
+    tag: ['ts', 'urlkit'],
+    sort: 'popular',
+    featured: true,
+    score: 9.5,
+    publishedOn: new Date('2026-06-06T00:00:00.000Z'),
+    scheduledAt: new Date('2026-06-06T10:30:00.000Z'),
+  },
+  hash: 'comments',
+});
+
+export const articleUrlMatches = ArticleUrlParsedParams.match(
+  '/articles/42?category=engineering&page=2#comments',
+);
+
+export const parsedSearch = parseSearch(
+  '?category=engineering&page=2&ref=email&tag=ts&tag=url&sort=popular&featured=true&score=9.5&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05',
   {
-    schema: articleRouteUrl.search,
+    schema: articleRouteUrlDescriptor.search,
   },
 );
 
-// parsedSearch.page === 2
-// parsedSearch.ref === 'email'
-// parsedSearch.tag === ['ts', 'url']
-// parsedSearch.publishedOn is a Date parsed from dd-MM-yyyy
-// parsedSearch.scheduledAt is a Date parsed from dd-MM-yyyy HH:mm:ss
-
-const partiallyParsedSearch = ArticleUrlRawParams.parseSearch(
-  '/articles/1?page=2&ref=email&tag=ts&tag=url&publishedOn=02-06-2026&scheduledAt=foo',
+export const partiallyParsedSearch = ArticleUrlParsedParams.parseSearch(
+  '/articles/1?category=engineering&page=2&ref=email&tag=ts&tag=url&publishedOn=02-06-2026&scheduledAt=foo',
   {
     invalidSearch: 'omit',
   },
 );
 
-// partiallyParsedSearch extracts the search from a serialized path,
-// keeps valid fields, and omits invalid optional scheduledAt.
-
-const invalidRawState = ArticleUrlRawParams.safeParse(
-  '/articles/42?page=2&ref=email&tag=ts&tag=url&publishedOn=02-06-2026&scheduledAt=foo',
+export const invalidRawState = ArticleUrlParsedParams.safeParse(
+  '/articles/42?category=engineering&page=2&ref=email&tag=ts&tag=url&publishedOn=02-06-2026&scheduledAt=foo',
 );
 
-// invalidRawState.success === false because strict parsing rejects invalid declared search fields.
-
-const partialRawState = ArticleUrlRawParams.safeParse(
-  '/articles/42?page=2&ref=email&tag=ts&tag=url&publishedOn=02-06-2026&scheduledAt=foo',
+export const partialRawState = ArticleUrlParsedParams.safeParse(
+  '/articles/42?category=engineering&page=2&ref=email&tag=ts&tag=url&publishedOn=02-06-2026&scheduledAt=foo',
   { invalidSearch: 'omit' },
 );
 
-// partialRawState.success === true and scheduledAt is omitted from search.
+export const partialHash = parseHash('#overview', articleRouteUrlDescriptor.hash, {
+  invalidHash: 'omit',
+});
 
-const partialHash = parseHash('#overview', articleRouteUrl.hash, { invalidHash: 'omit' });
-
-// partialHash === undefined because #overview is not one of comments/share.
-
-const builtSearch = buildSearch(
+export const builtSearch = buildSearch(
   {
+    category: 'engineering',
     page: 3,
     ref: 'newsletter',
     tag: ['ts', 'url'],
+    sort: 'popular',
+    featured: true,
+    score: 9.5,
     publishedOn: new Date('2026-06-02T00:00:00.000Z'),
     scheduledAt: new Date('2026-06-02T12:30:05.000Z'),
   },
-  { schema: articleRouteUrl.search },
+  { schema: articleRouteUrlDescriptor.search },
 );
 
-// builtSearch === '?page=3&ref=newsletter&tag=ts&tag=url&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05'
-
-const patchedSearch = patchSearch(
-  '?page=2&ref=email&tag=ts',
+export const patchedSearch = patchSearch(
+  '?category=engineering&page=2&ref=email&tag=ts',
   { page: 4 },
-  { schema: articleRouteUrl.search },
+  { schema: articleRouteUrlDescriptor.search },
 );
 
-// patchedSearch === '?page=4&ref=email&tag=ts'
-
-const replacedSearch = replaceSearch(
-  '?page=2&ref=email&tag=ts',
-  { page: 1 },
-  { schema: articleRouteUrl.search },
+export const replacedSearch = replaceSearch(
+  '?category=engineering&page=2&ref=email&tag=ts',
+  { category: 'engineering', page: 1 },
+  { schema: articleRouteUrlDescriptor.search },
 );
 
-// replacedSearch === '?page=1'
+export const omittedSearch = omitSearch('?category=engineering&page=2&ref=email&tag=ts', ['ref']);
 
-const omittedSearch = omitSearch('?page=2&ref=email&tag=ts', ['ref']);
+export const pickedSearch = pickSearch('?category=engineering&page=2&ref=email&tag=ts', [
+  'page',
+  'tag',
+]);
 
-// omittedSearch === '?page=2&tag=ts'
+export const strippedUnknownSearch = ArticleUrlParsedParams.parse(
+  '/articles/42?category=engineering&page=2&utm_source=ignored#comments',
+  { unknownSearch: 'strip' },
+);
 
-const pickedSearch = pickSearch('?page=2&ref=email&tag=ts', ['page', 'tag']);
+export const preservedUnknownSearch = ArticleUrlParsedParams.parse(
+  '/articles/42?category=engineering&page=2&utm_source=kept#comments',
+  { unknownSearch: 'preserve' },
+);
 
-// pickedSearch === '?page=2&tag=ts'
+export const unknownSearchError = ArticleUrlParsedParams.safeParse(
+  '/articles/42?category=engineering&page=2&utm_source=error#comments',
+  { unknownSearch: 'error' },
+);
 
-export {
-  ArticleUrlParsedParams,
-  ArticleUrlRawParams,
-  articleRouteUrl,
-  builtSearch,
-  invalidRawState,
-  omittedSearch,
-  partialHash,
-  partialRawState,
-  partiallyParsedSearch,
-  parsedSearch,
-  parsedState,
-  patchedSearch,
-  pickedSearch,
-  rawState,
-  replacedSearch,
+export const listingUrlDescriptor = {
+  search: {
+    page: { type: 'int', default: 1 },
+    tag: { type: 'string', many: true, optional: true },
+  },
+  hash: {
+    type: 'string',
+    optional: true,
+  },
+} as const satisfies StaticUrlDescriptor;
+
+export const ListingUrl = createRouteUrlContract(listingUrlDescriptor);
+
+export const listingSuffix = ListingUrl.build({
+  search: {
+    page: 2,
+    tag: ['typescript', 'urlkit'],
+  },
+  hash: 'results',
+});
+
+export const listingPath = ListingUrl.build({
+  pathname: '/articles',
+  search: {
+    page: 2,
+    tag: ['typescript', 'urlkit'],
+  },
+  hash: 'results',
+});
+
+export const defaultedHashUrlDescriptor = {
+  path: '/docs/{slug}',
+  hash: {
+    type: 'enum',
+    values: ['overview', 'api'],
+    default: 'overview',
+  },
+} as const satisfies StaticUrlDescriptor;
+
+export const DefaultedHashUrl = createRouteUrlContract(defaultedHashUrlDescriptor);
+export const defaultedHashState = DefaultedHashUrl.parse('/docs/intro');
+export const defaultedHashHref = DefaultedHashUrl.build({ params: { slug: 'intro' } });
+
+export const brokenArticleUrls = {
+  pathMismatch: ArticleUrlParsedParams.safeParse('/authors/42?category=engineering&page=2'),
+  invalidParam: ArticleUrlParsedParams.safeParse(
+    '/articles/not-an-int?category=engineering&page=2',
+  ),
+  missingRequiredSearch: ArticleUrlParsedParams.safeParse('/articles/42?page=2#comments'),
+  invalidIntSearch: ArticleUrlParsedParams.safeParse(
+    '/articles/42?category=engineering&page=abc#comments',
+  ),
+  invalidEnumSearch: ArticleUrlParsedParams.safeParse(
+    '/articles/42?category=engineering&page=2&sort=oldest',
+  ),
+  invalidBooleanSearch: ArticleUrlParsedParams.safeParse(
+    '/articles/42?category=engineering&page=2&featured=yes',
+  ),
+  invalidDateSearch: ArticleUrlParsedParams.safeParse(
+    '/articles/42?category=engineering&page=2&publishedOn=2026-06-06',
+  ),
+  invalidDateTimeSearch: ArticleUrlParsedParams.safeParse(
+    '/articles/42?category=engineering&page=2&scheduledAt=2026-06-06T10:30:00.000Z',
+  ),
+  invalidHash: ArticleUrlParsedParams.safeParse('/articles/42?category=engineering&page=2#invalid'),
+  unknownSearchRejected: ArticleUrlParsedParams.safeParse(
+    '/articles/42?category=engineering&page=2&utm_source=blocked',
+    { unknownSearch: 'error' },
+  ),
+};
+
+export const brokenArticleStates = {
+  missingParam: ArticleUrlParsedParams.safeNormalize({
+    params: {} as never,
+    search: { category: 'engineering', page: 2 },
+    hash: 'comments',
+  }),
+  invalidParam: ArticleUrlParsedParams.safeNormalize({
+    params: { id: Number.NaN },
+    search: { category: 'engineering', page: 2 },
+    hash: 'comments',
+  }),
+  invalidSearch: ArticleUrlParsedParams.safeNormalize({
+    params: { id: 42 },
+    search: { category: 'engineering', page: Number.NaN },
+    hash: 'comments',
+  }),
+  invalidHash: ArticleUrlParsedParams.safeNormalize({
+    params: { id: 42 },
+    search: { category: 'engineering', page: 2 },
+    hash: 'invalid' as never,
+  }),
+};
+
+function captureUrlKitError(operation: () => unknown): UrlKitError | undefined {
+  try {
+    operation();
+    return undefined;
+  } catch (error) {
+    return error instanceof UrlKitError ? error : undefined;
+  }
+}
+
+export const brokenStaticDescriptors = {
+  legacyValueField: captureUrlKitError(() =>
+    createRouteUrlContract({
+      path: '/legacy',
+      search: {
+        page: { value: 'int', default: 1 },
+      },
+    } as unknown as StaticUrlDescriptor),
+  ),
+  legacyManyField: captureUrlKitError(() =>
+    createRouteUrlContract({
+      path: '/legacy',
+      search: {
+        tag: { type: 'many', value: 'string' },
+      },
+    } as unknown as StaticUrlDescriptor),
+  ),
+  legacyHashArray: captureUrlKitError(() =>
+    createRouteUrlContract({
+      path: '/legacy',
+      hash: ['comments', 'share'],
+    } as unknown as StaticUrlDescriptor),
+  ),
+  optionalWithDefault: captureUrlKitError(() =>
+    createRouteUrlContract({
+      path: '/legacy',
+      search: {
+        page: { type: 'int', optional: true, default: 1 },
+      },
+    } as unknown as StaticUrlDescriptor),
+  ),
+  falseFlags: captureUrlKitError(() =>
+    createRouteUrlContract({
+      path: '/legacy',
+      search: {
+        tag: { type: 'string', many: false },
+      },
+    } as unknown as StaticUrlDescriptor),
+  ),
 };

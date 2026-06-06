@@ -3,15 +3,10 @@ import { UrlKitError } from '../errors/url-kit-error.js';
 import { compileStaticHashDescriptor } from './compile-static-hash-descriptor.js';
 
 describe('compileStaticHashDescriptor', () => {
-  it('compiles readonly string array shorthand as optional enum hash', () => {
-    const descriptor = compileStaticHashDescriptor(['comments', 'share'] as const);
-
-    expect(descriptor).toEqual({
-      kind: 'enum',
-      presence: 'optional',
-      values: ['comments', 'share'],
-    });
-    expect(Object.isFrozen(descriptor.values)).toBe(true);
+  it('rejects readonly string array shorthand', () => {
+    expect(() => compileStaticHashDescriptor(['comments', 'share'] as never)).toThrow(
+      expect.objectContaining({ code: 'invalid-descriptor', path: ['hash'] }),
+    );
   });
 
   it('compiles string hash descriptors with optional and default presence', () => {
@@ -60,6 +55,8 @@ describe('compileStaticHashDescriptor', () => {
       'comments',
       { type: 'boolean' },
       { type: 'string', optional: 'yes' },
+      { type: 'string', optional: false },
+      { type: 'string', optional: true, default: 'overview' },
     ];
 
     for (const input of invalidInputs) {
@@ -71,12 +68,12 @@ describe('compileStaticHashDescriptor', () => {
   });
 
   it('rejects invalid enum values and string defaults', () => {
-    expect(() => compileStaticHashDescriptor([] as never)).toThrow(
+    expect(() => compileStaticHashDescriptor({ type: 'enum', values: [] })).toThrow(
       expect.objectContaining({ code: 'invalid-descriptor' }),
     );
-    expect(() => compileStaticHashDescriptor(['comments', 1] as never)).toThrow(
-      expect.objectContaining({ code: 'invalid-descriptor' }),
-    );
+    expect(() =>
+      compileStaticHashDescriptor({ type: 'enum', values: ['comments', 1] } as never),
+    ).toThrow(expect.objectContaining({ code: 'invalid-descriptor' }));
     expect(() => compileStaticHashDescriptor({ type: 'string', default: 1 } as never)).toThrow(
       expect.objectContaining({ code: 'invalid-descriptor' }),
     );

@@ -10,8 +10,11 @@ import { int } from './schema/int.js';
 import { number as numberSchema } from './schema/number.js';
 import { object } from './schema/object.js';
 import { string } from './schema/string.js';
-import type { InferStaticSearch } from './static/contracts.js';
-import { createRouteUrlContract } from './runtime/create-route-url-contract.js';
+import type { InferStaticSearch, StaticUrlDescriptor } from './static/contracts.js';
+import {
+  createRouteUrlContract,
+  type RouteUrlContract,
+} from './runtime/create-route-url-contract.js';
 import type { ParamsFromPattern, PathnameFromPattern } from './url/contracts.js';
 import { url } from './url/create-url.js';
 
@@ -129,26 +132,25 @@ describe('comprehensive TypeScript inference', () => {
   it('infers static descriptor search values', () => {
     const descriptor = {
       ref: {
-        type: 'one',
+        type: 'string',
         optional: true,
       },
       filters: {
-        type: 'many',
+        type: 'string',
+        many: true,
         optional: true,
       },
       page: {
-        value: 'int',
+        type: 'int',
         default: 1,
       },
       sort: {
-        value: {
-          type: 'enum',
-          values: ['newest', 'popular'],
-        },
+        type: 'enum',
+        values: ['newest', 'popular'],
         default: 'newest',
       },
       startsAt: {
-        value: 'date-time',
+        type: 'date-time',
         optional: true,
       },
     } as const;
@@ -178,6 +180,62 @@ describe('comprehensive TypeScript inference', () => {
     expectType<number>(state.search.page);
     expectType<'newest' | 'popular'>(state.search.sort);
     expectType<Date | undefined>(state.search.startsAt);
+  });
+
+  it('validates static descriptors with satisfies without widening route contracts', () => {
+    const descriptor = {
+      path: '/articles/{id:int}',
+      search: {
+        page: { type: 'int', default: 1 },
+        tag: { type: 'string', many: true, optional: true },
+        sort: { type: 'enum', values: ['newest', 'popular'], default: 'newest' },
+      },
+      hash: { type: 'enum', values: ['comments', 'share'], optional: true },
+    } as const satisfies StaticUrlDescriptor;
+
+    const routeUrl: RouteUrlContract<typeof descriptor, { readonly params: 'parsed' }> =
+      createRouteUrlContract(descriptor, { params: 'parsed' });
+
+    routeUrl.build({
+      params: { id: 42 },
+      search: { page: 2, tag: ['ts'], sort: 'popular' },
+      hash: 'comments',
+    });
+
+    if (false) {
+      // @ts-expect-error descriptor rejects legacy static search value fields.
+      // prettier-ignore
+      ({ search: { page: { value: 'int', default: 1 } } }) as const satisfies StaticUrlDescriptor;
+
+      // @ts-expect-error descriptor rejects legacy cardinality in type.
+      // prettier-ignore
+      ({ search: { tag: { type: 'many', value: 'string' } } }) as const satisfies StaticUrlDescriptor;
+
+      // @ts-expect-error descriptor rejects hash array shorthand.
+      // prettier-ignore
+      ({ hash: ['comments', 'share'] }) as const satisfies StaticUrlDescriptor;
+
+      // @ts-expect-error descriptor rejects optional fields with defaults.
+      // prettier-ignore
+      ({ search: { page: { type: 'int', optional: true, default: 1 } } }) as const satisfies StaticUrlDescriptor;
+
+      // @ts-expect-error descriptor rejects invalid many flags.
+      // prettier-ignore
+      ({ search: { tag: { type: 'string', many: false } } }) as const satisfies StaticUrlDescriptor;
+
+      // @ts-expect-error descriptor rejects invalid optional flags.
+      // prettier-ignore
+      ({ search: { tag: { type: 'string', optional: false } } }) as const satisfies StaticUrlDescriptor;
+
+      // @ts-expect-error parsed params use numbers for int constraints.
+      routeUrl.build({ params: { id: '42' }, search: { page: 2 }, hash: 'comments' });
+
+      // @ts-expect-error enum search values are literal unions.
+      routeUrl.build({ params: { id: 42 }, search: { page: 2, sort: 'oldest' }, hash: 'comments' });
+
+      // @ts-expect-error enum hash values are literal unions.
+      routeUrl.build({ params: { id: 42 }, search: { page: 2 }, hash: 'invalid' });
+    }
   });
 
   it('infers hash optional/default states', () => {
@@ -235,8 +293,8 @@ describe('comprehensive TypeScript inference', () => {
     const StaticRouteUrl = createRouteUrlContract({
       path: '/articles/{slug}',
       search: {
-        page: { value: 'int' },
-        sort: { value: { type: 'enum', values: ['newest', 'popular'] }, default: 'newest' },
+        page: { type: 'int' },
+        sort: { type: 'enum', values: ['newest', 'popular'], default: 'newest' },
       },
     } as const);
 

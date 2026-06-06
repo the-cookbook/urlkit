@@ -78,7 +78,11 @@ describe('parseHash', () => {
 
     expect(parseHash('#overview', descriptor, { invalidHash: 'omit' })).toBeUndefined();
     expect(
-      parseHash('#overview', ['comments', 'share'] as const, { invalidHash: 'omit' }),
+      parseHash(
+        '#overview',
+        { type: 'enum', values: ['comments', 'share'], optional: true } as const,
+        { invalidHash: 'omit' },
+      ),
     ).toBeUndefined();
   });
 
@@ -88,9 +92,11 @@ describe('parseHash', () => {
     expect(() => parseHash('#overview', descriptor, { invalidHash: 'omit' })).toThrow(UrlKitError);
   });
 
-  it('supports static enum shorthand as optional hash', () => {
-    expect(parseHash('#comments', ['comments', 'share'] as const)).toBe('comments');
-    expect(parseHash(undefined, ['comments', 'share'] as const)).toBeUndefined();
-    expect(() => parseHash('#overview', ['comments', 'share'] as const)).toThrow(UrlKitError);
+  it('supports static enum object descriptors as optional hash', () => {
+    const descriptor = { type: 'enum', values: ['comments', 'share'], optional: true } as const;
+
+    expect(parseHash('#comments', descriptor)).toBe('comments');
+    expect(parseHash(undefined, descriptor)).toBeUndefined();
+    expect(() => parseHash('#overview', descriptor)).toThrow(UrlKitError);
   });
 });

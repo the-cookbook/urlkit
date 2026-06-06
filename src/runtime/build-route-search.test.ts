@@ -11,28 +11,27 @@ import {
 const expectType = <Value>(_value: Value): void => undefined;
 
 const schema = {
-  q: 'string',
+  q: { type: 'string' },
   page: {
-    value: 'int',
+    type: 'int',
     default: 1,
   },
   tags: {
-    type: 'many',
+    type: 'string',
+    many: true,
     optional: true,
   },
   active: {
-    value: 'boolean',
+    type: 'boolean',
     optional: true,
   },
   sort: {
-    value: {
-      type: 'enum',
-      values: ['newest', 'popular'],
-    },
+    type: 'enum',
+    values: ['newest', 'popular'],
     default: 'newest',
   },
   day: {
-    value: 'date',
+    type: 'date',
     optional: true,
   },
 } as const;

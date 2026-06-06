@@ -5,8 +5,8 @@ import { compileCachedStaticSearch } from './compile-cached-static-search.js';
 describe('compileCachedStaticSearch', () => {
   it('reuses compiled static search schemas by descriptor identity', () => {
     const schema = {
-      q: 'string',
-      page: { value: 'int', default: 1 },
+      q: { type: 'string' },
+      page: { type: 'int', default: 1 },
     } as const;
 
     const first = compileCachedStaticSearch(schema);
@@ -16,15 +16,15 @@ describe('compileCachedStaticSearch', () => {
   });
 
   it('does not share compiled schemas across different descriptor objects', () => {
-    const first = compileCachedStaticSearch({ q: 'string' } as const);
-    const second = compileCachedStaticSearch({ q: 'string' } as const);
+    const first = compileCachedStaticSearch({ q: { type: 'string' } } as const);
+    const second = compileCachedStaticSearch({ q: { type: 'string' } } as const);
 
     expect(second).not.toBe(first);
   });
 
   it('still validates invalid descriptors', () => {
     expect(() =>
-      compileCachedStaticSearch({ page: { value: 'int', default: 1.5 } } as never),
+      compileCachedStaticSearch({ page: { type: 'int', default: 1.5 } } as never),
     ).toThrow(expect.objectContaining({ code: 'invalid-descriptor' }));
     expect(() => compileCachedStaticSearch(null as never)).toThrow(UrlKitError);
   });

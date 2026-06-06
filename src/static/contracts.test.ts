@@ -22,26 +22,25 @@ describe('static contracts', () => {
   it('infers static search fields', () => {
     const descriptor = {
       ref: {
-        type: 'one',
+        type: 'string',
         optional: true,
       },
       filters: {
-        type: 'many',
+        type: 'string',
+        many: true,
         optional: true,
       },
       page: {
-        value: 'int',
+        type: 'int',
         default: 1,
       },
       sort: {
-        value: {
-          type: 'enum',
-          values: ['newest', 'popular'],
-        },
+        type: 'enum',
+        values: ['newest', 'popular'],
         default: 'newest',
       },
       startsAt: {
-        value: 'date-time',
+        type: 'date-time',
         optional: true,
       },
     } as const;
@@ -55,13 +54,6 @@ describe('static contracts', () => {
     }>({} as InferStaticSearch<typeof descriptor>);
 
     expect(descriptor.page.default).toBe(1);
-  });
-
-  it('infers static hash shorthand as optional enum hash', () => {
-    const descriptor = ['comments', 'share'] as const;
-
-    expectType<'comments' | 'share' | undefined>({} as InferStaticHash<typeof descriptor>);
-    expect(descriptor).toContain('comments');
   });
 
   it('infers static string hash descriptors', () => {
@@ -101,10 +93,10 @@ describe('static contracts', () => {
     const descriptor = {
       path: '/articles/{slug}',
       search: {
-        q: 'string',
-        page: { value: 'int', default: 1 },
+        q: { type: 'string' },
+        page: { type: 'int', default: 1 },
       },
-      hash: ['comments', 'share'],
+      hash: { type: 'enum', values: ['comments', 'share'], optional: true },
     } as const;
 
     expectType<'path'>({} as StaticUrlModeFromDescriptor<typeof descriptor>);
@@ -118,7 +110,7 @@ describe('static contracts', () => {
   it('infers pathless static URL descriptors', () => {
     const descriptor = {
       search: {
-        page: { value: 'int', default: 1 },
+        page: { type: 'int', default: 1 },
       },
     } as const;
 

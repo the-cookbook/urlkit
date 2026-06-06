@@ -17,6 +17,6 @@ export function matchCompiledUrl(
       return false;
     }
 
-    return false;
+    throw error;
   }
 }

@@ -39,14 +39,12 @@ describe('router-runtime public exports', () => {
   it('uses static search descriptors through the public entry', () => {
     const schema = {
       page: {
-        value: 'int',
+        type: 'int',
         default: 1,
       },
       sort: {
-        value: {
-          type: 'enum',
-          values: ['newest', 'popular'],
-        },
+        type: 'enum',
+        values: ['newest', 'popular'],
         default: 'newest',
       },
     } as const;
@@ -84,7 +82,7 @@ describe('router-runtime public exports', () => {
 
   it('can omit invalid optional parsed search fields through the public entry', () => {
     const schema = {
-      page: { value: 'int', default: 1 },
+      page: { type: 'int', default: 1 },
       publishedOn: {
         type: 'date',
         format: 'dd-MM-yyyy',
@@ -127,11 +125,25 @@ describe('router-runtime public exports', () => {
   });
 
   it('exposes hash helpers through the public entry', () => {
-    expect(parseHash('#comments', ['comments', 'share'])).toBe('comments');
-    expect(() => parseHash('#overview', ['comments', 'share'])).toThrow();
-    expect(parseHash('#overview', ['comments', 'share'], { invalidHash: 'omit' })).toBeUndefined();
-    expect(normalizeHash('comments', ['comments', 'share'])).toBe('comments');
-    expect(buildHash('share', ['comments', 'share'])).toBe('#share');
+    expect(
+      parseHash('#comments', { type: 'enum', values: ['comments', 'share'], optional: true }),
+    ).toBe('comments');
+    expect(() =>
+      parseHash('#overview', { type: 'enum', values: ['comments', 'share'], optional: true }),
+    ).toThrow();
+    expect(
+      parseHash(
+        '#overview',
+        { type: 'enum', values: ['comments', 'share'], optional: true },
+        { invalidHash: 'omit' },
+      ),
+    ).toBeUndefined();
+    expect(
+      normalizeHash('comments', { type: 'enum', values: ['comments', 'share'], optional: true }),
+    ).toBe('comments');
+    expect(
+      buildHash('share', { type: 'enum', values: ['comments', 'share'], optional: true }),
+    ).toBe('#share');
   });
 
   it('does not expose route definition concepts through router-runtime options', () => {

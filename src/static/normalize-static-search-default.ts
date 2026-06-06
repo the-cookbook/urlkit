@@ -7,12 +7,13 @@ import { UrlKitError } from '../errors/url-kit-error.js';
 import type {
   BuiltInStaticDateFormat,
   StaticDateFormat,
-  StaticResolvedSearchValue,
+  StaticDateTimeFormat,
+  StaticSearchValue,
 } from './contracts.js';
 
 export function normalizeStaticSearchDefault(
   fieldType: 'one' | 'many',
-  valueDescriptor: StaticResolvedSearchValue,
+  valueDescriptor: StaticSearchValue,
   defaultValue: unknown,
   path: readonly string[],
 ): unknown {
@@ -32,13 +33,11 @@ export function normalizeStaticSearchDefault(
 }
 
 function normalizeSingleStaticSearchDefault(
-  valueDescriptor: StaticResolvedSearchValue,
+  valueDescriptor: StaticSearchValue,
   defaultValue: unknown,
   path: readonly string[],
 ): unknown {
-  const kind = resolveStaticSearchValueKind(valueDescriptor, path);
-
-  if (kind === 'string') {
+  if (valueDescriptor === 'string') {
     if (typeof defaultValue === 'string') {
       return defaultValue;
     }
@@ -48,7 +47,7 @@ function normalizeSingleStaticSearchDefault(
     });
   }
 
-  if (kind === 'number') {
+  if (valueDescriptor === 'number') {
     if (typeof defaultValue === 'number' && Number.isFinite(defaultValue)) {
       return defaultValue;
     }
@@ -60,7 +59,7 @@ function normalizeSingleStaticSearchDefault(
     );
   }
 
-  if (kind === 'int') {
+  if (valueDescriptor === 'int') {
     if (typeof defaultValue === 'number' && Number.isInteger(defaultValue)) {
       return defaultValue;
     }
@@ -72,7 +71,7 @@ function normalizeSingleStaticSearchDefault(
     );
   }
 
-  if (kind === 'boolean') {
+  if (valueDescriptor === 'boolean') {
     if (typeof defaultValue === 'boolean') {
       return defaultValue;
     }
@@ -84,33 +83,11 @@ function normalizeSingleStaticSearchDefault(
     );
   }
 
-  if (kind === 'date') {
-    return normalizeStaticDateDefault(defaultValue, 'date', path);
-  }
-
-  if (kind === 'date-time') {
-    return normalizeStaticDateDefault(defaultValue, 'date-time', path);
-  }
-
-  if (kind === 'unix-seconds') {
-    return normalizeStaticDateDefault(defaultValue, 'unix-seconds', path);
-  }
-
-  if (kind === 'unix-ms') {
-    return normalizeStaticDateDefault(defaultValue, 'unix-ms', path);
-  }
-
   if (isStaticDateValue(valueDescriptor)) {
     return normalizeStaticDateDefault(defaultValue, valueDescriptor.format ?? 'date', path);
   }
 
-  if (kind === 'date-time-format') {
-    if (!isStaticDateTimeValue(valueDescriptor)) {
-      throw new UrlKitError('invalid-descriptor', 'Static date-time descriptor is invalid.', {
-        path,
-      });
-    }
-
+  if (isStaticDateTimeValue(valueDescriptor)) {
     return normalizeStaticDateTimeDefault(
       defaultValue,
       valueDescriptor.format ?? 'date-time',
@@ -185,7 +162,7 @@ function normalizeStaticDateDefault(
 
 function normalizeStaticDateTimeDefault(
   defaultValue: unknown,
-  format: StaticDateFormat,
+  format: StaticDateTimeFormat,
   path: readonly string[],
 ): Date {
   if (typeof defaultValue !== 'string') {
@@ -214,46 +191,6 @@ function normalizeStaticDateTimeDefault(
   });
 }
 
-function resolveStaticSearchValueKind(
-  value: StaticResolvedSearchValue,
-  path: readonly string[],
-): StaticDateFormat | 'string' | 'number' | 'int' | 'boolean' | 'enum' | 'date-time-format' {
-  if (typeof value === 'string') {
-    if (
-      value === 'string' ||
-      value === 'number' ||
-      value === 'int' ||
-      value === 'boolean' ||
-      value === 'date' ||
-      value === 'date-time' ||
-      value === 'unix-seconds' ||
-      value === 'unix-ms'
-    ) {
-      return value;
-    }
-
-    throw new UrlKitError('invalid-descriptor', 'Static search value shorthand is invalid.', {
-      path,
-    });
-  }
-
-  if (isStaticDateValue(value)) {
-    return value.format ?? 'date';
-  }
-
-  if (isStaticDateTimeValue(value)) {
-    return 'date-time-format';
-  }
-
-  if (isStaticEnumValue(value)) {
-    return 'enum';
-  }
-
-  throw new UrlKitError('invalid-descriptor', 'Static search value descriptor is invalid.', {
-    path,
-  });
-}
-
 function isStaticDateValue(
   input: unknown,
 ): input is { readonly type: 'date'; readonly format?: StaticDateFormat } {
@@ -262,11 +199,11 @@ function isStaticDateValue(
 
 function isStaticDateTimeValue(
   input: unknown,
-): input is { readonly type: 'date-time'; readonly format?: StaticDateFormat } {
+): input is { readonly type: 'date-time'; readonly format?: StaticDateTimeFormat } {
   return isRecord(input) && input.type === 'date-time';
 }
 
-function isBuiltInStaticDateFormat(input: StaticDateFormat): input is BuiltInStaticDateFormat {
+function isBuiltInStaticDateFormat(input: StaticDateTimeFormat): input is BuiltInStaticDateFormat {
   return (
     input === 'date' || input === 'date-time' || input === 'unix-seconds' || input === 'unix-ms'
   );

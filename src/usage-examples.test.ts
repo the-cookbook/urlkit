@@ -23,18 +23,35 @@ import {
 } from '../examples/custom-path-constraints.js';
 import { requestLikeState, requestState, safeRequest } from '../examples/server-request.js';
 import {
+  articleUrlMatches,
+  brokenArticleStates,
+  brokenArticleUrls,
+  brokenStaticDescriptors,
+  builtArticleUrl,
   builtSearch,
+  defaultedHashHref,
+  defaultedHashState,
   invalidRawState,
+  listingPath,
+  listingSuffix,
   omittedSearch,
   partialHash,
   partialRawState,
   partiallyParsedSearch,
+  parsedArticleRequest,
+  parsedArticleUrl,
   parsedSearch,
   parsedState,
   patchedSearch,
   pickedSearch,
+  preservedUnknownSearch,
   rawState,
   replacedSearch,
+  safeNormalizedArticleUrl,
+  safeParsedArticleRequest,
+  safeParsedArticleUrl,
+  strippedUnknownSearch,
+  unknownSearchError,
 } from '../examples/router-runtime.js';
 import { compiledSearch, compiledUrl } from '../examples/static-descriptor.js';
 import {
@@ -51,6 +68,32 @@ import {
   parsed,
   withDefaults,
 } from '../examples/error-handling.js';
+
+interface ExpectedSafeFailure {
+  readonly success: false;
+  readonly error: {
+    readonly code: string;
+    readonly path?: readonly string[];
+  };
+}
+
+const expectSafeFailure = (
+  result: {
+    readonly success: boolean;
+    readonly error?: { readonly code: string; readonly path?: readonly string[] };
+  },
+  code: string,
+  path?: readonly string[],
+): void => {
+  expect(result.success).toBe(false);
+
+  const failure = result as ExpectedSafeFailure;
+  expect(failure.error.code).toBe(code);
+
+  if (path) {
+    expect(failure.error.path).toEqual(path);
+  }
+};
 
 describe('usage examples', () => {
   it('executes the basic path-based usage example', () => {
@@ -109,36 +152,88 @@ describe('usage examples', () => {
     expect(rawState.params.id).toBe('42');
     expect(parsedState.params.id).toBe(42);
     expect(parsedSearch).toEqual({
+      category: 'engineering',
       page: 2,
       ref: 'email',
       tag: ['ts', 'url'],
+      sort: 'popular',
+      featured: true,
+      score: 9.5,
       publishedOn: new Date('2026-06-02T00:00:00.000Z'),
       scheduledAt: new Date('2026-06-02T12:30:05.000Z'),
     });
     expect(partiallyParsedSearch).toEqual({
+      category: 'engineering',
       page: 2,
       ref: 'email',
       tag: ['ts', 'url'],
+      sort: 'newest',
       publishedOn: new Date('2026-06-02T00:00:00.000Z'),
     });
     expect(invalidRawState.success).toBe(false);
     expect(partialRawState.success).toBe(true);
     if (partialRawState.success) {
       expect(partialRawState.data.search).toEqual({
+        category: 'engineering',
         page: 2,
         ref: 'email',
         tag: ['ts', 'url'],
+        sort: 'newest',
         publishedOn: new Date('2026-06-02T00:00:00.000Z'),
       });
     }
     expect(partialHash).toBeUndefined();
     expect(builtSearch).toBe(
-      '?page=3&ref=newsletter&tag=ts&tag=url&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05',
+      '?category=engineering&page=3&ref=newsletter&tag=ts&tag=url&sort=popular&featured=true&score=9.5&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05',
     );
-    expect(patchedSearch).toBe('?page=4&ref=email&tag=ts');
-    expect(replacedSearch).toBe('?page=1');
-    expect(omittedSearch).toBe('?page=2&tag=ts');
+    expect(patchedSearch).toBe('?category=engineering&page=4&ref=email&tag=ts&sort=newest');
+    expect(replacedSearch).toBe('?category=engineering&page=1&sort=newest');
+    expect(omittedSearch).toBe('?category=engineering&page=2&tag=ts');
     expect(pickedSearch).toBe('?page=2&tag=ts');
+
+    expect(parsedArticleUrl.search.sort).toBe('popular');
+    expect(safeParsedArticleUrl.success).toBe(true);
+    expect(parsedArticleRequest.params.id).toBe(42);
+    expect(safeParsedArticleRequest.success).toBe(true);
+    expect(safeNormalizedArticleUrl.success).toBe(true);
+    expect(builtArticleUrl).toBe(
+      '/articles/42?category=engineering&page=2&ref=newsletter&tag=ts&tag=urlkit&sort=popular&featured=true&score=9.5&publishedOn=06-06-2026&scheduledAt=06-06-2026+10%3A30%3A00#comments',
+    );
+    expect(articleUrlMatches).toBe(true);
+    expect(strippedUnknownSearch.unknownSearch).toBeUndefined();
+    expect(preservedUnknownSearch.unknownSearch).toEqual({ utm_source: 'kept' });
+    expect(unknownSearchError.success).toBe(false);
+    expect(listingSuffix).toBe('?page=2&tag=typescript&tag=urlkit#results');
+    expect(listingPath).toBe('/articles?page=2&tag=typescript&tag=urlkit#results');
+    expect(defaultedHashState.hash).toBe('overview');
+    expect(defaultedHashHref).toBe('/docs/intro#overview');
+
+    expectSafeFailure(brokenArticleUrls.pathMismatch, 'path-mismatch', ['pathname']);
+    expectSafeFailure(brokenArticleUrls.invalidParam, 'invalid-param', ['params', 'id']);
+    expectSafeFailure(brokenArticleUrls.missingRequiredSearch, 'missing-search', ['category']);
+    expectSafeFailure(brokenArticleUrls.invalidIntSearch, 'invalid-search', ['page']);
+    expectSafeFailure(brokenArticleUrls.invalidEnumSearch, 'invalid-search', ['sort']);
+    expectSafeFailure(brokenArticleUrls.invalidBooleanSearch, 'invalid-search', ['featured']);
+    expectSafeFailure(brokenArticleUrls.invalidDateSearch, 'invalid-search', ['publishedOn']);
+    expectSafeFailure(brokenArticleUrls.invalidDateTimeSearch, 'invalid-search', ['scheduledAt']);
+    expectSafeFailure(brokenArticleUrls.invalidHash, 'invalid-hash', ['hash']);
+    expectSafeFailure(brokenArticleUrls.unknownSearchRejected, 'invalid-search', ['utm_source']);
+
+    expectSafeFailure(brokenArticleStates.missingParam, 'missing-param', ['params', 'id']);
+    expectSafeFailure(brokenArticleStates.invalidParam, 'invalid-param', ['params']);
+    expectSafeFailure(brokenArticleStates.invalidSearch, 'invalid-search', ['page']);
+    expectSafeFailure(brokenArticleStates.invalidHash, 'invalid-hash', ['hash']);
+
+    expect(brokenStaticDescriptors.legacyValueField?.code).toBe('invalid-descriptor');
+    expect(brokenStaticDescriptors.legacyValueField?.path).toEqual(['search', 'page']);
+    expect(brokenStaticDescriptors.legacyManyField?.code).toBe('invalid-descriptor');
+    expect(brokenStaticDescriptors.legacyManyField?.path).toEqual(['search', 'tag']);
+    expect(brokenStaticDescriptors.legacyHashArray?.code).toBe('invalid-descriptor');
+    expect(brokenStaticDescriptors.legacyHashArray?.path).toEqual(['hash']);
+    expect(brokenStaticDescriptors.optionalWithDefault?.code).toBe('invalid-descriptor');
+    expect(brokenStaticDescriptors.optionalWithDefault?.path).toEqual(['search', 'page']);
+    expect(brokenStaticDescriptors.falseFlags?.code).toBe('invalid-descriptor');
+    expect(brokenStaticDescriptors.falseFlags?.path).toEqual(['search', 'tag']);
   });
 
   it('executes the static descriptor example', () => {

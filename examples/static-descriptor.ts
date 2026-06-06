@@ -1,12 +1,13 @@
 import { compileStaticSearch, compileStaticUrl } from '@cookbook/urlkit/static';
 
 const productSearchDescriptor = {
-  page: { value: 'int', default: 1 },
+  page: { type: 'int', default: 1 },
   sort: {
-    value: { type: 'enum', values: ['newest', 'popular'] },
+    type: 'enum',
+    values: ['newest', 'popular'],
     default: 'newest',
   },
-  tag: { type: 'many', value: 'string', optional: true },
+  tag: { type: 'string', many: true, optional: true },
 } as const;
 
 const compiledSearch = compileStaticSearch(productSearchDescriptor);

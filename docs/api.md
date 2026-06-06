@@ -483,7 +483,7 @@ ProductSearch.build({ search: { page: 2 } });
 
 ## `match`
 
-Returns `true` when the input satisfies the contract and `false` for ordinary validation failures.
+Returns `true` when the input satisfies the contract and `false` for ordinary URLKit validation failures. Unexpected non-URLKit errors are rethrown instead of being hidden, so delegated dependency failures remain visible.
 
 ```ts
 UserUrl.match('/users/42'); // true
@@ -723,10 +723,10 @@ Static descriptors are plain data and are suitable for router tooling and static
 const compiled = compileStaticUrl({
   path: '/search',
   search: {
-    q: 'string',
-    page: { value: 'int', default: 1 },
+    q: { type: 'string' },
+    page: { type: 'int', default: 1 },
   },
-  hash: ['results', 'filters'],
+  hash: { type: 'enum', values: ['results', 'filters'], optional: true },
 } as const);
 ```
 
@@ -742,14 +742,15 @@ Static search field forms:
 
 ```ts
 const search = {
-  q: 'string',
-  page: { value: 'int', default: 1 },
-  tags: { type: 'many', optional: true },
+  q: { type: 'string' },
+  page: { type: 'int', default: 1 },
+  tags: { type: 'string', many: true, optional: true },
   sort: {
-    value: { type: 'enum', values: ['newest', 'popular'] },
+    type: 'enum',
+    values: ['newest', 'popular'],
     default: 'newest',
   },
-  startsAt: { value: 'date-time', optional: true },
+  startsAt: { type: 'date-time', optional: true },
   publishedOn: {
     type: 'date',
     format: 'dd-MM-yyyy',
@@ -763,19 +764,18 @@ const search = {
 } as const;
 ```
 
-Supported static values:
+Supported static search field types:
 
-- `string`
-- `number`
-- `int`
-- `boolean`
-- `date`
-- `date-time`
-- `unix-seconds`
-- `unix-ms`
-- `{ type: 'date', format: ... }`
-- `{ type: 'date-time', format: ... }`
-- `{ type: 'enum', values: [...] }`
+- `{ type: 'string' }`
+- `{ type: 'number' }`
+- `{ type: 'int' }`
+- `{ type: 'boolean' }`
+- `{ type: 'date', format?: 'date' | 'date-time' | 'unix-seconds' | 'unix-ms' | string }`
+- `{ type: 'date-time', format?: 'date-time' | string }`
+- `{ type: 'enum',
+values: [...] }`
+
+Every static search field uses the object form `{ type, many?, optional?, default? }`. `type` always means value kind. Repeated search params use `many: true`. Static descriptors reject `many: false`, `optional: false`, and `optional: true` combined with `default`.
 
 Static date and date-time formats may use built-in static formats or strict format strings such as `dd-MM-yyyy` and `dd-MM-yyyy HH:mm:ss`. Static descriptors do not support runtime `{ parse, serialize }` codecs. Static date defaults must be serialized values, not `Date` instances.
 
@@ -790,10 +790,12 @@ Static date and date-time formats may use built-in static formats or strict form
 Static hash forms:
 
 ```ts
-const optionalEnum = ['comments', 'share'] as const;
 const stringHash = { type: 'string', optional: true } as const;
+const optionalEnumHash = { type: 'enum', values: ['comments', 'share'], optional: true } as const;
 const enumHash = { type: 'enum', values: ['overview', 'comments'], default: 'overview' } as const;
 ```
+
+Static hash array shorthand is not supported. Use an explicit object descriptor.
 
 ## Static descriptor contracts
 
@@ -808,10 +810,7 @@ interface StaticSearchDescriptor {
   readonly [key: string]: StaticSearchField;
 }
 
-type StaticHashDescriptor =
-  | readonly string[]
-  | StaticStringHashDescriptor
-  | StaticEnumHashDescriptor;
+type StaticHashDescriptor = StaticStringHashDescriptor | StaticEnumHashDescriptor;
 ```
 
 Exported static inference helpers include:
@@ -847,7 +846,7 @@ Router-runtime APIs are low-level primitives for router packages. They are frame
 
 | Item                | Details                                                                                                                                            |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Signature           | `createRouteUrlContract<Descriptor, Options>(descriptor, options?: CreateRouteUrlContractOptions): UrlContract<...>`                               |
+| Signature           | `createRouteUrlContract<Descriptor, Options>(descriptor, options?: CreateRouteUrlContractOptions): RouteUrlContract<Descriptor, Options>`          |
 | Purpose             | Create a URL contract from a static route-compatible descriptor.                                                                                   |
 | Options             | `params?: 'raw' \| 'parsed'`, `unknownSearch?: UnknownSearchBehavior`, `arrayFormat?: 'repeat' \| 'comma'`, `pathConstraints?: PathConstraintMap`. |
 | Default params mode | `raw`                                                                                                                                              |
@@ -857,10 +856,10 @@ Router-runtime APIs are low-level primitives for router packages. They are frame
 const ArticleUrl = createRouteUrlContract({
   path: '/articles/{slug:regex([a-z0-9-]+)}',
   search: {
-    ref: { type: 'one', optional: true },
-    page: { value: 'int', default: 1 },
+    ref: { type: 'string', optional: true },
+    page: { type: 'int', default: 1 },
   },
-  hash: ['comments', 'share'],
+  hash: { type: 'enum', values: ['comments', 'share'], optional: true },
 } as const);
 
 const state = ArticleUrl.parse('/articles/post-1?ref=email#comments');
@@ -889,14 +888,14 @@ UserUrl.parse('/users/42').params.id;
 ```ts
 parseSearch('?page=2', {
   schema: {
-    page: { value: 'int', default: 1 },
+    page: { type: 'int', default: 1 },
   },
 });
 // { page: 2 }
 
 parseSearch('?tags=ts%2Crouter', {
   schema: {
-    tags: { type: 'many', optional: true },
+    tags: { type: 'string', many: true, optional: true },
   },
   arrayFormat: 'comma',
 });
@@ -916,9 +915,13 @@ parseSearch('?from=02-06-2026&startsAt=02-06-2026+12%3A30%3A05', {
 
 parseSearch('/articles/1?page=2&publishedOn=02-06-2026&startsAt=foo', {
   schema: {
-    page: { value: 'int', default: 1 },
+    page: { type: 'int', default: 1 },
     publishedOn: { type: 'date', format: 'dd-MM-yyyy', optional: true },
-    startsAt: { type: 'date-time', format: 'dd-MM-yyyy HH:mm:ss', optional: true },
+    startsAt: {
+      type: 'date-time',
+      format: 'dd-MM-yyyy HH:mm:ss',
+      optional: true,
+    },
   },
   invalidSearch: 'omit',
 });
@@ -940,9 +943,9 @@ parseSearch('?filter.role=admin');
 
 ```ts
 const schema = {
-  page: { value: 'int', default: 1 },
-  q: { value: 'string', optional: true },
-  tags: { type: 'many', optional: true },
+  page: { type: 'int', default: 1 },
+  q: { type: 'string', optional: true },
+  tags: { type: 'string', many: true, optional: true },
   startsAt: {
     type: 'date-time',
     format: 'dd-MM-yyyy HH:mm:ss',

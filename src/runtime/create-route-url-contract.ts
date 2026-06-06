@@ -23,18 +23,7 @@ import type { CreateRouteUrlContractOptions } from './contracts.js';
 export function createRouteUrlContract<
   const Descriptor extends StaticUrlDescriptor,
   const Options extends CreateRouteUrlContractOptions | undefined = undefined,
->(
-  descriptor: Descriptor,
-  options?: Options,
-): UrlContract<
-  StaticUrlModeFromDescriptor<Descriptor>,
-  RoutePathnameFromDescriptor<Descriptor>,
-  RouteParamsFromDescriptor<Descriptor, Options>,
-  InferStaticUrlSearch<Descriptor>,
-  InferStaticUrlHash<Descriptor>,
-  InferStaticUrlSearchBuildInput<Descriptor>,
-  InferStaticUrlHashBuildInput<Descriptor>
-> {
+>(descriptor: Descriptor, options?: Options): RouteUrlContract<Descriptor, Options> {
   return createUrlContract<
     StaticUrlModeFromDescriptor<Descriptor>,
     RoutePathnameFromDescriptor<Descriptor>,
@@ -45,6 +34,19 @@ export function createRouteUrlContract<
     InferStaticUrlHashBuildInput<Descriptor>
   >(compileRouteUrlDescriptor(descriptor, options), options);
 }
+
+export interface RouteUrlContract<
+  Descriptor extends StaticUrlDescriptor,
+  Options extends CreateRouteUrlContractOptions | undefined = undefined,
+> extends UrlContract<
+  StaticUrlModeFromDescriptor<Descriptor>,
+  RoutePathnameFromDescriptor<Descriptor>,
+  RouteParamsFromDescriptor<Descriptor, Options>,
+  InferStaticUrlSearch<Descriptor>,
+  InferStaticUrlHash<Descriptor>,
+  InferStaticUrlSearchBuildInput<Descriptor>,
+  InferStaticUrlHashBuildInput<Descriptor>
+> {}
 
 export type RoutePathnameFromDescriptor<Descriptor extends StaticUrlDescriptor> =
   Descriptor extends {

@@ -31,13 +31,17 @@ describe('static public exports', () => {
 
   it('exports static descriptor contracts for tooling users', () => {
     const search = {
-      q: 'string',
+      q: { type: 'string' },
       page: {
-        value: 'int',
+        type: 'int',
         default: 1,
       },
     } as const satisfies StaticSearchDescriptor;
-    const hash = ['comments', 'share'] as const satisfies StaticHashDescriptor;
+    const hash = {
+      type: 'enum',
+      values: ['comments', 'share'],
+      optional: true,
+    } as const satisfies StaticHashDescriptor;
     const descriptor = {
       path: '/articles/{slug}',
       search,
