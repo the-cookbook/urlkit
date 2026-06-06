@@ -7,7 +7,8 @@ function expectType<Value>(_value: Value): void {}
 describe('getPathParamKind', () => {
   it('maps supported constraints to URLKit path param kinds', () => {
     expect(getPathParamKind({ kind: 'param', name: 'id', constraint: 'int' })).toBe('int');
-    expect(getPathParamKind({ kind: 'param', name: 'id', constraint: 'decimal' })).toBe('number');
+    expect(getPathParamKind({ kind: 'param', name: 'id', constraint: 'decimal' })).toBe('decimal');
+    expect(getPathParamKind({ kind: 'param', name: 'id', constraint: 'range' })).toBe('range');
     expect(
       getPathParamKind({
         kind: 'param',
@@ -27,7 +28,7 @@ describe('getPathParamKind', () => {
     const kind: PathParamKind = getPathParamKind({ kind: 'param', name: 'id', constraint: 'int' });
     const segment: ParsedPathParamSegment = { kind: 'param', name: 'slug' };
 
-    expectType<'string' | 'int' | 'number' | 'regex'>(kind);
+    expectType<'string' | 'int' | 'decimal' | 'range' | 'regex'>(kind);
     expect(getPathParamKind(segment)).toBe('string');
   });
 });

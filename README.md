@@ -181,7 +181,7 @@ ArticleUrl.build({ params: { slug: 'post-1' } });
 // ArticleUrl.build({ pathname: '/articles/post-1' });
 ```
 
-Path params are inferred from the pattern. Built-in `int`, `decimal` and `range` path constraints parse to numbers in standalone `url(...)` contracts.
+Path params are inferred from the pattern. Built-in `int`, `decimal` and `range` path constraints parse to numbers in standalone `url(...)` contracts. PathKit does not expose a `{param:number}` built-in; use `{param:decimal}` for finite decimal path values.
 
 ```ts
 const UserUrl = url({ path: '/users/{id:int}' });

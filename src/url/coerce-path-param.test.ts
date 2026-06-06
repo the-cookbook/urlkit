@@ -14,9 +14,10 @@ describe('coercePathParam', () => {
     expect(coercePathParam(param('decimal'), '4.2', 'raw')).toBe('4.2');
   });
 
-  it('coerces int and number params in parsed mode', () => {
+  it('coerces int, decimal, and range params in parsed mode', () => {
     expect(coercePathParam(param('int'), '42', 'parsed')).toBe(42);
     expect(coercePathParam(param('decimal'), '4.2', 'parsed')).toBe(4.2);
+    expect(coercePathParam(param('range'), '4.2', 'parsed')).toBe(4.2);
   });
 
   it('keeps string and regex params as strings in parsed mode', () => {

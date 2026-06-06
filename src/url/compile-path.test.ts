@@ -55,10 +55,13 @@ describe('compilePath', () => {
     expectType<`/users/${number}`>('/users/42');
   });
 
-  it('parses range params to numbers in standalone parsed-param mode', () => {
-    const path = compilePath('/users/{id:range(1,1000)}');
+  it('parses decimal and range params to numbers in standalone parsed-param mode', () => {
+    const decimalPath = compilePath('/prices/{amount:decimal}');
+    const rangePath = compilePath('/users/{id:range(1,1000)}');
 
-    expect(path.parsePathname('/users/4.2')).toEqual({ id: 4.2 });
+    expect(decimalPath.parsePathname('/prices/4.2')).toEqual({ amount: 4.2 });
+    expect(rangePath.parsePathname('/users/4.2')).toEqual({ id: 4.2 });
+    expectType<{ readonly amount: number }>({} as ParamsFromPattern<'/prices/{amount:decimal}'>);
     expectType<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:range(1,1000)}'>);
   });
 
@@ -123,11 +126,16 @@ describe('compilePath', () => {
 
   it('throws invalid-param when pathname shape matches but param constraints fail', () => {
     const intPath = compilePath('/users/{id:int}');
-    const numberPath = compilePath('/users/{id:range(1,10)}');
+    const decimalPath = compilePath('/prices/{amount:decimal}');
+    const rangePath = compilePath('/users/{id:range(1,10)}');
     const regexPath = compilePath('/posts/{slug:regex([a-z0-9-]+)}');
 
     expectUrlKitError(() => intPath.parsePathname('/users/abc'), 'invalid-param', ['params', 'id']);
-    expectUrlKitError(() => numberPath.parsePathname('/users/abc'), 'invalid-param', [
+    expectUrlKitError(() => decimalPath.parsePathname('/prices/abc'), 'invalid-param', [
+      'params',
+      'amount',
+    ]);
+    expectUrlKitError(() => rangePath.parsePathname('/users/abc'), 'invalid-param', [
       'params',
       'id',
     ]);

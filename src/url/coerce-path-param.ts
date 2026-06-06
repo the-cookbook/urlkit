@@ -1,5 +1,5 @@
 import { UrlKitError } from '../errors/url-kit-error.js';
-import { getPathParamKind } from './path-param-kind.js';
+import { getPathParamKind, isNumericPathParamKind } from './path-param-kind.js';
 import type { ParsedPathParamSegment } from './path-segment.js';
 
 export function coercePathParam(
@@ -29,13 +29,13 @@ export function coercePathParam(
     return parsed;
   }
 
-  if (kind === 'number') {
+  if (isNumericPathParamKind(kind)) {
     const parsed = Number(value);
 
     if (!Number.isFinite(parsed)) {
       throw new UrlKitError(
         'invalid-param',
-        `Path parameter "${segment.name}" must be a finite number.`,
+        `Path parameter "${segment.name}" must be a finite decimal number.`,
         {
           path: ['params', segment.name],
         },

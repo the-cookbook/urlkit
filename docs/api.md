@@ -68,7 +68,7 @@ import {
 | `options.arrayFormat`     | `'repeat' \| 'comma'`              | Contract-level default array search format for parsing and building.            |
 | `options.pathConstraints` | `PathConstraintMap`                | Per-contract custom PathKit constraints, registered before path compilation.    |
 
-Standalone `url(...)` path params default to parsed mode. `int`, `decimal` and `range` path params parse to numbers.
+Standalone `url(...)` path params default to parsed mode. `int`, `decimal` and `range` path params parse to numbers. PathKit does not expose a `{param:number}` built-in; use `{param:decimal}` for finite decimal path values.
 
 ```ts
 import { enumOf, int, string, url } from '@cookbook/urlkit';

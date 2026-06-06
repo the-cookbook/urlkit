@@ -59,7 +59,7 @@ describe('createRouteUrlContract', () => {
     expectType<{ readonly id: number }>(state.params);
   });
 
-  it('keeps number params raw by default and parsed by opt-in', () => {
+  it('keeps range params raw by default and parses them by opt-in', () => {
     const raw = createRouteUrlContract({ path: '/prices/{amount:range(1,10)}' } as const);
     const parsed = createRouteUrlContract({ path: '/prices/{amount:range(1,10)}' } as const, {
       params: 'parsed',

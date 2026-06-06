@@ -1,4 +1,6 @@
+import { createConstraint } from '@cookbook/pathkit/constraints';
 import { describe, expect, it } from 'vitest';
+import { registerPathConstraint } from './path-constraints.js';
 import { assertPathMatchFailure } from './assert-path-match-failure.js';
 import type { ParsedPathSegment } from './path-segment.js';
 
@@ -30,7 +32,7 @@ describe('assertPathMatchFailure', () => {
     expect(() =>
       assertPathMatchFailure('/prices/{amount:decimal}', '/prices/abc', [
         { kind: 'literal', value: 'prices' },
-        { kind: 'param', name: 'amount', constraint: 'number' },
+        { kind: 'param', name: 'amount', constraint: 'decimal' },
       ]),
     ).toThrow(expect.objectContaining({ code: 'invalid-param', path: ['params', 'amount'] }));
 
@@ -40,5 +42,46 @@ describe('assertPathMatchFailure', () => {
         { kind: 'param', name: 'slug', constraint: 'regex', constraintParams: '[a-z0-9-]+' },
       ]),
     ).toThrow(expect.objectContaining({ code: 'invalid-param', path: ['params', 'slug'] }));
+  });
+
+  it('preserves PathKit constraint validation errors as the UrlKitError cause', () => {
+    const slug = createConstraint({
+      parse(paramName, value) {
+        if (!/^[a-z0-9-]+$/.test(String(value))) {
+          throw new Error(`Path parameter "${paramName}" must be lowercase kebab-case.`);
+        }
+      },
+      verify(_paramName, params) {
+        if (params.trim()) {
+          throw new Error('Slug constraint does not accept arguments.');
+        }
+      },
+      toRegExp() {
+        return '[a-z0-9-]+';
+      },
+    });
+
+    registerPathConstraint('urlkitdetailedslug', slug);
+
+    try {
+      assertPathMatchFailure('/posts/{slug:urlkitdetailedslug}', '/posts/Post', [
+        { kind: 'literal', value: 'posts' },
+        { kind: 'param', name: 'slug', constraint: 'urlkitdetailedslug' },
+      ]);
+    } catch (error) {
+      expect(error).toEqual(
+        expect.objectContaining({
+          code: 'invalid-param',
+          message: expect.stringContaining('must be lowercase kebab-case'),
+          path: ['params', 'slug'],
+          cause: expect.objectContaining({
+            message: 'Path parameter "slug" must be lowercase kebab-case.',
+          }),
+        }),
+      );
+      return;
+    }
+
+    throw new Error('Expected invalid-param.');
   });
 });

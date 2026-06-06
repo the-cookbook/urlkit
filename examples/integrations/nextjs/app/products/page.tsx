@@ -54,7 +54,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             Reset
           </Link>
         </div>
-        {parsed.data.unknownSearch ? <p>Ignored unknown search params.</p> : null}
+        {parsed.data.unknownSearch ? (
+          <p>
+            Ignored unknown search params:{' '}
+            <code>{JSON.stringify(parsed.data.unknownSearch, null, 4)}</code>
+          </p>
+        ) : null}
         <nav className="quick-links" aria-label="Example filters">
           <Link href={saleHref}>Sale products</Link>
           <Link

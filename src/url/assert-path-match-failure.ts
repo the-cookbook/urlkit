@@ -2,6 +2,11 @@ import { getConstraint } from '@cookbook/pathkit/constraints';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import type { ParsedPathSegment } from './path-segment.js';
 
+interface PathParamValidationFailure {
+  readonly message: string;
+  readonly cause?: unknown;
+}
+
 export function assertPathMatchFailure(
   pattern: string,
   pathname: string,
@@ -18,7 +23,6 @@ export function assertPathMatchFailure(
     const pathnameSegment = pathnameSegments[index];
 
     if (!segment || pathnameSegment === undefined) {
-      console.log('ERROR', segment);
       throwPathMismatch(pattern, pathname);
     }
 
@@ -30,9 +34,12 @@ export function assertPathMatchFailure(
       continue;
     }
 
-    if (!isValidPathParamSegment(segment, pathnameSegment)) {
-      throw new UrlKitError('invalid-param', `Path parameter "${segment.name}" is invalid.`, {
+    const validationFailure = getPathParamValidationFailure(segment, pathnameSegment);
+
+    if (validationFailure) {
+      throw new UrlKitError('invalid-param', validationFailure.message, {
         path: ['params', segment.name],
+        ...(validationFailure.cause === undefined ? {} : { cause: validationFailure.cause }),
       });
     }
   }
@@ -54,27 +61,54 @@ function splitPath(pathname: string): readonly string[] {
   return Object.freeze(normalized.split('/'));
 }
 
-function isValidPathParamSegment(
+function getPathParamValidationFailure(
   segment: Extract<ParsedPathSegment, { readonly kind: 'param' }>,
   value: string,
-): boolean {
-  if (!value || !segment.constraint) {
-    return false;
+): PathParamValidationFailure | undefined {
+  if (!value) {
+    return {
+      message: `Path parameter "${segment.name}" is invalid.`,
+    };
+  }
+
+  if (!segment.constraint) {
+    return undefined;
   }
 
   const constraint = getConstraint(segment.constraint);
 
   if (!constraint) {
-    return false;
+    return {
+      message: `Path constraint "${segment.constraint}" is not registered.`,
+    };
   }
 
   try {
     constraint(segment.name, value, segment.constraintParams ?? '');
-    console.log(constraint, segment, value);
-    return true;
-  } catch {
-    return false;
+
+    return undefined;
+  } catch (error) {
+    const causeMessage = getCauseMessage(error);
+
+    return {
+      message: causeMessage
+        ? `Path parameter "${segment.name}" is invalid: ${causeMessage}`
+        : `Path parameter "${segment.name}" is invalid.`,
+      cause: error,
+    };
   }
+}
+
+function getCauseMessage(error: unknown): string | undefined {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (typeof error === 'string' && error) {
+    return error;
+  }
+
+  return undefined;
 }
 
 function throwPathMismatch(pattern: string, pathname: string): never {

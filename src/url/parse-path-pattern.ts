@@ -1,61 +1,68 @@
+import tokenize from '@cookbook/pathkit/tokenize';
+import type { LiteralSegment, ParameterSegment, RouteSegment } from '@cookbook/pathkit';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import type { ParsedPathSegment } from './path-segment.js';
 
 export function parsePathPattern(pattern: string): readonly ParsedPathSegment[] {
-  if (pattern === '') {
-    return Object.freeze([]);
-  }
+  try {
+    return Object.freeze(toParsedPathSegments(tokenize(pattern)));
+  } catch (error) {
+    if (error instanceof UrlKitError) {
+      throw error;
+    }
 
-  const normalized = pattern.startsWith('/') ? pattern.slice(1) : pattern;
+    const causeMessage = error instanceof Error && error.message ? `: ${error.message}` : '';
 
-  if (normalized === '') {
-    return Object.freeze([]);
-  }
-
-  return Object.freeze(
-    normalized.split('/').map((segment, index) => parsePathSegment(segment, index)),
-  );
-}
-
-function parsePathSegment(segment: string, index: number): ParsedPathSegment {
-  if (!segment.startsWith('{') || !segment.endsWith('}')) {
-    return Object.freeze({ kind: 'literal', value: segment });
-  }
-
-  const token = segment.slice(1, -1);
-  const parsed = parseParamToken(token);
-
-  if (!parsed.name) {
-    throw new UrlKitError('invalid-descriptor', 'Path parameter name is required.', {
-      path: ['path', String(index)],
+    throw new UrlKitError('invalid-descriptor', `Path pattern is invalid${causeMessage}.`, {
+      path: ['path'],
+      cause: error,
     });
   }
-
-  return Object.freeze({ kind: 'param', ...parsed });
 }
 
-function parseParamToken(token: string): {
-  readonly name: string;
-  readonly constraint?: string;
-  readonly constraintParams?: string;
-} {
-  const colonIndex = token.indexOf(':');
+function toParsedPathSegments(tokens: readonly RouteSegment[]): readonly ParsedPathSegment[] {
+  const segments: ParsedPathSegment[] = [];
 
-  if (colonIndex === -1) {
-    return { name: token };
+  for (const token of tokens) {
+    if (token.type === 'literal') {
+      appendLiteralSegments(segments, token.value);
+      continue;
+    }
+
+    segments.push(toParsedParamSegment(token));
   }
 
-  const name = token.slice(0, colonIndex);
-  const constraintToken = token.slice(colonIndex + 1);
-  const paramsStart = constraintToken.indexOf('(');
+  return segments.map((segment) => Object.freeze(segment));
+}
 
-  if (paramsStart === -1 || !constraintToken.endsWith(')')) {
-    return { name, constraint: constraintToken };
+function appendLiteralSegments(
+  segments: ParsedPathSegment[],
+  value: LiteralSegment['value'],
+): void {
+  if (!value) {
+    return;
   }
+
+  for (const segment of value.split('/')) {
+    if (!segment) {
+      continue;
+    }
+
+    segments.push({ kind: 'literal', value: segment });
+  }
+}
+
+function toParsedParamSegment(token: ParameterSegment): ParsedPathSegment {
+  const constraint = token.constraints[0];
 
   return {
-    name,
-    constraint: constraintToken.slice(0, paramsStart),
-    constraintParams: constraintToken.slice(paramsStart + 1, -1),
+    kind: 'param',
+    name: token.name,
+    ...(constraint
+      ? {
+          constraint: constraint.type,
+          ...(constraint.params ? { constraintParams: constraint.params } : {}),
+        }
+      : {}),
   };
 }

@@ -7,15 +7,12 @@ import { coercePathParam } from './coerce-path-param.js';
 import { normalizePathBuildParams } from './normalize-path-build-params.js';
 import { parsePathPattern } from './parse-path-pattern.js';
 import { registerPathConstraints } from './path-constraints.js';
-import { registerUrlKitPathConstraints } from './register-urlkit-path-constraints.js';
 import type { CompiledPath, CompilePathOptions } from './contracts.js';
 
 export function compilePath<Pattern extends string>(
   pattern: Pattern,
   options: CompilePathOptions = {},
 ): CompiledPath<Pattern> {
-  registerUrlKitPathConstraints();
-
   if (options.pathConstraints) {
     registerPathConstraints(options.pathConstraints);
   }
