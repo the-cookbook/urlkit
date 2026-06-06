@@ -204,7 +204,7 @@ const Events = search({
 Events.parse('/events?at=2026-01-01T10:30:00.000Z');
 ```
 
-Ambiguous or offset values such as `2026-01-01T10:30:00` and `2026-01-01T10:30:00+02:00` are invalid.
+Ambiguous or offset values such as `2026-01-01T10:30:00` and `2026-01-01T10:30:00+02:00` are invalid. Use `dateTime({ format: 'dd-MM-yyyy HH:mm:ss' })` for strict custom runtime date-time format strings, or `dateTime({ format: { parse, serialize } })` for fully custom codecs.
 
 ## Unix date field
 
@@ -218,10 +218,33 @@ const Imported = search({
 Imported.parse('/imports?createdAt=1704067200').search.createdAt;
 ```
 
-## Custom runtime date codec
+## Custom runtime date and date-time format strings
 
 ```ts
-import { date, search } from '@cookbook/urlkit';
+import { date, dateTime, search } from '@cookbook/urlkit';
+
+const Reports = search({
+  from: date({ format: 'dd-MM-yyyy' }),
+  at: dateTime({ format: 'dd-MM-yyyy HH:mm:ss' }).optional(),
+});
+
+Reports.build({
+  search: {
+    from: new Date('2026-06-02T00:00:00.000Z'),
+    at: new Date('2026-06-02T12:30:05.000Z'),
+  },
+});
+// '?from=02-06-2026&at=02-06-2026+12%3A30%3A05'
+```
+
+Supported tokens are `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`, and `SSS`. Unsupported third-party format tokens such as `DD`, `YYYY`, locale month names, and timezone names are rejected.
+
+Custom format strings are runtime-only and cannot be used in static descriptors.
+
+## Custom runtime date and date-time codecs
+
+```ts
+import { date, dateTime, search } from '@cookbook/urlkit';
 
 const Reports = search({
   from: date({
@@ -237,14 +260,17 @@ const Reports = search({
       },
     },
   }),
+  at: dateTime({
+    format: {
+      parse(value) {
+        return new Date(value);
+      },
+      serialize(value) {
+        return value.toISOString();
+      },
+    },
+  }).optional(),
 });
-
-Reports.build({
-  search: {
-    from: new Date('2026-06-02T00:00:00.000Z'),
-  },
-});
-// '?from=02-06-2026'
 ```
 
 Custom codecs are runtime-only and cannot be used in static descriptors.

@@ -192,7 +192,7 @@ const user = UserUrl.parse('/users/42');
 
 ### Custom path constraints
 
-URLKit re-exports PathKit's `createConstraint` and provides global registration helpers for reusable path constraints. Custom constraints infer `string` params by default; built-in `int`, `decimal` and `range` still infer `number`.
+URLKit re-exports PathKit's `createConstraint` and provides global registration helpers for reusable path constraints. Custom constraints infer `string` params by default; built-in `int`, `decimal` and `range` still infer `number`. When a PathKit constraint rejects a value, URLKit wraps it as `UrlKitError` with `code: 'invalid-param'` and preserves the original PathKit error in `error.cause`.
 
 ```ts
 import { createConstraint, registerPathConstraint, url } from '@cookbook/urlkit';
@@ -403,35 +403,32 @@ const Reports = search({
 });
 ```
 
-| Builder                                  | Serialized format                      |
-| ---------------------------------------- | -------------------------------------- |
-| `date()`                                 | Date-only `YYYY-MM-DD`.                |
-| `dateTime()`                             | Strict UTC `YYYY-MM-DDTHH:mm:ss.sssZ`. |
-| `date({ format: 'unix-seconds' })`       | Finite integer seconds.                |
-| `date({ format: 'unix-ms' })`            | Finite integer milliseconds.           |
-| `date({ format: { parse, serialize } })` | Custom runtime date codec.             |
+| Builder                                       | Serialized format                      |
+| --------------------------------------------- | -------------------------------------- |
+| `date()`                                      | Date-only `YYYY-MM-DD`.                |
+| `dateTime()`                                  | Strict UTC `YYYY-MM-DDTHH:mm:ss.sssZ`. |
+| `date({ format: 'dd-MM-yyyy' })`              | Strict custom date format string.      |
+| `dateTime({ format: 'dd-MM-yyyy HH:mm:ss' })` | Strict custom date-time format string. |
+| `date({ format: { parse, serialize } })`      | Custom runtime date codec.             |
+| `dateTime({ format: { parse, serialize } })`  | Custom runtime date-time codec.        |
+| `date({ format: 'unix-seconds' })`            | Finite integer seconds.                |
+| `date({ format: 'unix-ms' })`                 | Finite integer milliseconds.           |
 
-Custom runtime date codecs are available only in runtime-builder schemas. Static date defaults use serialized values, not `Date` instances.
+Custom date and date-time format strings are available only in runtime-builder schemas. Supported tokens are `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`, and `SSS`. Static date defaults use serialized values, not `Date` instances.
 
 ```ts
 const CustomDate = search({
-  from: date({
-    format: {
-      parse(value) {
-        const [day, month, year] = value.split('-');
-        return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
-      },
-      serialize(value) {
-        const day = String(value.getUTCDate()).padStart(2, '0');
-        const month = String(value.getUTCMonth() + 1).padStart(2, '0');
-        return `${day}-${month}-${value.getUTCFullYear()}`;
-      },
-    },
-  }),
+  from: date({ format: 'dd-MM-yyyy' }),
+  at: dateTime({ format: 'dd-MM-yyyy HH:mm:ss' }).optional(),
 });
 
-CustomDate.build({ search: { from: new Date('2026-06-02T00:00:00.000Z') } });
-// '?from=02-06-2026'
+CustomDate.build({
+  search: {
+    from: new Date('2026-06-02T00:00:00.000Z'),
+    at: new Date('2026-06-02T12:30:05.000Z'),
+  },
+});
+// '?from=02-06-2026&at=02-06-2026+12%3A30%3A05'
 ```
 
 ## Object search
@@ -639,16 +636,16 @@ try {
 }
 ```
 
-| Code                 | Meaning                                                                    |
-| -------------------- | -------------------------------------------------------------------------- |
-| `invalid-url`        | URL input could not be parsed as a URL.                                    |
-| `path-mismatch`      | URL pathname does not satisfy the path contract.                           |
-| `missing-param`      | Required path param is missing.                                            |
-| `invalid-param`      | Path param is invalid.                                                     |
-| `missing-search`     | Required search field is missing.                                          |
-| `invalid-search`     | Search value, unknown search behavior, or object search shape is invalid.  |
-| `invalid-hash`       | Hash value is missing or invalid.                                          |
-| `invalid-descriptor` | Contract/schema/static descriptor is invalid at construction/compile time. |
+| Code                 | Meaning                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| `invalid-url`        | URL input could not be parsed as a URL.                                                    |
+| `path-mismatch`      | URL pathname does not satisfy the path contract.                                           |
+| `missing-param`      | Required path param is missing.                                                            |
+| `invalid-param`      | Path param is invalid. Constraint failures preserve the original PathKit error in `cause`. |
+| `missing-search`     | Required search field is missing.                                                          |
+| `invalid-search`     | Search value, unknown search behavior, or object search shape is invalid.                  |
+| `invalid-hash`       | Hash value is missing or invalid.                                                          |
+| `invalid-descriptor` | Contract/schema/static descriptor is invalid at construction/compile time.                 |
 
 ## TypeScript inference
 

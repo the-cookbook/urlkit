@@ -9,6 +9,10 @@ import type { UrlKitHonoVariables } from './urlkit-middleware.js';
 
 const app = new Hono<{ Variables: UrlKitHonoVariables }>();
 
+app.get('/', (context) => {
+  return context.redirect('/products');
+});
+
 app.get(
   '/products',
   createUrlKitMiddleware(ProductFiltersUrl, { unknownSearch: 'preserve' }),

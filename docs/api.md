@@ -125,7 +125,7 @@ const ArticleUrl = url({ path: '/articles/{slug:slug}' }, { pathConstraints: { s
 
 Duplicate global registration with the same constraint instance is allowed. Registering a different constraint under an existing name throws unless `{ overwrite: true }` is passed to `registerPathConstraint` or `registerPathConstraints`.
 
-Custom constraints infer `string` route params by default. Built-in `int`, `decimal` and `range` constraints continue to infer `number`.
+Custom constraints infer `string` route params by default. Built-in `int`, `decimal` and `range` constraints continue to infer `number`. If a PathKit constraint rejects a value, URLKit reports `invalid-param` and preserves the original PathKit validation error in `UrlKitError.cause`.
 
 ## `search`
 
@@ -186,15 +186,17 @@ schema.default(value);
 
 Defaults are validated when the schema is compiled by a URL/search/hash contract. `null` is treated as absent for optional/defaulted fields and invalid for required fields.
 
-| Builder          | Purpose                                 | Serialized behavior      | Default validation             |
-| ---------------- | --------------------------------------- | ------------------------ | ------------------------------ |
-| `string()`       | String values                           | Exact string             | default must be string         |
-| `number()`       | Finite numbers                          | decimal string           | default must be finite number  |
-| `int()`          | Finite integers                         | integer string           | default must be finite integer |
-| `boolean()`      | Strict booleans                         | `true` / `false`         | default must be boolean        |
-| `enumOf(values)` | Exact literal enum                      | exact string value       | default must be in `values`    |
-| `array(schema)`  | Repeated search values or object arrays | repeated keys by default | default must be array          |
-| `object(shape)`  | Declared object search fields           | dotted keys              | default must match shape       |
+| Builder          | Purpose                                                      | Serialized behavior                              | Default validation             |
+| ---------------- | ------------------------------------------------------------ | ------------------------------------------------ | ------------------------------ |
+| `string()`       | String values                                                | Exact string                                     | default must be string         |
+| `number()`       | Finite numbers                                               | decimal string                                   | default must be finite number  |
+| `int()`          | Finite integers                                              | integer string                                   | default must be finite integer |
+| `boolean()`      | Strict booleans                                              | `true` / `false`                                 | default must be boolean        |
+| `date()`         | Date, date-time, Unix, custom string, or custom codec values | selected built-in, format-string, or codec value | default must be valid `Date`   |
+| `dateTime()`     | Strict UTC, custom string, or custom codec date-time values  | strict UTC, format-string, or codec value        | default must be valid `Date`   |
+| `enumOf(values)` | Exact literal enum                                           | exact string value                               | default must be in `values`    |
+| `array(schema)`  | Repeated search values or object arrays                      | repeated keys by default                         | default must be array          |
+| `object(shape)`  | Declared object search fields                                | dotted keys                                      | default must match shape       |
 
 ## `boolean()` strict parsing
 
@@ -266,12 +268,12 @@ If two serialized keys resolve to the same object path after unescaping, parsing
 
 ## `date`
 
-| Item         | Details                                                                                                            |
-| ------------ | ------------------------------------------------------------------------------------------------------------------ |
-| Import path  | `@cookbook/urlkit`                                                                                                 |
-| Signatures   | `date()`, `date({ format: 'date' \| 'date-time' \| 'unix-seconds' \| 'unix-ms' \| DateFormatCodec })`              |
-| Return value | Runtime schema builder that infers `Date`.                                                                         |
-| Throws       | Invalid parse/serialize values use the validation context error code; invalid defaults throw `invalid-descriptor`. |
+| Item         | Details                                                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Import path  | `@cookbook/urlkit`                                                                                                        |
+| Signatures   | `date()`, `date({ format: 'date' \| 'date-time' \| 'unix-seconds' \| 'unix-ms' \| DateFormatString \| DateFormatCodec })` |
+| Return value | Runtime schema builder that infers `Date`.                                                                                |
+| Throws       | Invalid parse/serialize values use the validation context error code; invalid defaults throw `invalid-descriptor`.        |
 
 Supported formats:
 
@@ -281,12 +283,14 @@ Supported formats:
 | `date-time`    | `YYYY-MM-DDTHH:mm:ss.sssZ`  | Strict UTC only. Offset or ambiguous values are rejected. |
 | `unix-seconds` | finite integer seconds      | Parses to `Date`; serializes from `Date`.                 |
 | `unix-ms`      | finite integer milliseconds | Parses to `Date`; serializes from `Date`.                 |
+| format string  | token-defined string        | Runtime only; supports URLKit's strict token subset.      |
 | custom codec   | codec-defined string        | Runtime only; not supported in static descriptors.        |
 
 ```ts
 const ReportsUrl = url({
   search: {
     day: date(),
+    displayDay: date({ format: 'dd-MM-yyyy' }).optional(),
     at: date({ format: 'date-time' }).optional(),
     created: date({ format: 'unix-seconds' }).optional(),
   },
@@ -295,14 +299,56 @@ const ReportsUrl = url({
 
 ## `dateTime`
 
-| Item             | Details                                                        |
-| ---------------- | -------------------------------------------------------------- |
-| Signature        | `dateTime()`                                                   |
-| Purpose          | Convenience builder equivalent to strict UTC date-time format. |
-| Serialized value | `YYYY-MM-DDTHH:mm:ss.sssZ`                                     |
+| Item             | Details                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Signatures       | `dateTime()`, `dateTime({ format: 'date-time' \| DateFormatString \| DateFormatCodec })`                           |
+| Purpose          | Convenience builder for strict UTC date-time values, custom format strings, or custom codecs.                      |
+| Serialized value | `YYYY-MM-DDTHH:mm:ss.sssZ` by default, or a format-string/codec-defined string.                                    |
+| Throws           | Invalid parse/serialize values use the validation context error code; invalid defaults throw `invalid-descriptor`. |
 
 ```ts
 const schema = dateTime().optional();
+```
+
+`dateTime(...)` accepts custom runtime date-time format strings and custom runtime codecs. It does not accept other built-in `date(...)` formats such as `'date'`, `'unix-seconds'`, or `'unix-ms'`.
+
+```ts
+const EuropeanDateTime = dateTime({
+  format: 'dd-MM-yyyy HH:mm:ss',
+});
+```
+
+## Custom runtime date format strings
+
+Runtime format strings use URLKit's strict token subset:
+
+| Token  | Meaning                     |
+| ------ | --------------------------- |
+| `yyyy` | Four-digit UTC year         |
+| `MM`   | Two-digit UTC month         |
+| `dd`   | Two-digit UTC day           |
+| `HH`   | Two-digit UTC hour          |
+| `mm`   | Two-digit UTC minute        |
+| `ss`   | Two-digit UTC second        |
+| `SSS`  | Three-digit UTC millisecond |
+
+Rules:
+
+- `date({ format })` requires `yyyy`, `MM`, and `dd` and does not allow time tokens.
+- `dateTime({ format })` requires `yyyy`, `MM`, `dd`, `HH`, `mm`, and `ss`; `SSS` is optional.
+- Literal letters must be single-quoted, for example `yyyy-MM-dd'T'HH:mm:ss.SSS'Z'`.
+- Unsupported or ambiguous tokens such as `YY`, `YYYY`, `M`, `D`, `DD`, `h`, `a`, timezone names, and locale month names are rejected.
+- Parsing is strict and validates real UTC calendar dates/instants.
+- If a date-time format omits `SSS`, serializing a `Date` with non-zero milliseconds throws to avoid silent precision loss.
+
+```ts
+const ReportsUrl = url({
+  search: {
+    from: date({ format: 'dd-MM-yyyy' }),
+    at: dateTime({ format: 'dd-MM-yyyy HH:mm:ss' }).optional(),
+    preciseAt: dateTime({ format: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" }).optional(),
+  },
+});
 ```
 
 ## Custom runtime date codecs
@@ -327,7 +373,7 @@ const ReportsUrl = url({
 });
 ```
 
-The custom `parse` method must return a valid `Date`. The custom `serialize` method must return a non-empty string.
+The custom `parse` method must return a valid `Date`. The custom `serialize` method must return a non-empty string. Runtime custom codecs are supported by both `date({ format: codec })` and `dateTime({ format: codec })`.
 
 ---
 
@@ -606,16 +652,16 @@ type UrlSafeParseResult<Pathname, Params, Search, Hash> =
 
 Error codes:
 
-| Code                 | Typical meaning                                                 |
-| -------------------- | --------------------------------------------------------------- |
-| `invalid-url`        | Input is not a valid serialized URL/request URL.                |
-| `path-mismatch`      | Pathname does not satisfy the path pattern.                     |
-| `missing-param`      | Required path param missing during build.                       |
-| `invalid-param`      | Path param cannot parse or build.                               |
-| `missing-search`     | Required search field missing.                                  |
-| `invalid-search`     | Search field invalid, unknown disallowed, or object collision.  |
-| `invalid-hash`       | Hash missing or invalid.                                        |
-| `invalid-descriptor` | Contract/schema/static descriptor invalid at construction time. |
+| Code                 | Typical meaning                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------- |
+| `invalid-url`        | Input is not a valid serialized URL/request URL.                                             |
+| `path-mismatch`      | Pathname does not satisfy the path pattern.                                                  |
+| `missing-param`      | Required path param missing during build.                                                    |
+| `invalid-param`      | Path param cannot parse or build; PathKit constraint failures are available through `cause`. |
+| `missing-search`     | Required search field missing.                                                               |
+| `invalid-search`     | Search field invalid, unknown disallowed, or object collision.                               |
+| `invalid-hash`       | Hash missing or invalid.                                                                     |
+| `invalid-descriptor` | Contract/schema/static descriptor invalid at construction time.                              |
 
 ```ts
 try {
@@ -647,6 +693,9 @@ The main entry also exports contracts used by advanced users and tooling:
 - `HashSchema`
 - `NormalizedHashDescriptor`
 - `DateFormatCodec`
+- `DateTimeFormat`
+- `DateTimeOptions`
+- `DateTimeSchema`
 - URL inference helpers such as `PathnameFromPattern` and `ParamsFromPattern`
 
 These are exported because they are part of the public type surface. Most application code only needs `url`, `search`, `hash`, schema builders, `UrlState`, options, safe result types, and `UrlKitError`.

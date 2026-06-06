@@ -7,6 +7,10 @@ import { createUrlKitMiddleware } from './urlkit-middleware.js';
 
 const fastify = Fastify({ logger: true });
 
+fastify.get('/', (_, response) => {
+  response.redirect('/products');
+});
+
 fastify.get(
   '/products',
   {

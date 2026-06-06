@@ -121,4 +121,151 @@ describe('dateTime', () => {
       expect((error as UrlKitError).path).toEqual(['hash']);
     }
   });
+
+  it('supports custom runtime date-time format strings', () => {
+    const defaultValue = new Date('2026-01-01T10:30:05.000Z');
+    const schema = dateTime({ format: 'dd-MM-yyyy HH:mm:ss' });
+
+    expect(compileRuntimeSchema(schema.default(defaultValue))).toEqual({
+      kind: 'date',
+      presence: 'defaulted',
+      options: { format: 'dd-MM-yyyy HH:mm:ss' },
+      defaultValue,
+    });
+    expect(parseRuntimeSchemaValue(schema, '01-01-2026 10:30:05').toISOString()).toBe(
+      '2026-01-01T10:30:05.000Z',
+    );
+    expect(normalizeRuntimeSchemaValue(schema, defaultValue)).toBe(defaultValue);
+    expect(serializeRuntimeSchemaValue(schema, defaultValue)).toBe('01-01-2026 10:30:05');
+  });
+
+  it('supports custom runtime date-time format strings with milliseconds and quoted literals', () => {
+    const defaultValue = new Date('2026-01-01T10:30:05.123Z');
+    const schema = dateTime({ format: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" });
+
+    expect(parseRuntimeSchemaValue(schema, '2026-01-01T10:30:05.123Z').toISOString()).toBe(
+      '2026-01-01T10:30:05.123Z',
+    );
+    expect(serializeRuntimeSchemaValue(schema, defaultValue)).toBe('2026-01-01T10:30:05.123Z');
+  });
+
+  it('supports custom runtime date-time formats through explicit codecs', () => {
+    const customFormat = {
+      parse(value: string) {
+        const [datePart = '', timePart = ''] = value.split(' ');
+        const [day = '', month = '', year = ''] = datePart.split('-');
+        const [hour = '', minute = '', second = ''] = timePart.split(':');
+
+        return new Date(
+          Date.UTC(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hour),
+            Number(minute),
+            Number(second),
+          ),
+        );
+      },
+      serialize(value: Date) {
+        const day = String(value.getUTCDate()).padStart(2, '0');
+        const month = String(value.getUTCMonth() + 1).padStart(2, '0');
+        const year = String(value.getUTCFullYear()).padStart(4, '0');
+        const hour = String(value.getUTCHours()).padStart(2, '0');
+        const minute = String(value.getUTCMinutes()).padStart(2, '0');
+        const second = String(value.getUTCSeconds()).padStart(2, '0');
+
+        return `${day}-${month}-${year} ${hour}:${minute}:${second}`;
+      },
+    };
+    const defaultValue = new Date('2026-01-01T10:30:05.000Z');
+    const schema = dateTime({ format: customFormat });
+
+    expect(compileRuntimeSchema(schema.default(defaultValue))).toEqual({
+      kind: 'date',
+      presence: 'defaulted',
+      options: { format: customFormat },
+      defaultValue,
+    });
+    expect(parseRuntimeSchemaValue(schema, '01-01-2026 10:30:05').toISOString()).toBe(
+      '2026-01-01T10:30:05.000Z',
+    );
+    expect(normalizeRuntimeSchemaValue(schema, defaultValue)).toBe(defaultValue);
+    expect(serializeRuntimeSchemaValue(schema, defaultValue)).toBe('01-01-2026 10:30:05');
+  });
+
+  it('infers Date values for custom runtime date-time formats', () => {
+    const schema = dateTime({
+      format: {
+        parse(value: string) {
+          return new Date(value);
+        },
+        serialize(value: Date) {
+          return value.toISOString();
+        },
+      },
+    }).optional();
+    const value = undefined as InferRuntimeSchemaValue<typeof schema>;
+
+    expect(value).toBeUndefined();
+  });
+
+  it('rejects non date-time built-in formats and invalid codec descriptors', () => {
+    expect(() => dateTime({ format: 'date' as never })).toThrow(UrlKitError);
+    expect(() => dateTime({ format: 'unix-seconds' as never })).toThrow(UrlKitError);
+    expect(() => dateTime({ format: 'unix-ms' as never })).toThrow(UrlKitError);
+    expect(() => dateTime({ format: 'DD-MM-YYYY HH:mm:ss' as never })).toThrow(UrlKitError);
+    expect(() => dateTime({ format: 'dd-MM-yyyy' as never })).toThrow(UrlKitError);
+    expect(() => dateTime('dd-MM-yyyy HH:mm:ss' as never)).toThrow(UrlKitError);
+    expect(() =>
+      dateTime({
+        format: {
+          parse() {
+            return new Date();
+          },
+        } as never,
+      }),
+    ).toThrow(UrlKitError);
+    expect(() =>
+      dateTime({
+        format: {
+          serialize() {
+            return 'x';
+          },
+        } as never,
+      }),
+    ).toThrow(UrlKitError);
+  });
+
+  it('returns safe failures for invalid custom date-time formats', () => {
+    const parseResult = safeParseRuntimeSchemaValue(
+      dateTime({
+        format: {
+          parse() {
+            return new Date(Number.NaN);
+          },
+          serialize(value: Date) {
+            return value.toISOString();
+          },
+        },
+      }),
+      'wrong',
+    );
+    const serializeResult = safeSerializeRuntimeSchemaValue(
+      dateTime({
+        format: {
+          parse(value: string) {
+            return new Date(value);
+          },
+          serialize() {
+            return '';
+          },
+        },
+      }),
+      new Date('2026-01-01T10:30:00.000Z'),
+    );
+
+    expect(parseResult.success).toBe(false);
+    expect(serializeResult.success).toBe(false);
+  });
 });

@@ -27,25 +27,17 @@ const reportHref = Reports.build({
 // reportHref === '?day=2026-06-02&publishedAt=2026-06-02T12%3A30%3A00.000Z&importedAtSeconds=1780403400&importedAtMs=1780403400000'
 
 const EuropeanDateSearch = search({
-  from: date({
-    format: {
-      parse(value) {
-        const [day, month, year] = value.split('-');
-        return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
-      },
-      serialize(value) {
-        const day = String(value.getUTCDate()).padStart(2, '0');
-        const month = String(value.getUTCMonth() + 1).padStart(2, '0');
-        return `${day}-${month}-${value.getUTCFullYear()}`;
-      },
-    },
-  }),
+  from: date({ format: 'dd-MM-yyyy' }),
+  at: dateTime({ format: 'dd-MM-yyyy HH:mm:ss' }).optional(),
 });
 
 const customDateHref = EuropeanDateSearch.build({
-  search: { from: new Date('2026-06-02T00:00:00.000Z') },
+  search: {
+    from: new Date('2026-06-02T00:00:00.000Z'),
+    at: new Date('2026-06-02T12:30:05.000Z'),
+  },
 });
 
-// customDateHref === '?from=02-06-2026'
+// customDateHref === '?from=02-06-2026&at=02-06-2026+12%3A30%3A05'
 
 export { EuropeanDateSearch, Reports, customDateHref, reportHref, reportState };

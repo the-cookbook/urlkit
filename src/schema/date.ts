@@ -1,5 +1,11 @@
 import { parseDate } from '../date/parse-date.js';
 import { parseCustomDate } from '../date/parse-custom-date.js';
+import {
+  parseDateFormatString,
+  serializeDateFormatString,
+  type DateFormatStringMode,
+  validateDateFormatString,
+} from '../date/date-format-string.js';
 import { parseDateTime } from '../date/parse-date-time.js';
 import { parseUnixMs } from '../date/parse-unix-ms.js';
 import { parseUnixSeconds } from '../date/parse-unix-seconds.js';
@@ -8,7 +14,7 @@ import { serializeCustomDate } from '../date/serialize-custom-date.js';
 import { serializeDateTime } from '../date/serialize-date-time.js';
 import { serializeUnixMs } from '../date/serialize-unix-ms.js';
 import { serializeUnixSeconds } from '../date/serialize-unix-seconds.js';
-import type { DateFormatCodec } from '../date/contracts.js';
+import type { DateFormatCodec, DateFormatString } from '../date/contracts.js';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import type {
   RequiredRuntimeSchemaDescriptor,
@@ -22,7 +28,7 @@ import { createRuntimeSchemaBuilder } from './create-schema-builder.js';
 import { createSchemaValueError } from './create-schema-value-error.js';
 
 export type BuiltInRuntimeDateFormat = 'date' | 'date-time' | 'unix-seconds' | 'unix-ms';
-export type RuntimeDateFormat = BuiltInRuntimeDateFormat | DateFormatCodec;
+export type RuntimeDateFormat = BuiltInRuntimeDateFormat | DateFormatString | DateFormatCodec;
 
 export interface DateSchemaOptions<
   Format extends RuntimeDateFormat = RuntimeDateFormat,
@@ -101,22 +107,32 @@ export function date(): DateSchema;
 export function date<const Format extends RuntimeDateFormat>(
   options: DateOptions<Format>,
 ): DateSchema<Format>;
-export function date(options: DateOptions<RuntimeDateFormat> = {}): DateSchema<RuntimeDateFormat> {
-  const format = resolveDateFormat(options);
+export function date(
+  options: DateOptions<RuntimeDateFormat> = {},
+  formatStringMode: DateFormatStringMode = 'date',
+): DateSchema<RuntimeDateFormat> {
+  const format = resolveDateFormat(options, formatStringMode);
 
   return createRuntimeSchemaBuilder<Date, 'date', DateSchemaOptions>({
     kind: 'date',
     options: { format },
-    codec: getDateCodec(format),
+    codec: getDateCodec(format, formatStringMode),
     validateDefault(value, context) {
       validateDateDefault(value, context);
     },
   });
 }
 
-function getDateCodec(format: RuntimeDateFormat): RuntimeSchemaCodec<Date> {
+function getDateCodec(
+  format: RuntimeDateFormat,
+  formatStringMode: DateFormatStringMode,
+): RuntimeSchemaCodec<Date> {
   if (isDateFormatCodec(format)) {
     return createCustomDateCodec(format);
+  }
+
+  if (isDateFormatString(format) && !isBuiltInDateFormat(format)) {
+    return createDateFormatStringCodec(format, formatStringMode);
   }
 
   if (format === 'date-time') {
@@ -132,6 +148,31 @@ function getDateCodec(format: RuntimeDateFormat): RuntimeSchemaCodec<Date> {
   }
 
   return dateOnlyCodec;
+}
+
+function createDateFormatStringCodec(
+  format: DateFormatString,
+  mode: DateFormatStringMode,
+): RuntimeSchemaCodec<Date> {
+  return {
+    parse(input, context) {
+      return parseDateFormatString(input, format, mode, {
+        code: context.errorCode,
+        path: context.path,
+      });
+    },
+
+    normalize(input, context) {
+      return validateDate(input, context);
+    },
+
+    serialize(input, context) {
+      return serializeDateFormatString(input, format, mode, {
+        code: context.errorCode,
+        path: context.path,
+      });
+    },
+  };
 }
 
 function createCustomDateCodec(format: DateFormatCodec): RuntimeSchemaCodec<Date> {
@@ -150,7 +191,10 @@ function createCustomDateCodec(format: DateFormatCodec): RuntimeSchemaCodec<Date
   };
 }
 
-function resolveDateFormat(options: DateOptions<RuntimeDateFormat>): RuntimeDateFormat {
+function resolveDateFormat(
+  options: DateOptions<RuntimeDateFormat>,
+  formatStringMode: DateFormatStringMode,
+): RuntimeDateFormat {
   if (!isDateOptions(options)) {
     throw new UrlKitError('invalid-descriptor', 'Date options must be an object.');
   }
@@ -161,14 +205,23 @@ function resolveDateFormat(options: DateOptions<RuntimeDateFormat>): RuntimeDate
     return format;
   }
 
+  if (isDateFormatString(format)) {
+    validateDateFormatString(format, formatStringMode);
+    return format;
+  }
+
   throw new UrlKitError(
     'invalid-descriptor',
-    'Date format must be a supported built-in format or an explicit codec.',
+    'Date format must be a supported built-in format, a supported format string, or an explicit codec.',
   );
 }
 
 function isDateOptions(input: unknown): input is DateOptions<RuntimeDateFormat> {
   return typeof input === 'object' && input !== null && !Array.isArray(input);
+}
+
+function isDateFormatString(input: unknown): input is DateFormatString {
+  return typeof input === 'string';
 }
 
 function isBuiltInDateFormat(input: unknown): input is BuiltInRuntimeDateFormat {

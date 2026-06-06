@@ -180,6 +180,23 @@ describe('date', () => {
     );
   });
 
+  it('supports custom runtime date format strings', () => {
+    const defaultValue = new Date('2026-06-02T00:00:00.000Z');
+    const schema = date({ format: 'dd-MM-yyyy' });
+
+    expect(compileRuntimeSchema(schema.default(defaultValue))).toEqual({
+      kind: 'date',
+      presence: 'defaulted',
+      options: { format: 'dd-MM-yyyy' },
+      defaultValue,
+    });
+    expect(parseRuntimeSchemaValue(schema, '02-06-2026').toISOString()).toBe(
+      '2026-06-02T00:00:00.000Z',
+    );
+    expect(normalizeRuntimeSchemaValue(schema, defaultValue)).toBe(defaultValue);
+    expect(serializeRuntimeSchemaValue(schema, defaultValue)).toBe('02-06-2026');
+  });
+
   it('supports custom runtime date formats through explicit codecs', () => {
     const customFormat = {
       parse(value: string) {
@@ -309,9 +326,10 @@ describe('date', () => {
     expect(serializeResult.success).toBe(false);
   });
 
-  it('rejects arbitrary format strings and invalid codec descriptors', () => {
+  it('rejects unsupported format strings and invalid codec descriptors', () => {
     expect(() => date({ format: 'DD-MM-YYYY' as never })).toThrow(UrlKitError);
-    expect(() => date('DD-MM-YYYY' as never)).toThrow(UrlKitError);
+    expect(() => date({ format: 'dd-MM-yyyy HH:mm:ss' as never })).toThrow(UrlKitError);
+    expect(() => date('dd-MM-yyyy' as never)).toThrow(UrlKitError);
     expect(() =>
       date({
         format: {
@@ -332,7 +350,7 @@ describe('date', () => {
     ).toThrow(UrlKitError);
   });
 
-  it('keeps custom formats runtime-only by not changing static descriptor exports', () => {
+  it('keeps custom codecs runtime-only by not changing static descriptor exports', () => {
     const customFormat = {
       parse(value: string) {
         return new Date(value);

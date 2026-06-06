@@ -26,7 +26,7 @@ npm run build
 | [`router-runtime.ts`](./router-runtime.ts)                   | `createRouteUrlContract`, raw params by default, parsed params opt-in, and router-runtime search helpers.                                |
 | [`static-descriptor.ts`](./static-descriptor.ts)             | Static URL/search/hash descriptors that remain analyzable by router tooling.                                                             |
 | [`object-search.ts`](./object-search.ts)                     | Declared object search fields, nested parsing/building, dot notation, escaped keys, and collision-safe parsing.                          |
-| [`date-search.ts`](./date-search.ts)                         | `date()`, `dateTime()`, unix seconds, unix milliseconds, and custom runtime date codecs.                                                 |
+| [`date-search.ts`](./date-search.ts)                         | `date()`, `dateTime()`, unix seconds, unix milliseconds, custom format strings, and custom runtime date codecs.                          |
 | [`error-handling.ts`](./error-handling.ts)                   | `UrlKitError`, `safeParse`, `safeNormalize`, error-code checks, and default include/omit behavior.                                       |
 
 ## Framework integration examples

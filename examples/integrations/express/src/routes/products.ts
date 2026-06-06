@@ -7,6 +7,10 @@ import { createUrlKitMiddleware } from '../urlkit-middleware.js';
 
 export const productsRouter = Router();
 
+productsRouter.get('/', (_, response) => {
+  response.redirect('/products');
+});
+
 productsRouter.get(
   '/products',
   createUrlKitMiddleware(ProductFiltersUrl, { unknownSearch: 'preserve' }),

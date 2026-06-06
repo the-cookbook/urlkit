@@ -132,7 +132,7 @@ describe('usage examples', () => {
     expect(reportHref).toBe(
       '?day=2026-06-02&publishedAt=2026-06-02T12%3A30%3A00.000Z&importedAtSeconds=1780403400&importedAtMs=1780403400000',
     );
-    expect(customDateHref).toBe('?from=02-06-2026');
+    expect(customDateHref).toBe('?from=02-06-2026&at=02-06-2026+12%3A30%3A05');
   });
 
   it('executes the error handling and defaults example', () => {
