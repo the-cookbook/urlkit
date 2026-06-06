@@ -13,6 +13,7 @@ const reportState = Reports.parse(
 
 // date() is date-only and serializes as YYYY-MM-DD.
 // dateTime() serializes as strict UTC YYYY-MM-DDTHH:mm:ss.sssZ.
+// Custom date-time format strings also parse and serialize UTC fields.
 // Unix formats require finite integer seconds or milliseconds.
 
 const reportHref = Reports.build({
@@ -28,7 +29,7 @@ const reportHref = Reports.build({
 
 const EuropeanDateSearch = search({
   from: date({ format: 'dd-MM-yyyy' }),
-  at: dateTime({ format: 'dd-MM-yyyy HH:mm:ss' }).optional(),
+  at: dateTime({ format: "dd-MM-yyyy'T'HH:mm:ss'Z'" }).optional(),
 });
 
 const customDateHref = EuropeanDateSearch.build({
@@ -38,6 +39,6 @@ const customDateHref = EuropeanDateSearch.build({
   },
 });
 
-// customDateHref === '?from=02-06-2026&at=02-06-2026+12%3A30%3A05'
+// customDateHref === '?from=02-06-2026&at=02-06-2026T12%3A30%3A05Z'
 
 export { EuropeanDateSearch, Reports, customDateHref, reportHref, reportState };

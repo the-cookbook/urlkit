@@ -405,23 +405,25 @@ const Reports = search({
 });
 ```
 
-| Builder                                       | Serialized format                      |
-| --------------------------------------------- | -------------------------------------- |
-| `date()`                                      | Date-only `YYYY-MM-DD`.                |
-| `dateTime()`                                  | Strict UTC `YYYY-MM-DDTHH:mm:ss.sssZ`. |
-| `date({ format: 'dd-MM-yyyy' })`              | Strict custom date format string.      |
-| `dateTime({ format: 'dd-MM-yyyy HH:mm:ss' })` | Strict custom date-time format string. |
-| `date({ format: { parse, serialize } })`      | Custom runtime date codec.             |
-| `dateTime({ format: { parse, serialize } })`  | Custom runtime date-time codec.        |
-| `date({ format: 'unix-seconds' })`            | Finite integer seconds.                |
-| `date({ format: 'unix-ms' })`                 | Finite integer milliseconds.           |
+| Builder                                            | Serialized format                      |
+| -------------------------------------------------- | -------------------------------------- |
+| `date()`                                           | Date-only `YYYY-MM-DD`.                |
+| `dateTime()`                                       | Strict UTC `YYYY-MM-DDTHH:mm:ss.sssZ`. |
+| `date({ format: 'dd-MM-yyyy' })`                   | Strict custom date format string.      |
+| `dateTime({ format: "dd-MM-yyyy'T'HH:mm:ss'Z'" })` | Strict custom date-time format string. |
+| `date({ format: { parse, serialize } })`           | Custom runtime date codec.             |
+| `dateTime({ format: { parse, serialize } })`       | Custom runtime date-time codec.        |
+| `date({ format: 'unix-seconds' })`                 | Finite integer seconds.                |
+| `date({ format: 'unix-ms' })`                      | Finite integer milliseconds.           |
 
 Custom date and date-time format strings are available in runtime-builder schemas and static router descriptors. Supported tokens are `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`, and `SSS`. Static date defaults use serialized values, not `Date` instances. Static descriptors may use format strings, but not custom `{ parse, serialize }` codecs.
+
+Date-time values are UTC instants. Custom `dateTime` and static `date-time` format strings parse into `Date` values using UTC fields and serialize from UTC fields. Local `Date` display methods such as `toString()` or `getHours()` may show a timezone-adjusted value; use `toISOString()` or UTC getters when asserting URL state.
 
 ```ts
 const CustomDate = search({
   from: date({ format: 'dd-MM-yyyy' }),
-  at: dateTime({ format: 'dd-MM-yyyy HH:mm:ss' }).optional(),
+  at: dateTime({ format: "dd-MM-yyyy'T'HH:mm:ss'Z'" }).optional(),
 });
 
 CustomDate.build({
@@ -430,7 +432,7 @@ CustomDate.build({
     at: new Date('2026-06-02T12:30:05.000Z'),
   },
 });
-// '?from=02-06-2026&at=02-06-2026+12%3A30%3A05'
+// '?from=02-06-2026&at=02-06-2026T12%3A30%3A05Z'
 ```
 
 ## Object search
@@ -601,7 +603,7 @@ const routeDescriptor = {
     },
     scheduledAt: {
       type: 'date-time',
-      format: 'dd-MM-yyyy HH:mm:ss',
+      format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
       optional: true,
     },
   },

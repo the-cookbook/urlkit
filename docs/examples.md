@@ -204,7 +204,9 @@ const Events = search({
 Events.parse('/events?at=2026-01-01T10:30:00.000Z');
 ```
 
-Ambiguous or offset values such as `2026-01-01T10:30:00` and `2026-01-01T10:30:00+02:00` are invalid. Use `dateTime({ format: 'dd-MM-yyyy HH:mm:ss' })` for strict custom runtime date-time format strings, or `dateTime({ format: { parse, serialize } })` for fully custom codecs.
+Ambiguous or offset values such as `2026-01-01T10:30:00` and `2026-01-01T10:30:00+02:00` are invalid. Use `dateTime({ format: "dd-MM-yyyy'T'HH:mm:ss'Z'" })` for strict custom runtime date-time format strings, or `dateTime({ format: { parse, serialize } })` for fully custom codecs.
+
+Date-time values are UTC instants. Custom `dateTime` format strings parse into `Date` values using UTC fields and serialize from UTC fields. Local `Date` display methods such as `toString()` or `getHours()` may show a timezone-adjusted value; use `toISOString()` or UTC getters when asserting URL state.
 
 ## Unix date field
 
@@ -225,7 +227,7 @@ import { date, dateTime, search } from '@cookbook/urlkit';
 
 const Reports = search({
   from: date({ format: 'dd-MM-yyyy' }),
-  at: dateTime({ format: 'dd-MM-yyyy HH:mm:ss' }).optional(),
+  at: dateTime({ format: "dd-MM-yyyy'T'HH:mm:ss'Z'" }).optional(),
 });
 
 Reports.build({
@@ -234,12 +236,12 @@ Reports.build({
     at: new Date('2026-06-02T12:30:05.000Z'),
   },
 });
-// '?from=02-06-2026&at=02-06-2026+12%3A30%3A05'
+// '?from=02-06-2026&at=02-06-2026T12%3A30%3A05Z'
 ```
 
 Supported tokens are `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`, and `SSS`. Unsupported third-party format tokens such as `DD`, `YYYY`, locale month names, and timezone names are rejected.
 
-Custom format strings are runtime-only and cannot be used in static descriptors.
+Runtime `{ parse, serialize }` codecs are runtime-only and cannot be used in static descriptors. Static descriptors may use supported date and date-time format strings.
 
 ## Custom runtime date and date-time codecs
 
@@ -315,7 +317,7 @@ const ArticleUrl = createRouteUrlContract({
     },
     scheduledAt: {
       type: 'date-time',
-      format: 'dd-MM-yyyy HH:mm:ss',
+      format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
       optional: true,
     },
   },
@@ -323,7 +325,7 @@ const ArticleUrl = createRouteUrlContract({
 } as const);
 
 ArticleUrl.parse(
-  '/articles/post-1?ref=email&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05#comments',
+  '/articles/post-1?ref=email&publishedOn=02-06-2026&scheduledAt=02-06-2026T12%3A30%3A05Z#comments',
 );
 
 ArticleUrl.safeParse('/articles/post-1?ref=email&publishedOn=02-06-2026&scheduledAt=foo#comments', {

@@ -39,7 +39,7 @@ export const articleRouteUrlDescriptor = {
     },
     scheduledAt: {
       type: 'date-time',
-      format: 'dd-MM-yyyy HH:mm:ss',
+      format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
       optional: true,
     },
   },
@@ -57,8 +57,11 @@ export const ArticleUrlParsedParams = createRouteUrlContract(articleRouteUrlDesc
   params: 'parsed',
 });
 
+// Static date-time format strings parse and serialize UTC fields.
+// Use toISOString() or UTC getters when asserting parsed Date values.
+
 export const rawState = ArticleUrlRawParams.parse(
-  '/articles/42?category=engineering&page=2&ref=email&tag=ts&tag=url&sort=popular&featured=true&score=9.5&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05#comments',
+  '/articles/42?category=engineering&page=2&ref=email&tag=ts&tag=url&sort=popular&featured=true&score=9.5&publishedOn=02-06-2026&scheduledAt=02-06-2026T12%3A30%3A05Z#comments',
 );
 
 export const parsedState = ArticleUrlParsedParams.parse(
@@ -66,7 +69,7 @@ export const parsedState = ArticleUrlParsedParams.parse(
 );
 
 export const parsedArticleUrl = ArticleUrlParsedParams.parse(
-  '/articles/42?category=engineering&page=2&ref=newsletter&tag=ts&tag=urlkit&sort=popular&featured=true&score=9.5&publishedOn=06-06-2026&scheduledAt=06-06-2026%2010%3A30%3A00#comments',
+  '/articles/42?category=engineering&page=2&ref=newsletter&tag=ts&tag=urlkit&sort=popular&featured=true&score=9.5&publishedOn=06-06-2026&scheduledAt=06-06-2026T10%3A30%3A00Z#comments',
 );
 
 export const safeParsedArticleUrl = ArticleUrlParsedParams.safeParse(
@@ -127,7 +130,7 @@ export const articleUrlMatches = ArticleUrlParsedParams.match(
 );
 
 export const parsedSearch = parseSearch(
-  '?category=engineering&page=2&ref=email&tag=ts&tag=url&sort=popular&featured=true&score=9.5&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05',
+  '?category=engineering&page=2&ref=email&tag=ts&tag=url&sort=popular&featured=true&score=9.5&publishedOn=02-06-2026&scheduledAt=02-06-2026T12%3A30%3A05Z',
   {
     schema: articleRouteUrlDescriptor.search,
   },

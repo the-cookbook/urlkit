@@ -132,9 +132,12 @@ describe('dateTime', () => {
       options: { format: 'dd-MM-yyyy HH:mm:ss' },
       defaultValue,
     });
-    expect(parseRuntimeSchemaValue(schema, '01-01-2026 10:30:05').toISOString()).toBe(
-      '2026-01-01T10:30:05.000Z',
-    );
+    const parsed = parseRuntimeSchemaValue(schema, '01-01-2026 10:30:05');
+
+    expect(parsed.toISOString()).toBe('2026-01-01T10:30:05.000Z');
+    expect(parsed.getUTCHours()).toBe(10);
+    expect(parsed.getUTCMinutes()).toBe(30);
+    expect(parsed.getUTCSeconds()).toBe(5);
     expect(normalizeRuntimeSchemaValue(schema, defaultValue)).toBe(defaultValue);
     expect(serializeRuntimeSchemaValue(schema, defaultValue)).toBe('01-01-2026 10:30:05');
   });
@@ -187,9 +190,12 @@ describe('dateTime', () => {
       options: { format: customFormat },
       defaultValue,
     });
-    expect(parseRuntimeSchemaValue(schema, '01-01-2026 10:30:05').toISOString()).toBe(
-      '2026-01-01T10:30:05.000Z',
-    );
+    const parsed = parseRuntimeSchemaValue(schema, '01-01-2026 10:30:05');
+
+    expect(parsed.toISOString()).toBe('2026-01-01T10:30:05.000Z');
+    expect(parsed.getUTCHours()).toBe(10);
+    expect(parsed.getUTCMinutes()).toBe(30);
+    expect(parsed.getUTCSeconds()).toBe(5);
     expect(normalizeRuntimeSchemaValue(schema, defaultValue)).toBe(defaultValue);
     expect(serializeRuntimeSchemaValue(schema, defaultValue)).toBe('01-01-2026 10:30:05');
   });

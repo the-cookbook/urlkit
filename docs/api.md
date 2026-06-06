@@ -314,7 +314,7 @@ const schema = dateTime().optional();
 
 ```ts
 const EuropeanDateTime = dateTime({
-  format: 'dd-MM-yyyy HH:mm:ss',
+  format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
 });
 ```
 
@@ -345,7 +345,7 @@ Rules:
 const ReportsUrl = url({
   search: {
     from: date({ format: 'dd-MM-yyyy' }),
-    at: dateTime({ format: 'dd-MM-yyyy HH:mm:ss' }).optional(),
+    at: dateTime({ format: "dd-MM-yyyy'T'HH:mm:ss'Z'" }).optional(),
     preciseAt: dateTime({ format: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" }).optional(),
   },
 });
@@ -758,7 +758,7 @@ const search = {
   },
   scheduledAt: {
     type: 'date-time',
-    format: 'dd-MM-yyyy HH:mm:ss',
+    format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
     optional: true,
   },
 } as const;
@@ -777,7 +777,9 @@ values: [...] }`
 
 Every static search field uses the object form `{ type, many?, optional?, default? }`. `type` always means value kind. Repeated search params use `many: true`. Static descriptors reject `many: false`, `optional: false`, and `optional: true` combined with `default`.
 
-Static date and date-time formats may use built-in static formats or strict format strings such as `dd-MM-yyyy` and `dd-MM-yyyy HH:mm:ss`. Static descriptors do not support runtime `{ parse, serialize }` codecs. Static date defaults must be serialized values, not `Date` instances.
+Static date and date-time formats may use built-in static formats or strict format strings such as `dd-MM-yyyy` and `dd-MM-yyyy'T'HH:mm:ss'Z'`. Static descriptors do not support runtime `{ parse, serialize }` codecs. Static date defaults must be serialized values, not `Date` instances.
+
+Date-time values are UTC instants. Custom runtime `dateTime` and static `date-time` format strings parse into `Date` values using UTC fields and serialize from UTC fields. Local `Date` display methods such as `toString()` or `getHours()` may show a timezone-adjusted value; use `toISOString()` or UTC getters when asserting URL state.
 
 ## `compileStaticHash`
 
@@ -901,12 +903,12 @@ parseSearch('?tags=ts%2Crouter', {
 });
 // { tags: ['ts', 'router'] }
 
-parseSearch('?from=02-06-2026&startsAt=02-06-2026+12%3A30%3A05', {
+parseSearch('?from=02-06-2026&startsAt=02-06-2026T12%3A30%3A05Z', {
   schema: {
     from: { type: 'date', format: 'dd-MM-yyyy', optional: true },
     startsAt: {
       type: 'date-time',
-      format: 'dd-MM-yyyy HH:mm:ss',
+      format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
       optional: true,
     },
   },
@@ -919,7 +921,7 @@ parseSearch('/articles/1?page=2&publishedOn=02-06-2026&startsAt=foo', {
     publishedOn: { type: 'date', format: 'dd-MM-yyyy', optional: true },
     startsAt: {
       type: 'date-time',
-      format: 'dd-MM-yyyy HH:mm:ss',
+      format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
       optional: true,
     },
   },
@@ -948,7 +950,7 @@ const schema = {
   tags: { type: 'string', many: true, optional: true },
   startsAt: {
     type: 'date-time',
-    format: 'dd-MM-yyyy HH:mm:ss',
+    format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
     optional: true,
   },
 } as const;
@@ -957,7 +959,7 @@ buildSearch(
   { page: 2, tags: ['ts', 'router'], startsAt: new Date('2026-06-02T12:30:05.000Z') },
   { schema, arrayFormat: 'comma' },
 );
-// '?page=2&tags=ts%2Crouter&startsAt=02-06-2026+12%3A30%3A05'
+// '?page=2&tags=ts%2Crouter&startsAt=02-06-2026T12%3A30%3A05Z'
 
 patchSearch('?page=1&debug=true', { page: 2 }, { schema });
 // '?page=2&debug=true'

@@ -14,7 +14,7 @@ describe('date format strings', () => {
     expect(serializeDateFormatString(value, 'dd-MM-yyyy', 'date')).toBe('02-06-2026');
   });
 
-  it('parses and serializes strict date-time format strings', () => {
+  it('parses and serializes strict date-time format strings as UTC instants', () => {
     const value = parseDateFormatString(
       '02-06-2026 15:04:05.123',
       'dd-MM-yyyy HH:mm:ss.SSS',
@@ -22,8 +22,23 @@ describe('date format strings', () => {
     );
 
     expect(value.toISOString()).toBe('2026-06-02T15:04:05.123Z');
+    expect(value.getUTCFullYear()).toBe(2026);
+    expect(value.getUTCMonth()).toBe(5);
+    expect(value.getUTCDate()).toBe(2);
+    expect(value.getUTCHours()).toBe(15);
+    expect(value.getUTCMinutes()).toBe(4);
+    expect(value.getUTCSeconds()).toBe(5);
+    expect(value.getUTCMilliseconds()).toBe(123);
     expect(serializeDateFormatString(value, 'dd-MM-yyyy HH:mm:ss.SSS', 'date-time')).toBe(
       '02-06-2026 15:04:05.123',
+    );
+  });
+
+  it('serializes strict date-time format strings from UTC fields', () => {
+    const value = new Date('2026-06-02T12:30:05.000Z');
+
+    expect(serializeDateFormatString(value, 'dd-MM-yyyy HH:mm:ss', 'date-time')).toBe(
+      '02-06-2026 12:30:05',
     );
   });
 

@@ -184,7 +184,7 @@ describe('usage examples', () => {
     }
     expect(partialHash).toBeUndefined();
     expect(builtSearch).toBe(
-      '?category=engineering&page=3&ref=newsletter&tag=ts&tag=url&sort=popular&featured=true&score=9.5&publishedOn=02-06-2026&scheduledAt=02-06-2026+12%3A30%3A05',
+      '?category=engineering&page=3&ref=newsletter&tag=ts&tag=url&sort=popular&featured=true&score=9.5&publishedOn=02-06-2026&scheduledAt=02-06-2026T12%3A30%3A05Z',
     );
     expect(patchedSearch).toBe('?category=engineering&page=4&ref=email&tag=ts&sort=newest');
     expect(replacedSearch).toBe('?category=engineering&page=1&sort=newest');
@@ -197,7 +197,7 @@ describe('usage examples', () => {
     expect(safeParsedArticleRequest.success).toBe(true);
     expect(safeNormalizedArticleUrl.success).toBe(true);
     expect(builtArticleUrl).toBe(
-      '/articles/42?category=engineering&page=2&ref=newsletter&tag=ts&tag=urlkit&sort=popular&featured=true&score=9.5&publishedOn=06-06-2026&scheduledAt=06-06-2026+10%3A30%3A00#comments',
+      '/articles/42?category=engineering&page=2&ref=newsletter&tag=ts&tag=urlkit&sort=popular&featured=true&score=9.5&publishedOn=06-06-2026&scheduledAt=06-06-2026T10%3A30%3A00Z#comments',
     );
     expect(articleUrlMatches).toBe(true);
     expect(strippedUnknownSearch.unknownSearch).toBeUndefined();
@@ -256,7 +256,7 @@ describe('usage examples', () => {
     expect(reportHref).toBe(
       '?day=2026-06-02&publishedAt=2026-06-02T12%3A30%3A00.000Z&importedAtSeconds=1780403400&importedAtMs=1780403400000',
     );
-    expect(customDateHref).toBe('?from=02-06-2026&at=02-06-2026+12%3A30%3A05');
+    expect(customDateHref).toBe('?from=02-06-2026&at=02-06-2026T12%3A30%3A05Z');
   });
 
   it('executes the error handling and defaults example', () => {
