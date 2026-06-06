@@ -1,6 +1,5 @@
 import { getConstraint } from '@cookbook/pathkit/constraints';
 import { UrlKitError } from '../errors/url-kit-error.js';
-import { getPathParamKind } from './path-param-kind.js';
 import type { ParsedPathSegment } from './path-segment.js';
 
 export function assertPathMatchFailure(
@@ -19,6 +18,7 @@ export function assertPathMatchFailure(
     const pathnameSegment = pathnameSegments[index];
 
     if (!segment || pathnameSegment === undefined) {
+      console.log('ERROR', segment);
       throwPathMismatch(pattern, pathname);
     }
 
@@ -41,13 +41,13 @@ export function assertPathMatchFailure(
 }
 
 function splitPath(pathname: string): readonly string[] {
-  if (pathname === '') {
+  if (!pathname) {
     return Object.freeze([]);
   }
 
   const normalized = pathname.startsWith('/') ? pathname.slice(1) : pathname;
 
-  if (normalized === '') {
+  if (!normalized) {
     return Object.freeze([]);
   }
 
@@ -58,45 +58,23 @@ function isValidPathParamSegment(
   segment: Extract<ParsedPathSegment, { readonly kind: 'param' }>,
   value: string,
 ): boolean {
-  if (value === '') {
+  if (!value || !segment.constraint) {
     return false;
   }
 
-  const kind = getPathParamKind(segment);
+  const constraint = getConstraint(segment.constraint);
 
-  if (kind === 'int') {
-    return /^\d+$/.test(value);
+  if (!constraint) {
+    return false;
   }
 
-  if (kind === 'number') {
-    return /^-?(?:\d+(?:\.\d+)?|\.\d+)$/.test(value) && Number.isFinite(Number(value));
+  try {
+    constraint(segment.name, value, segment.constraintParams ?? '');
+    console.log(constraint, segment, value);
+    return true;
+  } catch {
+    return false;
   }
-
-  if (kind === 'regex') {
-    const params = segment.constraintParams;
-
-    if (!params) {
-      return false;
-    }
-
-    return new RegExp(`^(?:${params})$`).test(value);
-  }
-
-  if (segment.constraint) {
-    const constraint = getConstraint(segment.constraint);
-
-    if (!constraint) {
-      return false;
-    }
-
-    try {
-      return new RegExp(`^(?:${constraint.toRegExp(segment.constraintParams ?? '')})$`).test(value);
-    } catch {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 function throwPathMismatch(pattern: string, pathname: string): never {

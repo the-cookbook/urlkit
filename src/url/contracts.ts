@@ -225,10 +225,12 @@ type PathParamValue<Param extends string> = Param extends `${string}:${infer Con
 
 type PathParamValueFromConstraint<Constraint extends string> = Constraint extends 'int'
   ? number
-  : Constraint extends 'number'
+  : Constraint extends `decimal`
     ? number
-    : Constraint extends `regex(${string})`
-      ? string
-      : string;
+    : Constraint extends `range(${number},${number})`
+      ? number
+      : Constraint extends `regex(${string})`
+        ? string
+        : string;
 
 type Simplify<Value> = { readonly [Key in keyof Value]: Value[Key] } & {};

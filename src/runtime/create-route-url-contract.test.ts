@@ -60,8 +60,8 @@ describe('createRouteUrlContract', () => {
   });
 
   it('keeps number params raw by default and parsed by opt-in', () => {
-    const raw = createRouteUrlContract({ path: '/prices/{amount:number}' } as const);
-    const parsed = createRouteUrlContract({ path: '/prices/{amount:number}' } as const, {
+    const raw = createRouteUrlContract({ path: '/prices/{amount:range(1,10)}' } as const);
+    const parsed = createRouteUrlContract({ path: '/prices/{amount:range(1,10)}' } as const, {
       params: 'parsed',
     });
 

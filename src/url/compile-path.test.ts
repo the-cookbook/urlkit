@@ -55,11 +55,11 @@ describe('compilePath', () => {
     expectType<`/users/${number}`>('/users/42');
   });
 
-  it('parses number params to numbers in standalone parsed-param mode', () => {
-    const path = compilePath('/users/{id:number}');
+  it('parses range params to numbers in standalone parsed-param mode', () => {
+    const path = compilePath('/users/{id:range(1,1000)}');
 
     expect(path.parsePathname('/users/4.2')).toEqual({ id: 4.2 });
-    expectType<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:number}'>);
+    expectType<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:range(1,1000)}'>);
   });
 
   it('supports raw-param mode for router runtime integration', () => {
@@ -123,7 +123,7 @@ describe('compilePath', () => {
 
   it('throws invalid-param when pathname shape matches but param constraints fail', () => {
     const intPath = compilePath('/users/{id:int}');
-    const numberPath = compilePath('/users/{id:number}');
+    const numberPath = compilePath('/users/{id:range(1,10)}');
     const regexPath = compilePath('/posts/{slug:regex([a-z0-9-]+)}');
 
     expectUrlKitError(() => intPath.parsePathname('/users/abc'), 'invalid-param', ['params', 'id']);

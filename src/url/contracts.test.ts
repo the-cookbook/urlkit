@@ -80,7 +80,7 @@ describe('url contract types', () => {
   it('infers pathnames and params from path patterns', () => {
     expectType<`/users/${number}`>('/users/42');
     expectType<`/teams/${string}/users/${number}`>('/teams/core/users/42');
-    expectType<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:number}'>);
+    expectType<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:int}'>);
     expectType<{ readonly slug: string }>(
       {} as ParamsFromPattern<'/articles/{slug:regex([a-z0-9-]+)}'>,
     );
@@ -90,7 +90,7 @@ describe('url contract types', () => {
     type UserPathname = PathnameFromPattern<'/users/{id:int}'>;
     type ArticlePathname = PathnameFromPattern<'/articles/{slug:regex([a-z0-9-]+)}'>;
     type TeamUserPathname = PathnameFromPattern<'/teams/{teamId}/users/{userId:int}'>;
-    type NumberPathname = PathnameFromPattern<'/products/{id:number}'>;
+    type NumberPathname = PathnameFromPattern<'/products/{id:int}'>;
 
     expectType<Assert<IsEqual<UserPathname, `/users/${number}`>>>(true);
     expectType<Assert<IsEqual<ArticlePathname, `/articles/${string}`>>>(true);
@@ -105,11 +105,13 @@ describe('url contract types', () => {
 
   it('infers exact params from path patterns', () => {
     type UserParams = ParamsFromPattern<'/users/{id:int}'>;
+    type ProductsParams = ParamsFromPattern<'/products/{price:decimal}'>;
     type ArticleParams = ParamsFromPattern<'/articles/{slug:regex([a-z0-9-]+)}'>;
     type TeamUserParams = ParamsFromPattern<'/teams/{teamId}/users/{userId:int}'>;
-    type NumberParams = ParamsFromPattern<'/products/{id:number}'>;
+    type NumberParams = ParamsFromPattern<'/products/{id:int}'>;
 
     expectType<Assert<IsEqual<UserParams, { readonly id: number }>>>(true);
+    expectType<Assert<IsEqual<ProductsParams, { readonly price: number }>>>(true);
     expectType<Assert<IsEqual<ArticleParams, { readonly slug: string }>>>(true);
     expectType<
       Assert<IsEqual<TeamUserParams, { readonly teamId: string; readonly userId: number }>>

@@ -30,12 +30,12 @@ describe('comprehensive TypeScript inference', () => {
     type UserPathname = PathnameFromPattern<'/users/{id:int}'>;
     type ArticlePathname = PathnameFromPattern<'/articles/{slug:regex([a-z0-9-]+)}'>;
     type TeamUserPathname = PathnameFromPattern<'/teams/{teamId}/users/{userId:int}'>;
-    type ProductPathname = PathnameFromPattern<'/products/{sku}/prices/{amount:number}'>;
+    type ProductPathname = PathnameFromPattern<'/products/{sku}/prices/{amount:range(1,10)}'>;
 
     type UserParams = ParamsFromPattern<'/users/{id:int}'>;
     type ArticleParams = ParamsFromPattern<'/articles/{slug:regex([a-z0-9-]+)}'>;
     type TeamUserParams = ParamsFromPattern<'/teams/{teamId}/users/{userId:int}'>;
-    type ProductParams = ParamsFromPattern<'/products/{sku}/prices/{amount:number}'>;
+    type ProductParams = ParamsFromPattern<'/products/{sku}/prices/{amount:range(1,100)}'>;
 
     type _UserPathname = Expect<Equal<UserPathname, `/users/${number}`>>;
     type _ArticlePathname = Expect<Equal<ArticlePathname, `/articles/${string}`>>;

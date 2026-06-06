@@ -7,7 +7,7 @@ function expectType<Value>(_value: Value): void {}
 describe('getPathParamKind', () => {
   it('maps supported constraints to URLKit path param kinds', () => {
     expect(getPathParamKind({ kind: 'param', name: 'id', constraint: 'int' })).toBe('int');
-    expect(getPathParamKind({ kind: 'param', name: 'id', constraint: 'number' })).toBe('number');
+    expect(getPathParamKind({ kind: 'param', name: 'id', constraint: 'decimal' })).toBe('number');
     expect(
       getPathParamKind({
         kind: 'param',

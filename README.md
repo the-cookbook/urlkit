@@ -181,7 +181,7 @@ ArticleUrl.build({ params: { slug: 'post-1' } });
 // ArticleUrl.build({ pathname: '/articles/post-1' });
 ```
 
-Path params are inferred from the pattern. Built-in `int` and `number` path constraints parse to numbers in standalone `url(...)` contracts.
+Path params are inferred from the pattern. Built-in `int`, `decimal` and `range` path constraints parse to numbers in standalone `url(...)` contracts.
 
 ```ts
 const UserUrl = url({ path: '/users/{id:int}' });
@@ -192,7 +192,7 @@ const user = UserUrl.parse('/users/42');
 
 ### Custom path constraints
 
-URLKit re-exports PathKit's `createConstraint` and provides global registration helpers for reusable path constraints. Custom constraints infer `string` params by default; built-in `int` and `number` still infer `number`.
+URLKit re-exports PathKit's `createConstraint` and provides global registration helpers for reusable path constraints. Custom constraints infer `string` params by default; built-in `int`, `decimal` and `range` still infer `number`.
 
 ```ts
 import { createConstraint, registerPathConstraint, url } from '@cookbook/urlkit';

@@ -68,7 +68,7 @@ import {
 | `options.arrayFormat`     | `'repeat' \| 'comma'`              | Contract-level default array search format for parsing and building.            |
 | `options.pathConstraints` | `PathConstraintMap`                | Per-contract custom PathKit constraints, registered before path compilation.    |
 
-Standalone `url(...)` path params default to parsed mode. `int` and `number` path params parse to numbers.
+Standalone `url(...)` path params default to parsed mode. `int`, `decimal` and `range` path params parse to numbers.
 
 ```ts
 import { enumOf, int, string, url } from '@cookbook/urlkit';
@@ -125,7 +125,7 @@ const ArticleUrl = url({ path: '/articles/{slug:slug}' }, { pathConstraints: { s
 
 Duplicate global registration with the same constraint instance is allowed. Registering a different constraint under an existing name throws unless `{ overwrite: true }` is passed to `registerPathConstraint` or `registerPathConstraints`.
 
-Custom constraints infer `string` route params by default. Built-in `int` and `number` constraints continue to infer `number`.
+Custom constraints infer `string` route params by default. Built-in `int`, `decimal` and `range` constraints continue to infer `number`.
 
 ## `search`
 

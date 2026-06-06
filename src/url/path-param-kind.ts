@@ -6,7 +6,8 @@ export function getPathParamKind(segment: ParsedPathParamSegment): PathParamKind
   switch (segment.constraint) {
     case 'int':
       return 'int';
-    case 'number':
+    case 'decimal':
+    case 'range':
       return 'number';
     case 'regex':
       return 'regex';

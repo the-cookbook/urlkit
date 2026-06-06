@@ -26,9 +26,9 @@ describe('assertPathMatchFailure', () => {
     );
   });
 
-  it('validates number and regex param constraints while explaining PathKit failures', () => {
+  it('validates range and regex param constraints while explaining PathKit failures', () => {
     expect(() =>
-      assertPathMatchFailure('/prices/{amount:number}', '/prices/abc', [
+      assertPathMatchFailure('/prices/{amount:decimal}', '/prices/abc', [
         { kind: 'literal', value: 'prices' },
         { kind: 'param', name: 'amount', constraint: 'number' },
       ]),

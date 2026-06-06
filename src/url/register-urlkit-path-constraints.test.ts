@@ -6,7 +6,7 @@ describe('registerUrlKitPathConstraints', () => {
   it('registers number constraints for PathKit path matching', () => {
     registerUrlKitPathConstraints();
 
-    const matcher = match('/users/{id:number}');
+    const matcher = match('/users/{id:decimal}');
 
     expect(matcher('/users/42')).toEqual({ match: true, params: { id: '42' } });
     expect(matcher('/users/4.2')).toEqual({ match: true, params: { id: '4.2' } });

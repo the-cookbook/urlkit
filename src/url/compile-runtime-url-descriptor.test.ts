@@ -49,7 +49,7 @@ describe('compileRuntimeUrlDescriptor', () => {
 
   it('uses parsed standalone params for path patterns', () => {
     const descriptor = compileRuntimeUrlDescriptor({
-      path: '/products/{id:number}',
+      path: '/products/{id:range(1,100)}',
     });
 
     expect(descriptor.path?.parsePathname('/products/12.5')).toEqual({ id: 12.5 });

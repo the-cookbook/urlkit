@@ -215,12 +215,14 @@ describe('url parse and safeParse', () => {
 
     const success = UserUrl.safeParse('/users/42');
     expect(success.success).toBe(true);
+
     if (success.success) {
       expect(success.data.params).toEqual({ id: 42 });
     }
 
     const failure = UserUrl.safeParse('/users/wrong');
     expect(failure.success).toBe(false);
+
     if (!failure.success) {
       expect(failure.error).toBeInstanceOf(UrlKitError);
       expect(failure.error.code).toBe('invalid-param');
