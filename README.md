@@ -5,23 +5,102 @@
 [![Bundle size](https://img.shields.io/bundlephobia/minzip/@cookbook/urlkit)](https://bundlephobia.com/package/@cookbook/urlkit)
 [![CI](https://github.com/the-cookbook/urlkit/actions/workflows/ci.yml/badge.svg)](https://github.com/the-cookbook/urlkit/actions/workflows/ci.yml)
 
-Framework-agnostic typed URL contracts for parsing, validating, normalizing, matching, and building URL state.
+URLKit helps you define type-safe URL contracts for pathname params, search params, and hash fragments across browsers, servers, edge runtimes, and routers.
 
-URLKit owns typed URL state: path params, search params, hash fragments, request parsing, URL normalization, matching, and href building. It sits between `@cookbook/pathkit` and higher-level router packages, but it does not define routes, route IDs, route trees, loaders, middleware, React hooks, components, or framework adapters.
+Use one contract to parse serialized URLs, validate URL input, normalize structured URL state, match URLs, parse `Request` objects, and build hrefs.
 
-## Status
+> URLKit is framework-agnostic and sits between [`@cookbook/pathkit`](https://github.com/the-cookbook/pathkit) and higher-level router packages. It does not define routes, route IDs, route trees, loaders, middleware, React hooks, components, or framework adapters.
 
-`@cookbook/urlkit` is currently version `0.0.0`. The implementation is covered by type, unit, integration, documentation-example, and build checks, but the package should be treated as pre-1.0 until its public API is released.
+Without URLKit:
 
-## Documentation
+```ts
+const url = new URL(input, 'https://example.com');
 
-- [Full API reference](./docs/api.md)
-- [Focused examples](./docs/examples.md)
-- [Release readiness notes](./release-readiness.md)
+const id = Number(url.pathname.split('/')[2]);
 
-## Real-world framework examples
+const pageValues = url.searchParams.getAll('page');
+const sortValues = url.searchParams.getAll('sort');
+const tagValues = url.searchParams.getAll('tag');
 
-Full integration examples are available under [`examples/integrations`](./examples/integrations). They show the same product catalog contracts used with Next.js, Express, Hono, Fastify, React Router, Remix, and TanStack Router, including local Express/Hono/Fastify middleware wrappers that accept a URLKit contract plus options.
+if (!Number.isInteger(id)) {
+  throw new Error('Invalid article id.');
+}
+
+if (pageValues.length > 1) {
+  throw new Error('Expected one page value.');
+}
+
+if (sortValues.length > 1) {
+  throw new Error('Expected one sort value.');
+}
+
+const page = Number(pageValues[0] ?? '1');
+const sort = sortValues[0] ?? 'newest';
+
+if (!Number.isInteger(page)) {
+  throw new Error('Invalid page.');
+}
+
+if (sort !== 'newest' && sort !== 'popular') {
+  throw new Error('Invalid sort.');
+}
+
+const hash = url.hash.slice(1) || undefined;
+
+if (hash !== undefined && hash !== 'comments' && hash !== 'share') {
+  throw new Error('Invalid hash.');
+}
+
+const state = {
+  pathname: url.pathname,
+  params: { id },
+  search: {
+    page,
+    tag: tagValues.length ? tagValues : undefined,
+    sort,
+  },
+  hash,
+};
+
+const href = `/articles/${state.params.id}?page=${state.search.page}&sort=${state.search.sort}`;
+```
+
+With URLKit:
+
+```ts
+import { array, enumOf, int, string, url } from '@cookbook/urlkit';
+
+const ArticleUrl = url({
+  path: '/articles/{id:int}',
+  search: {
+    page: int().default(1),
+    tag: array(string()).optional(),
+    sort: enumOf(['newest', 'popular']).default('newest'),
+  },
+  hash: enumOf(['comments', 'share']).optional(),
+});
+
+const state = ArticleUrl.parse('/articles/42?page=2&tag=ts&tag=urlkit&sort=popular#comments');
+
+// Fully typed:
+// state.params.id    -> number
+// state.search.page  -> number
+// state.search.tag   -> readonly string[] | undefined
+// state.search.sort  -> 'newest' | 'popular'
+// state.hash         -> 'comments' | 'share' | undefined
+
+const href = ArticleUrl.build({
+  params: { id: 42 },
+  search: {
+    page: 2,
+    tag: ['ts', 'urlkit'],
+    sort: 'popular',
+  },
+  hash: 'comments',
+});
+```
+
+---
 
 ## Table of contents
 
@@ -54,6 +133,17 @@ Full integration examples are available under [`examples/integrations`](./exampl
 - [TypeScript inference](#typescript-inference)
 - [Framework boundary](#framework-boundary)
 - [Testing and development](#testing-and-development)
+
+---
+
+## Documentation
+
+- [Full API reference](./docs/api.md)
+- [Examples](./docs/examples.md)
+
+## Real-world framework examples
+
+Full integration examples are available under [`examples/integrations`](./examples/integrations). They show the same product catalog contracts used with Next.js, Express, Hono, Fastify, React Router, Remix, and TanStack Router, including local Express/Hono/Fastify middleware wrappers that accept a URLKit contract plus options.
 
 ## Installation
 
@@ -89,13 +179,16 @@ const href = UserUrl.build({
 
 ## Why URLKit?
 
-URLs usually cross boundaries as strings, but application code wants typed state. URLKit gives you one reusable contract for:
+URLs start as strings, but application code needs input safety: validation, normalization, consistency, and predictable error handling.
+
+URLKit gives you one source of truth for:
 
 - parsing serialized URLs into typed state
-- normalizing structured params/search/hash from framework or server inputs
-- building canonical URLs from typed state
-- validating and matching URLs without routing dependencies
-- sharing the same URL contract across browser, server, edge, router, CLI, and test environments
+- validating path params, search params, and hash fragments
+- normalizing structured URL state from framework, server, router, or test inputs
+- building canonical hrefs from typed state
+- matching URLs without routing dependencies
+- sharing consistent URL behavior across browsers, servers, edge runtimes, routers, CLI tools, and tests
 
 ## Package exports
 
@@ -233,7 +326,7 @@ const ArticleUrl = url({ path: '/articles/{slug:slug}' }, { pathConstraints: { s
 
 ## Pathless URL contracts
 
-Pathless contracts validate search/hash independently of pathname. `pattern` is `undefined`, `params` is `{}`, and `parse` preserves the input pathname.
+Pathless contracts validate search/hash independently of pathname and are great for reusability. `pattern` is `undefined`, `params` is `{}`, and `parse` preserves the input pathname.
 
 ```ts
 import { int, url } from '@cookbook/urlkit';

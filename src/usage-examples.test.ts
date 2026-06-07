@@ -53,6 +53,13 @@ import {
   strippedUnknownSearch,
   unknownSearchError,
 } from '../examples/router-runtime.js';
+import {
+  ProductFilters,
+  parsedFilters,
+  filtersHref,
+  filtersParses,
+  filtersDoesNotParse,
+} from '../examples/pathless-url.js';
 import { compiledSearch, compiledUrl } from '../examples/static-descriptor.js';
 import {
   built as objectBuilt,
@@ -140,6 +147,33 @@ describe('usage examples', () => {
       slug: 'custom-paths',
     });
     expect(customRouteState.params.slug).toBe('router-runtime-path-constraints');
+  });
+
+  it('executes pathless url example', () => {
+    expect(parsedFilters).toEqual({
+      pathname: '/products/42',
+      params: {},
+      search: {
+        categories: ['gadgets'],
+        sortBy: 'priceAsc',
+      },
+      hash: undefined,
+    });
+    expect(filtersHref).toBe('?categories=books&sortBy=recommendation');
+    expect(filtersParses).toEqual(
+      expect.objectContaining({
+        hash: undefined,
+        search: {
+          categories: ['eletronics'],
+        },
+      }),
+    );
+    expect(filtersDoesNotParse).toEqual(
+      expect.objectContaining({
+        hash: undefined,
+        search: {},
+      }),
+    );
   });
 
   it('executes the server request example', () => {
