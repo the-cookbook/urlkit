@@ -380,24 +380,38 @@ The custom `parse` method must return a valid `Date`. The custom `serialize` met
 # `UrlContract`
 
 ```ts
-interface UrlContract<Mode, Pathname, Params, Search, Hash> {
+interface UrlContract<Mode, Pathname, Params, Search, Hash, SearchInput = Partial<Search>, HashInput = Hash> {
   readonly pattern: Mode extends 'path' ? string : undefined;
+
   parse(input: string | URL, options?: ParseUrlOptions): UrlState<Pathname, Params, Search, Hash>;
   safeParse(input: string | URL, options?: ParseUrlOptions): UrlSafeParseResult<Pathname, Params, Search, Hash>;
-  parseRequest(input: Request | UrlRequestInput, options?: ParseRequestOptions): UrlState<Pathname, Params, Search, Hash>;
-  safeParseRequest(input: Request | UrlRequestInput, options?: ParseRequestOptions): UrlSafeParseResult<Pathname, Params, Search, Hash>;
+
+  parseRequest(
+    input: Request | UrlRequestInput,
+    options?: ParseRequestOptions,
+  ): UrlState<Pathname, Params, Search, Hash>;
+  safeParseRequest(
+    input: Request | UrlRequestInput,
+    options?: ParseRequestOptions,
+  ): UrlSafeParseResult<Pathname, Params, Search, Hash>;
+
   normalize(input, options?: NormalizeUrlOptions): UrlState<...>;
   safeNormalize(input, options?: NormalizeUrlOptions): UrlSafeNormalizeResult<...>;
+
   build(input, options?: BuildUrlOptions): string;
   match(input: string | URL, options?: ParseUrlOptions): boolean;
+
   readonly parsePathname: Mode extends 'path' ? (pathname: string) => Params : never;
   readonly buildPath: Mode extends 'path' ? PathBuildMethod<Params> : never;
+
   parseSearch(input: string | URLSearchParams, options?: ParseUrlOptions): Search;
-  buildSearch(search: Partial<Search>, options?: BuildSearchOptions): string;
+  buildSearch(search: SearchInputArgument<SearchInput>, options?: BuildSearchOptions): string;
+
   parseHash(input: unknown): Hash;
-  buildHash(hash?: Hash, options?: BuildUrlOptions): string;
+  buildHash(...args: BuildHashArguments<HashInput>): string;
+
   withSearch(input: string | URL, search: Partial<Search>, options?: PatchSearchOptions): string;
-  replaceSearch(input: string | URL, search: Partial<Search>, options?: BuildSearchOptions): string;
+  replaceSearch(input: string | URL, search: SearchInput, options?: BuildSearchOptions): string;
   omitSearch(input: string | URL, keys: readonly string[], options?: BuildSearchOptions): string;
   pickSearch(input: string | URL, keys: readonly string[], options?: BuildSearchOptions): string;
 }
@@ -411,19 +425,34 @@ interface UrlContract<Mode, Pathname, Params, Search, Hash> {
 ## `parse`
 
 | Item       | Details                                                                                        |
-| ---------- | ---------------------------------------------------------------------------------------------- | --------------------------------- |
+| ---------- | ---------------------------------------------------------------------------------------------- |
 | Purpose    | Parse serialized URL input and return typed URL state.                                         |
-| Parameters | `input: string                                                                                 | URL`, `options?: ParseUrlOptions` |
+| Parameters | `input: string \| URL`, `options?: ParseUrlOptions`                                            |
+| Options    | `unknownSearch`, `arrayFormat`, `invalidSearch`                                                |
 | Returns    | `UrlState<Pathname, Params, Search, Hash>`                                                     |
 | Throws     | `UrlKitError` for invalid URL, path mismatch, invalid params, invalid search, or invalid hash. |
 
 ```ts
 const state = UserUrl.parse('/users/42?page=2#activity');
+
+UserUrl.parse('/users/42?page=2&utm_source=email', {
+  unknownSearch: 'preserve',
+});
+
+UserUrl.parse('/users/42?tags=ts,urlkit', {
+  arrayFormat: 'comma',
+});
 ```
 
 ## `safeParse`
 
-Returns a discriminated result and does not throw for ordinary validation errors.
+| Item       | Details                                                                                                  |
+| ---------- | -------------------------------------------------------------------------------------------------------- |
+| Purpose    | Parse serialized URL input without throwing for ordinary validation errors.                              |
+| Parameters | `input: string \| URL`, `options?: ParseUrlOptions`                                                      |
+| Options    | Same as `parse`: `unknownSearch`, `arrayFormat`, `invalidSearch`                                         |
+| Returns    | `UrlSafeParseResult<Pathname, Params, Search, Hash>`                                                     |
+| Notes      | Unexpected non-URLKit errors are converted to a safe failure with `UrlKitError('invalid-url')` as error. |
 
 ```ts
 const result = UserUrl.safeParse('/users/not-a-number');
@@ -435,28 +464,34 @@ if (!result.success) {
 
 ## `parseRequest` and `safeParseRequest`
 
-| Item       | Details                                                                                |
-| ---------- | -------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Purpose    | Parse web-standard `Request` or request-like `{ url: string }`.                        |
-| Parameters | `input: Request                                                                        | UrlRequestInput`, `options?: ParseRequestOptions` |
-| Options    | `baseUrl` for relative request-like URLs; `unknownSearch` and `arrayFormat` overrides. |
-| Throws     | `parseRequest` throws `UrlKitError`; `safeParseRequest` returns safe failure.          |
+| Item       | Details                                                                                                                              |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Purpose    | Parse web-standard `Request` or request-like `{ url: string }`.                                                                      |
+| Parameters | `input: Request \| UrlRequestInput`, `options?: ParseRequestOptions`                                                                 |
+| Options    | `baseUrl`, plus all `ParseUrlOptions`: `unknownSearch`, `arrayFormat`, `invalidSearch`                                               |
+| Throws     | `parseRequest` throws `UrlKitError`; `safeParseRequest` returns safe failure.                                                        |
+| Notes      | `baseUrl` is used to resolve relative request-like `{ url }` values. It is not needed for real `Request` objects with absolute URLs. |
 
 ```ts
 UserUrl.parseRequest(new Request('https://example.com/users/42'));
 
-UserUrl.safeParseRequest({ url: '/users/42?page=2' }, { baseUrl: 'https://example.com' });
+UserUrl.safeParseRequest(
+  { url: '/users/42?page=2' },
+  { baseUrl: 'https://example.com', unknownSearch: 'error' },
+);
 ```
 
 ## `normalize` and `safeNormalize`
 
-| Item                 | Details                                                                      |
-| -------------------- | ---------------------------------------------------------------------------- |
-| Purpose              | Validate structured URL state and apply defaults.                            |
-| Path mode input      | `params`, optional `search`, optional `hash`; no caller-provided `pathname`. |
-| Pathless input       | optional `pathname`, optional `search`, optional `hash`; no `params`.        |
-| TypeScript inference | Pathless literal pathname is preserved.                                      |
-| Throws               | `normalize` throws `UrlKitError`; `safeNormalize` returns safe failure.      |
+| Item                 | Details                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| Purpose              | Validate structured URL state and apply defaults.                                  |
+| Parameters           | `input: UrlNormalizeInput<...>`, `options?: NormalizeUrlOptions`                   |
+| Options              | `unknownSearch` controls structured `unknownSearch` handling during normalization. |
+| Path mode input      | `params`, optional `search`, optional `hash`; no caller-provided `pathname`.       |
+| Pathless input       | optional `pathname`, optional `search`, optional `hash`; no `params`.              |
+| TypeScript inference | Pathless literal pathname is preserved.                                            |
+| Throws               | `normalize` throws `UrlKitError`; `safeNormalize` returns safe failure.            |
 
 ```ts
 UserUrl.normalize({
@@ -467,23 +502,36 @@ UserUrl.normalize({
 
 ## `build`
 
-| Item     | Details                                                                                                   |
-| -------- | --------------------------------------------------------------------------------------------------------- |
-| Purpose  | Serialize typed state to a canonical URL string.                                                          |
-| Options  | `BuildUrlOptions` with `defaults?: 'include' \| 'omit'` and `arrayFormat?: 'repeat' \| 'comma'`.          |
-| Behavior | Path-based contracts build pathname from `params`; pathless contracts return suffixes without `pathname`. |
+| Item       | Details                                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| Purpose    | Serialize typed state to a canonical URL string.                                                          |
+| Parameters | `input: UrlBuildInput<...> \| UrlState<...>`, `options?: BuildUrlOptions`                                 |
+| Options    | `defaults?: 'include' \| 'omit'`, `arrayFormat?: 'repeat' \| 'comma'`                                     |
+| Behavior   | Path-based contracts build pathname from `params`; pathless contracts return suffixes without `pathname`. |
 
 ```ts
 UserUrl.build({ params: { id: 42 }, search: { page: 2 } });
 // '/users/42?page=2'
 
+UserUrl.build({ params: { id: 42 }, search: { page: 1 } }, { defaults: 'omit' });
+// '/users/42'
+
 ProductSearch.build({ search: { page: 2 } });
 // '?page=2'
+
+ProductSearch.build({ pathname: '/products', search: { page: 2 } });
+// '/products?page=2'
 ```
 
 ## `match`
 
-Returns `true` when the input satisfies the contract and `false` for ordinary URLKit validation failures. Unexpected non-URLKit errors are rethrown instead of being hidden, so delegated dependency failures remain visible.
+| Item       | Details                                                                         |
+| ---------- | ------------------------------------------------------------------------------- |
+| Purpose    | Return whether serialized URL input satisfies the contract.                     |
+| Parameters | `input: string \| URL`, `options?: ParseUrlOptions`                             |
+| Options    | `unknownSearch`, `arrayFormat`, `invalidSearch`                                 |
+| Returns    | `true` for valid input, `false` for ordinary `UrlKitError` validation failures. |
+| Throws     | Unexpected non-URLKit errors are rethrown instead of being hidden.              |
 
 ```ts
 UserUrl.match('/users/42'); // true
@@ -493,6 +541,11 @@ UserUrl.match('/users/nope'); // false
 ## Path helpers: `parsePathname` and `buildPath`
 
 Available only for path-mode contracts by type. Pathless contracts expose these properties as `never`.
+
+| Method                    | Parameters                            | Options |
+| ------------------------- | ------------------------------------- | ------- |
+| `parsePathname(pathname)` | `pathname: string`                    | none    |
+| `buildPath(params)`       | path params, or omitted for no params | none    |
 
 ```ts
 UserUrl.parsePathname('/users/42');
@@ -504,30 +557,60 @@ UserUrl.buildPath({ id: 42 });
 
 ## Search helpers
 
-| Method                                   | Purpose                                                                                                        | Notes                                                    |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `parseSearch(input, options?)`           | Parse search params through the contract schema. String input may be a search suffix, serialized path, or URL. | Returns typed `Search`. Unknowns follow `unknownSearch`. |
-| `buildSearch(search, options?)`          | Build a search suffix from typed partial search.                                                               | Returns `''` or `'?...'`.                                |
-| `withSearch(input, search, options?)`    | Patch a URL while preserving existing unknown params by default.                                               | Keeps path/hash.                                         |
-| `replaceSearch(input, search, options?)` | Replace URL search with new typed search.                                                                      | Removes unknown params.                                  |
-| `omitSearch(input, keys, options?)`      | Remove selected search keys.                                                                                   | Keeps path/hash.                                         |
-| `pickSearch(input, keys, options?)`      | Keep selected search keys.                                                                                     | Keeps path/hash.                                         |
+| Method                                   | Parameters                                        | Options                                                                                                       | Purpose                                                                                                        |
+| ---------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `parseSearch(input, options?)`           | `input: string \| URLSearchParams`                | `ParseUrlOptions`: `unknownSearch`, `arrayFormat`, `invalidSearch`                                            | Parse search params through the contract schema. String input may be a search suffix, serialized path, or URL. |
+| `buildSearch(search, options?)`          | `search: SearchInputArgument<SearchInput>`        | `BuildSearchOptions`: `defaults`, `arrayFormat`, `sortKeys`                                                   | Build a search suffix from typed search input. Returns `''` or `'?...'`.                                       |
+| `withSearch(input, search, options?)`    | `input: string \| URL`, `search: Partial<Search>` | `PatchSearchOptions`: `defaults`, `arrayFormat`, `sortKeys`, `removeUndefined`, `removeNull`                  | Patch typed search fields while preserving existing unknown params by default. Keeps path and hash.            |
+| `replaceSearch(input, search, options?)` | `input: string \| URL`, `search: SearchInput`     | `BuildSearchOptions`: `defaults`, `arrayFormat`, `sortKeys`                                                   | Replace URL search with new typed search. Unknown params are removed. Keeps path and hash.                     |
+| `omitSearch(input, keys, options?)`      | `input: string \| URL`, `keys: readonly string[]` | `BuildSearchOptions`: `arrayFormat`, `sortKeys`; `defaults` is accepted by type but has no schema effect here | Remove selected raw search keys. Keeps path and hash.                                                          |
+| `pickSearch(input, keys, options?)`      | `input: string \| URL`, `keys: readonly string[]` | `BuildSearchOptions`: `arrayFormat`, `sortKeys`; `defaults` is accepted by type but has no schema effect here | Keep selected raw search keys. Keeps path and hash.                                                            |
+
+`parseSearch` returns typed `Search`; preserved unknown params are not returned by this helper because it returns only the typed search object. Use `parse` when you need `state.unknownSearch`.
 
 ```ts
-UserUrl.withSearch('/users/42?page=1#activity', { page: 2 });
+UserUrl.parseSearch('/users/42?page=2&utm_source=email', {
+  unknownSearch: 'error',
+});
+
+UserUrl.buildSearch({ page: 2 }, { sortKeys: true });
+// '?page=2'
+
+UserUrl.withSearch('/users/42?page=1&debug=true#activity', { page: 2 });
+// '/users/42?page=2&debug=true#activity'
+
+UserUrl.withSearch(
+  '/users/42?page=1#activity',
+  { page: undefined },
+  {
+    removeUndefined: true,
+  },
+);
+// '/users/42#activity'
+
+UserUrl.replaceSearch('/users/42?page=1&debug=true#activity', { page: 2 });
 // '/users/42?page=2#activity'
+
+UserUrl.omitSearch('/users/42?page=1&debug=true#activity', ['debug']);
+// '/users/42?page=1#activity'
+
+UserUrl.pickSearch('/users/42?page=1&debug=true#activity', ['page']);
+// '/users/42?page=1#activity'
 ```
 
 ## Hash helpers
 
-| Method                       | Purpose                                                      |
-| ---------------------------- | ------------------------------------------------------------ |
-| `parseHash(input)`           | Parse hash through the contract hash schema.                 |
-| `buildHash(hash?, options?)` | Build a hash suffix and apply default include/omit behavior. |
+| Method                      | Parameters                                                                | Options                                                                                          | Purpose                                                      |
+| --------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `parseHash(input)`          | `input: unknown`                                                          | none                                                                                             | Parse hash through the contract hash schema.                 |
+| `buildHash(hash, options?)` | `hash` is required when the contract hash is required; otherwise optional | `BuildUrlOptions`: `defaults`; `arrayFormat` is accepted by type but does not affect hash output | Build a hash suffix and apply default include/omit behavior. |
+
+Contract-level `parseHash` does not expose `invalidHash`. Use the standalone router-runtime `parseHash(input, descriptor, { invalidHash: 'omit' })` helper when you need invalid-hash omission behavior.
 
 ```ts
 UserUrl.parseHash('#activity');
 UserUrl.buildHash('comments');
+UserUrl.buildHash('overview', { defaults: 'omit' });
 ```
 
 ---
@@ -578,6 +661,9 @@ type UnknownSearchBehavior = 'strip' | 'preserve' | 'error';
 
 ```ts
 type SearchArrayFormat = 'repeat' | 'comma';
+type UnknownSearchBehavior = 'strip' | 'preserve' | 'error';
+type InvalidSearchBehavior = 'error' | 'omit';
+type InvalidHashBehavior = 'error' | 'omit';
 
 interface PathConstraintMap {
   readonly [name: string]: ConstraintValidation;
@@ -590,7 +676,7 @@ interface RegisterPathConstraintOptions {
 interface ParseUrlOptions {
   readonly unknownSearch?: UnknownSearchBehavior;
   readonly arrayFormat?: SearchArrayFormat;
-  readonly invalidSearch?: 'error' | 'omit';
+  readonly invalidSearch?: InvalidSearchBehavior;
 }
 
 interface NormalizeUrlOptions {
@@ -614,7 +700,29 @@ interface PatchSearchOptions extends BuildSearchOptions {
 interface ParseRequestOptions extends ParseUrlOptions {
   readonly baseUrl?: string;
 }
+
+interface ParseHashOptions {
+  readonly invalidHash?: InvalidHashBehavior;
+}
+
+type BuildHashOptions = BuildUrlOptions;
 ```
+
+### Option behavior matrix
+
+| Option            | Values                             | Used by                                                                                                                                                                                                              | Behavior                                                                                                                                               |
+| ----------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `unknownSearch`   | `'strip' \| 'preserve' \| 'error'` | `url/search/hash` contract creation, `parse`, `safeParse`, `parseRequest`, `safeParseRequest`, `normalize`, `safeNormalize`, `match`, contract `parseSearch`, router-runtime `parseSearch`, `createRouteUrlContract` | Controls unknown search params. Default is `'strip'`.                                                                                                  |
+| `arrayFormat`     | `'repeat' \| 'comma'`              | contract creation, `parse`, `safeParse`, `parseRequest`, `safeParseRequest`, `match`, `build`, contract search helpers, router-runtime parse/build/patch/replace search helpers                                      | Controls array parsing/building. Default is `'repeat'`. `'comma'` splits declared array fields and serializes arrays as comma-separated values.        |
+| `invalidSearch`   | `'error' \| 'omit'`                | `parse`, `safeParse`, `parseRequest`, `safeParseRequest`, `match`, contract `parseSearch`, router-runtime `parseSearch`                                                                                              | Default is `'error'`. `'omit'` omits invalid optional/defaulted declared search fields where recovery is possible. Required invalid fields still fail. |
+| `defaults`        | `'include' \| 'omit'`              | `build`, `buildSearch`, `buildHash`, `withSearch`, `replaceSearch`, contract `omitSearch`/`pickSearch`, router-runtime build/patch/replace search, standalone `buildHash`                                            | Default behavior is include. `'omit'` omits values equal to normalized defaults.                                                                       |
+| `sortKeys`        | `boolean`                          | `BuildSearchOptions` and `PatchSearchOptions` search serializers                                                                                                                                                     | Sorts serialized search entries by key.                                                                                                                |
+| `removeUndefined` | `boolean`                          | `withSearch`, router-runtime `patchSearch`                                                                                                                                                                           | When `true`, `undefined` patch values delete existing keys instead of being ignored.                                                                   |
+| `removeNull`      | `boolean`                          | `withSearch`, router-runtime `patchSearch`                                                                                                                                                                           | When `true`, `null` patch values delete existing keys instead of being ignored.                                                                        |
+| `baseUrl`         | `string`                           | `parseRequest`, `safeParseRequest`                                                                                                                                                                                   | Resolves relative request-like `{ url }` values.                                                                                                       |
+| `invalidHash`     | `'error' \| 'omit'`                | standalone router-runtime `parseHash`                                                                                                                                                                                | Default is `'error'`. `'omit'` treats invalid optional/defaulted hash values as absent by parsing `undefined` through the descriptor.                  |
+| `params`          | `'raw' \| 'parsed'`                | `createRouteUrlContract`                                                                                                                                                                                             | Router-runtime path param mode. Default is `'raw'`; standalone `url(...)` uses parsed params.                                                          |
+| `pathConstraints` | `PathConstraintMap`                | `url`, `compileStaticUrl`, `createRouteUrlContract`                                                                                                                                                                  | Per-contract custom PathKit constraints registered before path compilation.                                                                            |
 
 ## Build defaults
 
@@ -717,17 +825,21 @@ Static descriptors are plain data and are suitable for router tooling and static
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Signature | `compileStaticUrl<Descriptor extends StaticUrlDescriptor>(descriptor: Descriptor, options?: CompileStaticUrlOptions): NormalizedUrlDescriptor<...>` |
 | Purpose   | Compile a static URL descriptor into URLKit's normalized internal descriptor.                                                                       |
+| Options   | `pathConstraints?: PathConstraintMap`                                                                                                               |
 | Throws    | `UrlKitError` with `invalid-descriptor` for invalid descriptors/defaults.                                                                           |
 
 ```ts
-const compiled = compileStaticUrl({
-  path: '/search',
-  search: {
-    q: { type: 'string' },
-    page: { type: 'int', default: 1 },
-  },
-  hash: { type: 'enum', values: ['results', 'filters'], optional: true },
-} as const);
+const compiled = compileStaticUrl(
+  {
+    path: '/search/{slug:slug}',
+    search: {
+      q: { type: 'string' },
+      page: { type: 'int', default: 1 },
+    },
+    hash: { type: 'enum', values: ['results', 'filters'], optional: true },
+  } as const,
+  { pathConstraints: { slug } },
+);
 ```
 
 ## `compileStaticSearch`
@@ -772,8 +884,7 @@ Supported static search field types:
 - `{ type: 'boolean' }`
 - `{ type: 'date', format?: 'date' | 'date-time' | 'unix-seconds' | 'unix-ms' | string }`
 - `{ type: 'date-time', format?: 'date-time' | string }`
-- `{ type: 'enum',
-values: [...] }`
+- `{ type: 'enum', values: [...] }`
 
 Every static search field uses the object form `{ type, many?, optional?, default? }`. `type` always means value kind. Repeated search params use `many: true`. Static descriptors reject `many: false`, `optional: false`, and `optional: true` combined with `default`.
 
@@ -879,13 +990,22 @@ UserUrl.parse('/users/42').params.id;
 
 ## Router-runtime `parseSearch`
 
-| Item                  | Details                                                                                                                                               |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Signature with schema | `parseSearch(input, { schema, unknownSearch?, arrayFormat?, invalidSearch? }): InferStaticSearch<typeof schema>`                                      |
-| Fallback signature    | `parseSearch(input, options?): RawSearchParams`                                                                                                       |
-| Purpose               | Parse raw or static-schema search. String input may be a search suffix, serialized path, or URL. `arrayFormat: 'comma'` splits declared array fields. |
-| Invalid fields        | Defaults to strict `invalidSearch: 'error'`. Use `invalidSearch: 'omit'` to omit invalid optional/defaulted declared fields.                          |
-| Throws                | `invalid-search` / `missing-search` for strict schema validation failures.                                                                            |
+| Item                  | Details                                                                                                          |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Signature with schema | `parseSearch(input, { schema, unknownSearch?, arrayFormat?, invalidSearch? }): InferStaticSearch<typeof schema>` |
+| Omit signature        | `parseSearch(input, { schema, invalidSearch: 'omit', ... }): Partial<InferStaticSearch<typeof schema>>`          |
+| Fallback signature    | `parseSearch(input, options?): RawSearchParams`                                                                  |
+| Purpose               | Parse raw or static-schema search. String input may be a search suffix, serialized path, or URL.                 |
+| Throws                | `invalid-search` / `missing-search` for strict schema validation failures.                                       |
+
+### Router-runtime `parseSearch` options
+
+| Option          | Type                     | Behavior                                                                                                                                                                       |
+| --------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `schema`        | `StaticSearchDescriptor` | Enables static-schema parsing and typed output. Without a schema, raw flat search params are returned.                                                                         |
+| `unknownSearch` | `UnknownSearchBehavior`  | With a schema, controls unknown search params. Default is `'strip'`. Ignored without a schema.                                                                                 |
+| `arrayFormat`   | `'repeat' \| 'comma'`    | With a schema, controls declared array parsing. Default is `'repeat'`. Ignored without a schema.                                                                               |
+| `invalidSearch` | `'error' \| 'omit'`      | With a schema, default is `'error'`. `'omit'` omits invalid optional/defaulted fields when recovery is possible. Required invalid fields still fail. Ignored without a schema. |
 
 ```ts
 parseSearch('?page=2', {
@@ -903,17 +1023,13 @@ parseSearch('?tags=ts%2Crouter', {
 });
 // { tags: ['ts', 'router'] }
 
-parseSearch('?from=02-06-2026&startsAt=02-06-2026T12%3A30%3A05Z', {
+parseSearch('?page=2&utm_source=email', {
   schema: {
-    from: { type: 'date', format: 'dd-MM-yyyy', optional: true },
-    startsAt: {
-      type: 'date-time',
-      format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
-      optional: true,
-    },
+    page: { type: 'int', default: 1 },
   },
+  unknownSearch: 'error',
 });
-// { from: Date, startsAt: Date }
+// throws UrlKitError with code 'invalid-search'
 
 parseSearch('/articles/1?page=2&publishedOn=02-06-2026&startsAt=foo', {
   schema: {
@@ -935,13 +1051,40 @@ parseSearch('?filter.role=admin');
 
 ## Router-runtime search builders
 
-| Function                                 | Purpose                                                   | Schema support          |
-| ---------------------------------------- | --------------------------------------------------------- | ----------------------- |
-| `buildSearch(input?, options?)`          | Build a search suffix.                                    | Optional static schema. |
-| `patchSearch(current, patch, options?)`  | Merge search values; preserves unknown params by default. | Optional static schema. |
-| `replaceSearch(current, next, options?)` | Replace search values; removes unknown params.            | Optional static schema. |
-| `omitSearch(current, keys)`              | Remove selected raw keys.                                 | Raw helper.             |
-| `pickSearch(current, keys)`              | Keep selected raw keys.                                   | Raw helper.             |
+| Function        | Signature                                                                                   | Options                                                                    | Purpose                                                   |
+| --------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `buildSearch`   | `buildSearch(input?, options?)` or `buildSearch(input, { schema, ... })`                    | Raw: `BuildSearchOptions`; schema: `BuildRouteSearchOptions` with `schema` | Build a search suffix.                                    |
+| `patchSearch`   | `patchSearch(current, patch, options?)` or `patchSearch(current, patch, { schema, ... })`   | Raw: `PatchSearchOptions`; schema: `PatchRouteSearchOptions` with `schema` | Merge search values. Preserves unknown params by default. |
+| `replaceSearch` | `replaceSearch(current, next, options?)` or `replaceSearch(current, next, { schema, ... })` | Raw: `BuildSearchOptions`; schema: `BuildRouteSearchOptions` with `schema` | Replace search values. Removes unknown params.            |
+| `omitSearch`    | `omitSearch(current, keys)`                                                                 | no options                                                                 | Remove selected raw keys.                                 |
+| `pickSearch`    | `pickSearch(current, keys)`                                                                 | no options                                                                 | Keep selected raw keys.                                   |
+
+### Router-runtime search builder option contracts
+
+```ts
+interface BuildRouteSearchOptions<
+  SearchDescriptor = StaticSearchDescriptor,
+> extends BuildSearchOptions {
+  readonly schema?: SearchDescriptor;
+}
+
+interface PatchRouteSearchOptions<
+  SearchDescriptor = StaticSearchDescriptor,
+> extends PatchSearchOptions {
+  readonly schema?: SearchDescriptor;
+}
+```
+
+| Option            | Used by                                       | Behavior                                                                                                                               |
+| ----------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema`          | `buildSearch`, `patchSearch`, `replaceSearch` | Compiles a static search descriptor and validates/serializes typed values. Without `schema`, helpers operate on raw key/value records. |
+| `defaults`        | `buildSearch`, `patchSearch`, `replaceSearch` | `'omit'` omits schema default values. No schema effect for raw helpers.                                                                |
+| `arrayFormat`     | `buildSearch`, `patchSearch`, `replaceSearch` | Controls array serialization. Default is `'repeat'`; `'comma'` serializes arrays as comma-separated values.                            |
+| `sortKeys`        | `buildSearch`, `patchSearch`, `replaceSearch` | Sorts serialized keys.                                                                                                                 |
+| `removeUndefined` | `patchSearch` only                            | Deletes existing keys when a patch value is `undefined`. Without it, `undefined` patch values are ignored.                             |
+| `removeNull`      | `patchSearch` only                            | Deletes existing keys when a patch value is `null`. Without it, `null` patch values are ignored.                                       |
+
+`omitSearch` and `pickSearch` from `@cookbook/urlkit/router-runtime` do not accept options. Contract methods `UrlContract.omitSearch(...)` and `UrlContract.pickSearch(...)` do accept `BuildSearchOptions` because they reserialize through the URL contract helper.
 
 ```ts
 const schema = {
@@ -957,32 +1100,72 @@ const schema = {
 
 buildSearch(
   { page: 2, tags: ['ts', 'router'], startsAt: new Date('2026-06-02T12:30:05.000Z') },
-  { schema, arrayFormat: 'comma' },
+  { schema, arrayFormat: 'comma', sortKeys: true },
 );
-// '?page=2&tags=ts%2Crouter&startsAt=02-06-2026T12%3A30%3A05Z'
+// '?page=2&startsAt=02-06-2026T12%3A30%3A05Z&tags=ts%2Crouter'
+
+buildSearch({ page: 1 }, { schema, defaults: 'omit' });
+// ''
 
 patchSearch('?page=1&debug=true', { page: 2 }, { schema });
 // '?page=2&debug=true'
 
+patchSearch('?page=1&q=old', { q: undefined }, { schema, removeUndefined: true });
+// '?page=1'
+
 replaceSearch('?page=1&debug=true', { page: 2 }, { schema });
 // '?page=2'
+
+omitSearch('?page=1&debug=true', ['debug']);
+// '?page=1'
+
+pickSearch('?page=1&debug=true', ['page']);
+// '?page=1'
 ```
 
 ## Router-runtime hash helpers
 
 These delegate to the same hash implementation used by contracts.
 
-| Function        | Signature                                          | Purpose                                                                                                |
-| --------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `parseHash`     | `parseHash(input, descriptor?, options?)`          | Parse a hash fragment. Use `invalidHash: 'omit'` to treat invalid optional/defaulted hashes as absent. |
-| `buildHash`     | `buildHash(hash?, descriptorOrOptions?, options?)` | Build a hash fragment.                                                                                 |
-| `normalizeHash` | `normalizeHash(input, descriptor?)`                | Normalize structured hash input.                                                                       |
+| Function                        | Signature                                | Options                                                                                          | Purpose                                                                              |
+| ------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `parseHash`                     | `parseHash(input)`                       | none                                                                                             | Read a raw hash fragment as `string \| undefined`.                                   |
+| `parseHash` with descriptor     | `parseHash(input, descriptor, options?)` | `ParseHashOptions`: `invalidHash?: 'error' \| 'omit'`                                            | Parse a hash fragment through a runtime/static/normalized hash descriptor.           |
+| `buildHash`                     | `buildHash(hash?, options?)`             | `BuildUrlOptions`: `defaults`; `arrayFormat` is accepted by type but does not affect hash output | Build a raw hash suffix without a descriptor.                                        |
+| `buildHash` with descriptor     | `buildHash(hash, descriptor, options?)`  | `BuildUrlOptions`: `defaults`; `arrayFormat` is accepted by type but does not affect hash output | Build a hash suffix through a runtime/static/normalized hash descriptor.             |
+| `normalizeHash`                 | `normalizeHash(input)`                   | none                                                                                             | Normalize a raw hash fragment as `string \| undefined`.                              |
+| `normalizeHash` with descriptor | `normalizeHash(input, descriptor)`       | none                                                                                             | Normalize structured hash input through a runtime/static/normalized hash descriptor. |
+
+### Hash helper descriptors
+
+`descriptor` may be a runtime hash schema builder, a static hash descriptor object, or a normalized hash descriptor. Static hash array shorthand is not supported.
 
 ```ts
-parseHash('#comments', ['comments', 'share'] as const);
-parseHash('#overview', ['comments', 'share'] as const, { invalidHash: 'omit' });
+import { enumOf } from '@cookbook/urlkit';
+
+const staticHash = {
+  type: 'enum',
+  values: ['comments', 'share'],
+  optional: true,
+} as const;
+
+parseHash('#comments', staticHash);
+// 'comments'
+
+parseHash('#overview', staticHash, { invalidHash: 'omit' });
 // undefined
 
-buildHash('comments', ['comments', 'share'] as const);
-normalizeHash('comments', ['comments', 'share'] as const);
+buildHash('comments', staticHash);
+// '#comments'
+
+buildHash(undefined, staticHash);
+// ''
+
+normalizeHash('comments', staticHash);
+// 'comments'
+
+const runtimeHash = enumOf(['comments', 'share']).optional();
+
+parseHash('#share', runtimeHash);
+// 'share'
 ```
