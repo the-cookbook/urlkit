@@ -184,7 +184,7 @@ schema.required();
 schema.default(value);
 ```
 
-Defaults are validated when the schema is compiled by a URL/search/hash contract. `null` is treated as absent for optional/defaulted fields and invalid for required fields.
+Defaults are validated when the schema is compiled by a URL/search/hash contract. `null` is treated as absent for optional/defaulted fields and invalid for required fields. `default(value)` is the strongest presence rule: `schema.default(value).optional()` and `schema.default(value).required()` remain defaulted at runtime. Prefer `schema.default(value)` without redundant presence chaining.
 
 | Builder          | Purpose                                                      | Serialized behavior                              | Default validation             |
 | ---------------- | ------------------------------------------------------------ | ------------------------------------------------ | ------------------------------ |

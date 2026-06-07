@@ -68,6 +68,33 @@ describe('createRuntimeSchemaBuilder', () => {
     expectTypeOf<'required'>(descriptor.presence);
   });
 
+  it('keeps defaulted builders defaulted when optional or required is chained after default', () => {
+    const optionalAfterDefault = createTestSchema().default('fallback').optional();
+    const requiredAfterDefault = createTestSchema().default('fallback').required();
+
+    const optionalDescriptor = compileRuntimeSchema(optionalAfterDefault) as {
+      readonly presence: string;
+      readonly defaultValue?: unknown;
+    };
+    const requiredDescriptor = compileRuntimeSchema(requiredAfterDefault) as {
+      readonly presence: string;
+      readonly defaultValue?: unknown;
+    };
+
+    expect(optionalDescriptor).toEqual({
+      kind: 'test',
+      presence: 'defaulted',
+      options: { label: 'field' },
+      defaultValue: 'fallback',
+    });
+    expect(requiredDescriptor).toEqual({
+      kind: 'test',
+      presence: 'defaulted',
+      options: { label: 'field' },
+      defaultValue: 'fallback',
+    });
+  });
+
   it('copies options into descriptors', () => {
     const options = { label: 'before' } satisfies TestSchemaOptions;
     const schema = createRuntimeSchemaBuilder<string, 'test', TestSchemaOptions>({

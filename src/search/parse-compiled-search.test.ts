@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { array } from '../schema/array.js';
 import { int } from '../schema/int.js';
+import { number } from '../schema/number.js';
 import { string } from '../schema/string.js';
 import { compileSearchSchema } from './compile-search-schema.js';
 import { parseCompiledSearch } from './parse-compiled-search.js';
@@ -46,6 +47,17 @@ describe('parseCompiledSearch', () => {
       parseCompiledSearch({ tag: 'react,router' }, compiled, 'strip', { arrayFormat: 'comma' }),
     ).toEqual({
       search: { tag: ['react', 'router'] },
+    });
+  });
+
+  it('applies defaults when optional is chained after default', () => {
+    const compiled = compileSearchSchema({
+      categories: array(string()).default(['electronics']).optional(),
+      price: number().default(9.99).optional(),
+    });
+
+    expect(parseCompiledSearch({}, compiled)).toEqual({
+      search: { categories: ['electronics'], price: 9.99 },
     });
   });
 

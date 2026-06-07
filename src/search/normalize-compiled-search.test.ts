@@ -3,6 +3,7 @@ import { UrlKitError } from '../errors/url-kit-error.js';
 import { boolean } from '../schema/boolean.js';
 import { enumOf } from '../schema/enum-of.js';
 import { int } from '../schema/int.js';
+import { number } from '../schema/number.js';
 import { object } from '../schema/object.js';
 import { string } from '../schema/string.js';
 import { array } from '../schema/array.js';
@@ -51,6 +52,21 @@ describe('normalizeCompiledSearch', () => {
           active: true,
           tags: [],
         },
+      },
+    });
+  });
+
+  it('applies defaults when optional is chained after default', () => {
+    const compiled = compileSearchSchema({
+      categories: array(string()).default(['electronics']).optional(),
+      price: number().default(9.99).optional(),
+      sortBy: enumOf(['recommendation', 'desc', 'asc', 'priceDesc', 'priceAsc']).optional(),
+    });
+
+    expect(normalizeCompiledSearch({}, compiled)).toEqual({
+      search: {
+        categories: ['electronics'],
+        price: 9.99,
       },
     });
   });

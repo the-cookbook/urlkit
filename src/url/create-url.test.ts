@@ -1,6 +1,7 @@
 import { createConstraint } from '@cookbook/pathkit/constraints';
 import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
+import { array } from '../schema/array.js';
 import { dateTime } from '../schema/date-time.js';
 import { enumOf } from '../schema/enum-of.js';
 import { int } from '../schema/int.js';
@@ -8,6 +9,7 @@ import { string } from '../schema/string.js';
 import type { UrlNormalizeInput } from '../contracts.js';
 import type { UrlContract } from './contracts.js';
 import { url } from './create-url.js';
+import { number } from '../schema/number.js';
 
 describe('url', () => {
   it('constructs path-mode contracts from runtime builder descriptors', () => {
@@ -131,6 +133,47 @@ describe('url', () => {
 
     expectTypeOf<never>(FiltersUrl.parsePathname);
     expectTypeOf<never>(FiltersUrl.buildPath);
+  });
+
+  it('applies defaults when optional is chained after default in pathless runtime contracts', () => {
+    const ProductFilters = url({
+      search: {
+        categories: array(string()).default(['electronics']).optional(),
+        price: number().default(9.99).optional(),
+        sortBy: enumOf(['recommendation', 'desc', 'asc', 'priceDesc', 'priceAsc']).optional(),
+      },
+    });
+
+    const parsed = ProductFilters.parse('/products/42');
+
+    expect(parsed.search).toEqual({
+      categories: ['electronics'],
+      price: 9.99,
+    });
+    expect(
+      ProductFilters.normalize({
+        pathname: '/products/42',
+        search: {},
+      }).search,
+    ).toEqual({
+      categories: ['electronics'],
+      price: 9.99,
+    });
+    expect(ProductFilters.build({ search: { sortBy: 'recommendation' } })).toBe(
+      '?categories=electronics&price=9.99&sortBy=recommendation',
+    );
+    expect(
+      ProductFilters.build(
+        {
+          search: {
+            categories: ['electronics'],
+            price: 9.99,
+            sortBy: 'recommendation',
+          },
+        },
+        { defaults: 'omit' },
+      ),
+    ).toBe('?sortBy=recommendation');
   });
 
   it('constructs pathless hash-only contracts', () => {

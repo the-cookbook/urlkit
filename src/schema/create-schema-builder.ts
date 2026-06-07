@@ -71,6 +71,17 @@ function createBuilder<
     [runtimeSchemaSymbol]: internals,
 
     optional: () => {
+      if (state.presence === 'defaulted') {
+        return createBuilder(
+          copyDefaultedState<Value, Kind, Options, Descriptor>(state),
+        ) as unknown as RuntimeSchemaBuilder<
+          Value | undefined,
+          Kind,
+          Options,
+          OptionalRuntimeSchemaDescriptor<Kind, Options>
+        >;
+      }
+
       const nextState = {
         kind: state.kind,
         presence: 'optional',
@@ -96,6 +107,17 @@ function createBuilder<
     },
 
     required: () => {
+      if (state.presence === 'defaulted') {
+        return createBuilder(
+          copyDefaultedState<Value, Kind, Options, Descriptor>(state),
+        ) as unknown as RuntimeSchemaBuilder<
+          NonNullable<Value>,
+          Kind,
+          Options,
+          RequiredRuntimeSchemaDescriptor<Kind, Options>
+        >;
+      }
+
       const nextState = {
         kind: state.kind,
         presence: 'required',
@@ -152,6 +174,25 @@ function createBuilder<
   } satisfies RuntimeSchemaBuilderWithInternals<Value, Kind, Options, Descriptor>;
 
   return Object.freeze(builder);
+}
+
+function copyDefaultedState<
+  Value,
+  Kind extends string,
+  Options extends RuntimeSchemaOptions,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+>(
+  state: RuntimeSchemaState<Value, Kind, Options, Descriptor>,
+): RuntimeSchemaState<NonNullable<Value>, Kind, Options, Descriptor> {
+  return {
+    kind: state.kind,
+    presence: 'defaulted',
+    options: state.options,
+    defaultValue: state.defaultValue,
+    ...(state.codec ? { codec: state.codec as RuntimeSchemaCodec<NonNullable<Value>> } : {}),
+    ...(state.validateDefault ? { validateDefault: state.validateDefault } : {}),
+    ...(state.validateDescriptor ? { validateDescriptor: state.validateDescriptor } : {}),
+  };
 }
 
 function createDescriptor<

@@ -118,6 +118,27 @@ describe('buildSchemaSearch', () => {
     ).toBe('?page=1&sort=newest');
   });
 
+  it('includes defaults when optional is chained after default', () => {
+    const schema = {
+      categories: array(string()).default(['electronics']).optional(),
+      price: number().default(9.99).optional(),
+      sortBy: enumOf(['recommendation', 'desc', 'asc', 'priceDesc', 'priceAsc']).optional(),
+    };
+
+    expect(buildSchemaSearch({ sortBy: 'recommendation' }, schema)).toBe(
+      '?categories=electronics&price=9.99&sortBy=recommendation',
+    );
+    expect(
+      buildSchemaSearch(
+        { categories: ['electronics'], price: 9.99, sortBy: 'recommendation' },
+        schema,
+        {
+          defaults: 'omit',
+        },
+      ),
+    ).toBe('?sortBy=recommendation');
+  });
+
   it('omits default values when requested', () => {
     expect(
       buildSchemaSearch(

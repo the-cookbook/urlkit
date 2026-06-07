@@ -21,7 +21,7 @@ const filtersHref = ProductFilters.build({
 
 // filtersHref === '?categories=books&sortBy=recommendation'
 
-const filtersParses = ProductFilters.parse('/products?categories=eletronics');
+const filtersParses = ProductFilters.parse('/products?categories=electronics');
 const filtersDoesNotParse = ProductFilters.parse('/products?tab=settings');
 
 // filtersMatches === true
