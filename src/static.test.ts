@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import {
   compileStaticHash,
   compileStaticSearch,
@@ -15,8 +15,6 @@ import type {
   StaticSearchDescriptor,
   StaticUrlDescriptor,
 } from './static.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('static public exports', () => {
   it('exports static compilers', () => {
@@ -48,10 +46,10 @@ describe('static public exports', () => {
       hash,
     } as const satisfies StaticUrlDescriptor;
 
-    expectType<{ readonly q: string; readonly page: number }>(
+    expectTypeOf<{ readonly q: string; readonly page: number }>(
       {} as InferStaticSearch<typeof search>,
     );
-    expectType<'comments' | 'share' | undefined>({} as InferStaticHash<typeof hash>);
+    expectTypeOf<'comments' | 'share' | undefined>({} as InferStaticHash<typeof hash>);
     expect(compileStaticUrl(descriptor).mode).toBe('path');
   });
 });

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import type { EmptyParams } from '../contracts.js';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { enumOf } from '../schema/enum-of.js';
@@ -6,8 +6,6 @@ import { string } from '../schema/string.js';
 import type { UrlContract } from '../url/contracts.js';
 import { url } from '../url/create-url.js';
 import { hash } from './create-hash.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('hash', () => {
   it('creates a pathless contract equivalent to url({ hash })', () => {
@@ -120,22 +118,22 @@ describe('hash', () => {
     const DocsHash = hash(enumOf(['intro', 'api']).optional());
     const state = DocsHash.parse('/docs#intro');
 
-    expectType<
+    expectTypeOf<
       UrlContract<'pathless', string, EmptyParams, EmptyParams, 'intro' | 'api' | undefined>
     >(DocsHash);
-    expectType<string>(state.pathname);
-    expectType<EmptyParams>(state.params);
-    expectType<EmptyParams>(state.search);
-    expectType<'intro' | 'api' | undefined>(state.hash);
-    expectType<never>(DocsHash.parsePathname);
-    expectType<never>(DocsHash.buildPath);
+    expectTypeOf<string>(state.pathname);
+    expectTypeOf<EmptyParams>(state.params);
+    expectTypeOf<EmptyParams>(state.search);
+    expectTypeOf<'intro' | 'api' | undefined>(state.hash);
+    expectTypeOf<never>(DocsHash.parsePathname);
+    expectTypeOf<never>(DocsHash.buildPath);
 
     if (false) {
       const normalized = DocsHash.normalize({
         pathname: '/docs',
         hash: 'api',
       });
-      expectType<'/docs'>(normalized.pathname);
+      expectTypeOf<'/docs'>(normalized.pathname);
 
       // @ts-expect-error pathless hash contracts do not accept params.
       DocsHash.build({ params: {}, hash: 'api' });
@@ -149,7 +147,7 @@ describe('hash', () => {
     const requiredState = RequiredHash.parse('/docs#overview');
     const defaultState = DefaultHash.parse('/docs');
 
-    expectType<string>(requiredState.hash);
-    expectType<'overview' | 'comments'>(defaultState.hash);
+    expectTypeOf<string>(requiredState.hash);
+    expectTypeOf<'overview' | 'comments'>(defaultState.hash);
   });
 });

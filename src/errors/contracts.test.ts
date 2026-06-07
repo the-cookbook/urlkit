@@ -1,7 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import type { UrlKitErrorCode, UrlKitErrorOptions } from './contracts.js';
-
-function expectType<Value>(_value: Value): void {}
 
 describe('error contracts', () => {
   it('keeps public error codes and options structured', () => {
@@ -19,6 +17,6 @@ describe('error contracts', () => {
 
     expect(codes).toHaveLength(8);
     expect(options.path).toEqual(['search', 'q']);
-    expectType<readonly string[] | undefined>(options.path);
+    expectTypeOf<readonly string[] | undefined>(options.path);
   });
 });

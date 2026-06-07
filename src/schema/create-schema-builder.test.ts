@@ -1,9 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import type { RuntimeSchemaOptions } from './contracts.js';
 import { compileRuntimeSchema } from './compile-runtime-schema.js';
 import { createRuntimeSchemaBuilder } from './create-schema-builder.js';
-
-function expectType<Value>(_value: Value): void {}
 
 interface TestSchemaOptions extends RuntimeSchemaOptions {
   readonly label: string;
@@ -26,7 +24,7 @@ describe('createRuntimeSchemaBuilder', () => {
       presence: 'required',
       options: { label: 'field' },
     });
-    expectType<'required'>(descriptor.presence);
+    expectTypeOf<'required'>(descriptor.presence);
   });
 
   it('creates optional builders without mutating the original builder', () => {
@@ -41,7 +39,7 @@ describe('createRuntimeSchemaBuilder', () => {
     expect(requiredSchema).not.toBe(optionalSchema);
     expect(Object.isFrozen(requiredSchema)).toBe(true);
     expect(Object.isFrozen(optionalSchema)).toBe(true);
-    expectType<'optional'>(optionalDescriptor.presence);
+    expectTypeOf<'optional'>(optionalDescriptor.presence);
   });
 
   it('creates defaulted builders without mutating the source builder', () => {
@@ -58,8 +56,8 @@ describe('createRuntimeSchemaBuilder', () => {
       options: { label: 'field' },
       defaultValue: 'profile',
     });
-    expectType<'defaulted'>(defaultedDescriptor.presence);
-    expectType<string>(defaultedDescriptor.defaultValue);
+    expectTypeOf<'defaulted'>(defaultedDescriptor.presence);
+    expectTypeOf<string>(defaultedDescriptor.defaultValue);
   });
 
   it('can return required builders from optional builders', () => {
@@ -67,7 +65,7 @@ describe('createRuntimeSchemaBuilder', () => {
     const descriptor = compileRuntimeSchema(schema);
 
     expect(descriptor.presence).toBe('required');
-    expectType<'required'>(descriptor.presence);
+    expectTypeOf<'required'>(descriptor.presence);
   });
 
   it('copies options into descriptors', () => {

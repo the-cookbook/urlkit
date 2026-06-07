@@ -1,5 +1,5 @@
 import packageJson from '../package.json' with { type: 'json' };
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import {
   UrlKitError,
   array,
@@ -44,8 +44,6 @@ import type {
   ConstraintValidation,
 } from './index.js';
 
-const expectType = <Value>(_value: Value): void => undefined;
-
 describe('main public exports', () => {
   it('exports the required public factories and builders', () => {
     expect(url).toBeTypeOf('function');
@@ -75,36 +73,42 @@ describe('main public exports', () => {
   });
 
   it('exports user-facing contracts', () => {
-    expectType<UrlMode>('path');
-    expectType<UnknownSearchBehavior>('strip');
-    expectType<InvalidSearchBehavior>('omit');
-    expectType<InvalidHashBehavior>('omit');
-    expectType<SearchArrayFormat>('comma');
-    expectType<UnknownSearchParams>({ debug: 'true', tag: ['a', 'b'] });
-    expectType<EmptyParams>({});
-    expectType<ParseUrlOptions>({
+    expectTypeOf<UrlMode>('path');
+    expectTypeOf<UnknownSearchBehavior>('strip');
+    expectTypeOf<InvalidSearchBehavior>('omit');
+    expectTypeOf<InvalidHashBehavior>('omit');
+    expectTypeOf<SearchArrayFormat>('comma');
+    expectTypeOf<UnknownSearchParams>({ debug: 'true', tag: ['a', 'b'] });
+    expectTypeOf<EmptyParams>({});
+    expectTypeOf<ParseUrlOptions>({
       unknownSearch: 'preserve',
       arrayFormat: 'comma',
       invalidSearch: 'omit',
     });
-    expectType<NormalizeUrlOptions>({ unknownSearch: 'error' });
-    expectType<BuildUrlOptions>({ defaults: 'omit', arrayFormat: 'comma' });
-    expectType<BuildSearchOptions>({ defaults: 'include', arrayFormat: 'repeat', sortKeys: true });
-    expectType<PatchSearchOptions>({ removeNull: true, removeUndefined: true });
-    expectType<RegisterPathConstraintOptions>({ overwrite: true });
-    expectType<UrlRequestInput>({ url: '/users/42' });
-    expectType<ParseRequestOptions>({
+    expectTypeOf<NormalizeUrlOptions>({ unknownSearch: 'error' });
+    expectTypeOf<BuildUrlOptions>({ defaults: 'omit', arrayFormat: 'comma' });
+    expectTypeOf<BuildSearchOptions>({
+      defaults: 'include',
+      arrayFormat: 'repeat',
+      sortKeys: true,
+    });
+    expectTypeOf<PatchSearchOptions>({ removeNull: true, removeUndefined: true });
+    expectTypeOf<RegisterPathConstraintOptions>({ overwrite: true });
+    expectTypeOf<UrlRequestInput>({ url: '/users/42' });
+    expectTypeOf<ParseRequestOptions>({
       baseUrl: 'https://example.com',
       unknownSearch: 'strip',
       arrayFormat: 'comma',
     });
-    expectType<UrlState<'/users/42', { readonly id: number }, { readonly q: string }, undefined>>({
-      pathname: '/users/42',
-      params: { id: 42 },
-      search: { q: 'router' },
-      hash: undefined,
-    });
-    expectType<UrlSafeParseResult<string, EmptyParams, EmptyParams, undefined>>({
+    expectTypeOf<UrlState<'/users/42', { readonly id: number }, { readonly q: string }, undefined>>(
+      {
+        pathname: '/users/42',
+        params: { id: 42 },
+        search: { q: 'router' },
+        hash: undefined,
+      },
+    );
+    expectTypeOf<UrlSafeParseResult<string, EmptyParams, EmptyParams, undefined>>({
       success: true,
       data: {
         pathname: '/docs',
@@ -113,7 +117,7 @@ describe('main public exports', () => {
         hash: undefined,
       },
     });
-    expectType<
+    expectTypeOf<
       UrlSafeNormalizeResult<
         'pathless',
         string,
@@ -131,7 +135,7 @@ describe('main public exports', () => {
         hash: undefined,
       },
     });
-    expectType<PathBuildMethod<{ readonly id: number }>>(
+    expectTypeOf<PathBuildMethod<{ readonly id: number }>>(
       (params: { readonly id: number }) => `/users/${params.id}`,
     );
     const constraint = createConstraint({
@@ -141,8 +145,8 @@ describe('main public exports', () => {
         return '[a-z]+';
       },
     });
-    expectType<ConstraintValidation>(constraint);
-    expectType<PathConstraintMap>({ urlkitindexconstraint: constraint });
+    expectTypeOf<ConstraintValidation>(constraint);
+    expectTypeOf<PathConstraintMap>({ urlkitindexconstraint: constraint });
   });
 
   it('exports the custom date format codec contract', () => {

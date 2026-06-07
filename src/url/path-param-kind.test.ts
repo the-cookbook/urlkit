@@ -1,8 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { getPathParamKind, type PathParamKind } from './path-param-kind.js';
 import type { ParsedPathParamSegment } from './path-segment.js';
-
-function expectType<Value>(_value: Value): void {}
 
 describe('getPathParamKind', () => {
   it('maps supported constraints to URLKit path param kinds', () => {
@@ -28,7 +26,7 @@ describe('getPathParamKind', () => {
     const kind: PathParamKind = getPathParamKind({ kind: 'param', name: 'id', constraint: 'int' });
     const segment: ParsedPathParamSegment = { kind: 'param', name: 'slug' };
 
-    expectType<'string' | 'int' | 'decimal' | 'range' | 'regex'>(kind);
+    expectTypeOf<'string' | 'int' | 'decimal' | 'range' | 'regex'>(kind);
     expect(getPathParamKind(segment)).toBe('string');
   });
 });

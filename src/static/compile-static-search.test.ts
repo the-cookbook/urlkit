@@ -1,12 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { buildSearch } from '../search/build-search.js';
 import { parseSearch } from '../search/parse-search.js';
 import { compileSearchSchema } from '../search/compile-search-schema.js';
 import { compileStaticSearch } from './compile-static-search.js';
 import type { InferStaticSearch } from './contracts.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('compileStaticSearch', () => {
   it('supports object fields and parses schema-based search', () => {
@@ -22,7 +20,7 @@ describe('compileStaticSearch', () => {
     const result = parseSearch('?q=router&active=true&sort=popular', { schema });
 
     expect(result.search).toEqual({ q: 'router', page: 1, active: true, sort: 'popular' });
-    expectType<{
+    expectTypeOf<{
       readonly q: string;
       readonly page: number;
       readonly score?: number;
@@ -105,7 +103,7 @@ describe('compileStaticSearch', () => {
         { schema },
       ),
     ).toBe('?from=03-06-2026&startsAt=03-06-2026+12%3A30%3A05');
-    expectType<{ readonly from: Date; readonly startsAt?: Date }>(
+    expectTypeOf<{ readonly from: Date; readonly startsAt?: Date }>(
       {} as InferStaticSearch<typeof descriptor>,
     );
   });

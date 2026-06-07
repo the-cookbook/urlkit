@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { enumOf } from '../schema/enum-of.js';
 import { int } from '../schema/int.js';
@@ -6,8 +6,6 @@ import { string } from '../schema/string.js';
 import type { UrlContract } from '../url/contracts.js';
 import { url } from '../url/create-url.js';
 import { search } from './create-search.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('search', () => {
   it('creates a pathless contract equivalent to url({ search })', () => {
@@ -109,15 +107,15 @@ describe('search', () => {
 
     const state = ProductSearch.parse('/products?page=2');
 
-    expectType<
+    expectTypeOf<
       UrlContract<'pathless', string, {}, { readonly page: number; readonly q?: string }, undefined>
     >(ProductSearch);
-    expectType<string>(state.pathname);
-    expectType<{}>(state.params);
-    expectType<{ readonly page: number; readonly q?: string }>(state.search);
-    expectType<undefined>(state.hash);
-    expectType<never>(ProductSearch.parsePathname);
-    expectType<never>(ProductSearch.buildPath);
+    expectTypeOf<string>(state.pathname);
+    expectTypeOf<{}>(state.params);
+    expectTypeOf<{ readonly page: number; readonly q?: string }>(state.search);
+    expectTypeOf<undefined>(state.hash);
+    expectTypeOf<never>(ProductSearch.parsePathname);
+    expectTypeOf<never>(ProductSearch.buildPath);
 
     if (false) {
       const normalized = ProductSearch.normalize({
@@ -126,7 +124,7 @@ describe('search', () => {
           page: 2,
         },
       });
-      expectType<'/products'>(normalized.pathname);
+      expectTypeOf<'/products'>(normalized.pathname);
 
       // @ts-expect-error pathless search contracts do not accept params.
       ProductSearch.build({ params: {}, search: { page: 2 } });

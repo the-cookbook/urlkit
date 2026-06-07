@@ -1,11 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { compileRuntimeSchema } from '../schema/compile-runtime-schema.js';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { compileSearchSchema } from '../search/compile-search-schema.js';
 import type { RuntimeSearchField } from '../search/contracts.js';
 import { createStaticSearchSchema } from './create-static-search-schema.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('createStaticSearchSchema', () => {
   it('creates runtime-compatible schema fields from static descriptors', () => {
@@ -17,7 +15,7 @@ describe('createStaticSearchSchema', () => {
       startsAt: { type: 'date-time', optional: true },
     } as const);
 
-    expectType<Readonly<Record<string, unknown>>>(schema);
+    expectTypeOf<Readonly<Record<string, unknown>>>(schema);
     expect(Object.isFrozen(schema)).toBe(true);
     expect((schema.q as RuntimeSearchField | undefined)?.type).toBe('one');
     expect((schema.tags as RuntimeSearchField | undefined)?.type).toBe('many');

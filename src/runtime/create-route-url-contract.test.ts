@@ -1,9 +1,7 @@
 import { createConstraint } from '@cookbook/pathkit/constraints';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { createRouteUrlContract } from './create-route-url-contract.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 const expectUrlKitError = (
   callback: () => unknown,
@@ -84,7 +82,7 @@ describe('createRouteUrlContract', () => {
     const state = contract.parse('/users/42');
 
     expect(state.params).toEqual({ id: '42' });
-    expectType<{ readonly id: string }>(state.params);
+    expectTypeOf<{ readonly id: string }>(state.params);
   });
 
   it('supports parsed params when requested', () => {
@@ -94,7 +92,7 @@ describe('createRouteUrlContract', () => {
     const state = contract.parse('/users/42');
 
     expect(state.params).toEqual({ id: 42 });
-    expectType<{ readonly id: number }>(state.params);
+    expectTypeOf<{ readonly id: number }>(state.params);
   });
 
   it('keeps range params raw by default and parses them by opt-in', () => {
@@ -114,8 +112,8 @@ describe('createRouteUrlContract', () => {
     const state = contract.parse('/teams/core/posts/post-1');
 
     expect(state.params).toEqual({ teamId: 'core', slug: 'post-1' });
-    expectType<`/teams/${string}/posts/${string}`>(state.pathname);
-    expectType<{ readonly teamId: string; readonly slug: string }>(state.params);
+    expectTypeOf<`/teams/${string}/posts/${string}`>(state.pathname);
+    expectTypeOf<{ readonly teamId: string; readonly slug: string }>(state.params);
   });
 
   it('uses standalone url parsed-param default separately from router runtime', async () => {
@@ -160,7 +158,7 @@ describe('createRouteUrlContract', () => {
     expect(state.params).toEqual({ slug: 'hello-world' });
     expect(contract.build({ params: { slug: 'hello-world' } })).toBe('/articles/hello-world');
     expect(contract.match('/articles/HelloWorld')).toBe(false);
-    expectType<{ readonly slug: string }>(state.params);
+    expectTypeOf<{ readonly slug: string }>(state.params);
   });
 
   it('preserves PathKit causes for route descriptor path compilation failures', () => {
@@ -228,7 +226,7 @@ describe('createRouteUrlContract', () => {
         },
       }),
     ).toBe('/reports?from=03-06-2026&startsAt=03-06-2026+12%3A30%3A05');
-    expectType<{ readonly from?: Date; readonly startsAt?: Date }>(state.search);
+    expectTypeOf<{ readonly from?: Date; readonly startsAt?: Date }>(state.search);
   });
 
   it('rejects runtime date codecs in static route search formats', () => {
@@ -401,7 +399,7 @@ describe('createRouteUrlContract', () => {
   it('keeps route concepts outside the router-runtime options contract', () => {
     createRouteUrlContract({ path: '/users/{id}' } as const);
 
-    expectType<'params' | 'unknownSearch' | 'arrayFormat' | 'pathConstraints' | never>(
+    expectTypeOf<'params' | 'unknownSearch' | 'arrayFormat' | 'pathConstraints' | never>(
       {} as keyof import('./contracts.js').CreateRouteUrlContractOptions,
     );
   });

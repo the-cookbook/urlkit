@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { boolean } from '../schema/boolean.js';
 import { date } from '../schema/date.js';
 import { dateTime } from '../schema/date-time.js';
@@ -10,8 +10,6 @@ import { object } from '../schema/object.js';
 import { string } from '../schema/string.js';
 import { parseSearch } from './parse-search.js';
 import type { InferRuntimeSearch, RawSearchParams } from './contracts.js';
-
-function expectType<Value>(_value: Value): void {}
 
 describe('parseSearch', () => {
   it('returns an empty object for empty raw search input', () => {
@@ -85,9 +83,9 @@ describe('parseSearch', () => {
   it('returns the raw search params contract without a schema', () => {
     const parsed = parseSearch('?q=router&tag=react&tag=router');
 
-    expectType<RawSearchParams>(parsed);
-    expectType<string | readonly string[]>(parsed.q!);
-    expectType<string | readonly string[]>(parsed.tag!);
+    expectTypeOf<RawSearchParams>(parsed);
+    expectTypeOf<string | readonly string[]>(parsed.q!);
+    expectTypeOf<string | readonly string[]>(parsed.tag!);
   });
 
   it('parses schema-based one fields', () => {
@@ -302,11 +300,11 @@ describe('parseSearch', () => {
 
     const parsed = parseSearch('?q=router', { schema });
 
-    expectType<InferRuntimeSearch<typeof schema>>(parsed.search);
-    expectType<string>(parsed.search.q);
-    expectType<number>(parsed.search.page);
-    expectType<'profile' | 'settings' | undefined>(parsed.search.tab);
-    expectType<readonly string[] | undefined>(parsed.search.tag);
+    expectTypeOf<InferRuntimeSearch<typeof schema>>(parsed.search);
+    expectTypeOf<string>(parsed.search.q);
+    expectTypeOf<number>(parsed.search.page);
+    expectTypeOf<'profile' | 'settings' | undefined>(parsed.search.tab);
+    expectTypeOf<readonly string[] | undefined>(parsed.search.tag);
   });
   it('hydrates declared object fields and keeps raw parsing flat without schema', () => {
     expect(parseSearch('?filter.role=admin&filter.active=true')).toEqual({
@@ -415,7 +413,7 @@ describe('parseSearch', () => {
 
     const parsed = parseSearch('?filter.role=admin', { schema });
 
-    expectType<{
+    expectTypeOf<{
       readonly filter: {
         readonly role: string;
         readonly active?: boolean;

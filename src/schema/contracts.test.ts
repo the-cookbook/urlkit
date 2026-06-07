@@ -1,8 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import type {
   DefaultedRuntimeSchemaDescriptor,
   EmptyRuntimeSchemaOptions,
-  InferRuntimeSchemaDescriptor,
   InferRuntimeSchemaValue,
   OptionalRuntimeSchemaDescriptor,
   RequiredRuntimeSchemaDescriptor,
@@ -11,20 +10,18 @@ import type {
 import { compileRuntimeSchema } from './compile-runtime-schema.js';
 import { createRuntimeSchemaBuilder } from './create-schema-builder.js';
 
-function expectType<Value>(_value: Value): void {}
-
 describe('runtime schema contracts', () => {
   it('infers builder values and descriptor shapes', () => {
     const required = createRuntimeSchemaBuilder<string, 'test'>({ kind: 'test' });
     const optional = required.optional();
     const defaulted = required.default('fallback');
 
-    expectType<RuntimeSchemaBuilder<string>>(required);
-    expectType<string | undefined>(undefined as InferRuntimeSchemaValue<typeof optional>);
-    expectType<string>(undefined as unknown as InferRuntimeSchemaValue<typeof defaulted>);
-    expectType<RequiredRuntimeSchemaDescriptor<'test'>>(compileRuntimeSchema(required));
-    expectType<OptionalRuntimeSchemaDescriptor<'test'>>(compileRuntimeSchema(optional));
-    expectType<DefaultedRuntimeSchemaDescriptor<'test', EmptyRuntimeSchemaOptions, string>>(
+    expectTypeOf<RuntimeSchemaBuilder<string>>(required);
+    expectTypeOf<string | undefined>(undefined as InferRuntimeSchemaValue<typeof optional>);
+    expectTypeOf<string>(undefined as unknown as InferRuntimeSchemaValue<typeof defaulted>);
+    expectTypeOf<RequiredRuntimeSchemaDescriptor<'test'>>(compileRuntimeSchema(required));
+    expectTypeOf<OptionalRuntimeSchemaDescriptor<'test'>>(compileRuntimeSchema(optional));
+    expectTypeOf<DefaultedRuntimeSchemaDescriptor<'test', EmptyRuntimeSchemaOptions, string>>(
       undefined as never,
     );
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { array } from '../schema/array.js';
 import { boolean } from '../schema/boolean.js';
 import { int } from '../schema/int.js';
@@ -11,8 +11,6 @@ import type {
   SearchParseResult,
 } from './contracts.js';
 
-function expectType<Value>(_value: Value): void {}
-
 describe('search contracts', () => {
   it('models raw search params and schema parse results separately', () => {
     const raw: RawSearchParams = { q: 'router', tag: ['react', 'url'] };
@@ -23,7 +21,7 @@ describe('search contracts', () => {
 
     expect(raw.tag).toEqual(['react', 'url']);
     expect(result.unknownSearch).toEqual({ debug: 'true' });
-    expectType<string | readonly string[]>(raw.q!);
+    expectTypeOf<string | readonly string[]>(raw.q!);
   });
 
   it('infers runtime search field values without unknown search pollution', () => {
@@ -37,7 +35,7 @@ describe('search contracts', () => {
 
     type Search = InferRuntimeSearch<typeof schema>;
 
-    expectType<{
+    expectTypeOf<{
       readonly q: string;
       readonly page: number;
       readonly filter: { readonly role: string; readonly ids: readonly number[] };

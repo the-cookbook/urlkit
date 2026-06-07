@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import type {
   CompileStaticUrlOptions,
   InferStaticHash,
@@ -7,8 +7,6 @@ import type {
   InferStaticUrlSearch,
   StaticUrlModeFromDescriptor,
 } from './contracts.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('static contracts', () => {
   it('models static URL compiler path constraint options', () => {
@@ -45,7 +43,7 @@ describe('static contracts', () => {
       },
     } as const;
 
-    expectType<{
+    expectTypeOf<{
       readonly ref?: string;
       readonly filters?: readonly string[];
       readonly page: number;
@@ -57,30 +55,30 @@ describe('static contracts', () => {
   });
 
   it('infers static string hash descriptors', () => {
-    expectType<string>({} as InferStaticHash<{ readonly type: 'string' }>);
-    expectType<string | undefined>(
+    expectTypeOf<string>({} as InferStaticHash<{ readonly type: 'string' }>);
+    expectTypeOf<string | undefined>(
       {} as InferStaticHash<{ readonly type: 'string'; readonly optional: true }>,
     );
-    expectType<string>(
+    expectTypeOf<string>(
       {} as InferStaticHash<{ readonly type: 'string'; readonly default: 'overview' }>,
     );
   });
 
   it('infers static enum hash descriptors', () => {
-    expectType<'overview' | 'comments'>(
+    expectTypeOf<'overview' | 'comments'>(
       {} as InferStaticHash<{
         readonly type: 'enum';
         readonly values: readonly ['overview', 'comments'];
       }>,
     );
-    expectType<'overview' | 'comments' | undefined>(
+    expectTypeOf<'overview' | 'comments' | undefined>(
       {} as InferStaticHash<{
         readonly type: 'enum';
         readonly values: readonly ['overview', 'comments'];
         readonly optional: true;
       }>,
     );
-    expectType<'overview' | 'comments'>(
+    expectTypeOf<'overview' | 'comments'>(
       {} as InferStaticHash<{
         readonly type: 'enum';
         readonly values: readonly ['overview', 'comments'];
@@ -99,12 +97,12 @@ describe('static contracts', () => {
       hash: { type: 'enum', values: ['comments', 'share'], optional: true },
     } as const;
 
-    expectType<'path'>({} as StaticUrlModeFromDescriptor<typeof descriptor>);
-    expectType<{
+    expectTypeOf<'path'>({} as StaticUrlModeFromDescriptor<typeof descriptor>);
+    expectTypeOf<{
       readonly q: string;
       readonly page: number;
     }>({} as InferStaticUrlSearch<typeof descriptor>);
-    expectType<'comments' | 'share' | undefined>({} as InferStaticUrlHash<typeof descriptor>);
+    expectTypeOf<'comments' | 'share' | undefined>({} as InferStaticUrlHash<typeof descriptor>);
   });
 
   it('infers pathless static URL descriptors', () => {
@@ -114,8 +112,8 @@ describe('static contracts', () => {
       },
     } as const;
 
-    expectType<'pathless'>({} as StaticUrlModeFromDescriptor<typeof descriptor>);
-    expectType<{ readonly page: number }>({} as InferStaticUrlSearch<typeof descriptor>);
-    expectType<undefined>(undefined);
+    expectTypeOf<'pathless'>({} as StaticUrlModeFromDescriptor<typeof descriptor>);
+    expectTypeOf<{ readonly page: number }>({} as InferStaticUrlSearch<typeof descriptor>);
+    expectTypeOf<undefined>(undefined);
   });
 });

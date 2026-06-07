@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import {
   buildSearch,
@@ -7,8 +7,6 @@ import {
   pickSearch,
   replaceSearch,
 } from './build-route-search.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 const schema = {
   q: { type: 'string' },
@@ -54,7 +52,7 @@ describe('router-runtime search helpers', () => {
     expect(buildSearch(value, { schema })).toBe(
       '?q=urlkit&page=2&tags=ts&tags=url&active=false&sort=popular&day=2026-06-02',
     );
-    expectType<
+    expectTypeOf<
       Partial<{
         readonly q: string;
         readonly page: number;

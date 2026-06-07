@@ -1,12 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { array } from './array.js';
 import { compileRuntimeSchema } from './compile-runtime-schema.js';
 import type { InferRuntimeSchemaValue } from './contracts.js';
 import { normalizeRuntimeSchemaValue } from './normalize-runtime-schema-value.js';
 import { string } from './string.js';
-
-function expectType<Value>(_value: Value): void {}
 
 describe('array', () => {
   it('compiles to a normalized descriptor with an element descriptor', () => {
@@ -22,7 +20,9 @@ describe('array', () => {
   it('infers readonly element arrays', () => {
     const schema = array(string()).optional();
 
-    expectType<readonly string[] | undefined>(undefined as InferRuntimeSchemaValue<typeof schema>);
+    expectTypeOf<readonly string[] | undefined>(
+      undefined as InferRuntimeSchemaValue<typeof schema>,
+    );
   });
 
   it('normalizes arrays and rejects scalars', () => {

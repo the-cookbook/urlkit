@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import {
   buildHash,
   buildSearch,
@@ -15,8 +15,6 @@ import {
   registerPathConstraints,
   replaceSearch,
 } from './router-runtime.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('router-runtime public exports', () => {
   it('exports framework-agnostic router-runtime helpers', () => {
@@ -53,7 +51,7 @@ describe('router-runtime public exports', () => {
 
     expect(parsed).toEqual({ page: 2, sort: 'popular' });
     expect(buildSearch(parsed, { schema })).toBe('?page=2&sort=popular');
-    expectType<{ readonly page: number; readonly sort: 'newest' | 'popular' }>(parsed);
+    expectTypeOf<{ readonly page: number; readonly sort: 'newest' | 'popular' }>(parsed);
   });
 
   it('supports custom formatted static date descriptors through the public entry', () => {
@@ -77,7 +75,7 @@ describe('router-runtime public exports', () => {
       at: new Date('2026-06-02T12:30:05.000Z'),
     });
     expect(buildSearch(parsed, { schema })).toBe('?from=02-06-2026&at=02-06-2026+12%3A30%3A05');
-    expectType<{ readonly from?: Date; readonly at?: Date }>(parsed);
+    expectTypeOf<{ readonly from?: Date; readonly at?: Date }>(parsed);
   });
 
   it('can omit invalid optional parsed search fields through the public entry', () => {
@@ -108,7 +106,7 @@ describe('router-runtime public exports', () => {
       page: 2,
       publishedOn: new Date('2026-06-02T00:00:00.000Z'),
     });
-    expectType<
+    expectTypeOf<
       Partial<{
         readonly page: number;
         readonly publishedOn?: Date;
@@ -147,7 +145,7 @@ describe('router-runtime public exports', () => {
   });
 
   it('does not expose route definition concepts through router-runtime options', () => {
-    expectType<'params' | 'unknownSearch' | 'arrayFormat' | 'pathConstraints' | never>(
+    expectTypeOf<'params' | 'unknownSearch' | 'arrayFormat' | 'pathConstraints' | never>(
       {} as keyof import('./runtime/contracts.js').CreateRouteUrlContractOptions,
     );
   });

@@ -1,9 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import type { UrlRequestInput } from '../contracts.js';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { resolveRequestUrlInput } from './parse-request.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('resolveRequestUrlInput', () => {
   it('reads a web-standard Request URL', () => {
@@ -61,7 +59,7 @@ describe('resolveRequestUrlInput', () => {
   it('keeps core request-like contracts framework-agnostic', () => {
     const input: UrlRequestInput = { url: '/users/42' };
 
-    expectType<UrlRequestInput>(input);
+    expectTypeOf<UrlRequestInput>(input);
 
     if (false) {
       const withExpressField: UrlRequestInput = {
@@ -69,7 +67,7 @@ describe('resolveRequestUrlInput', () => {
         // @ts-expect-error framework-specific request fields do not belong in core UrlRequestInput.
         originalUrl: '/express/users/42',
       };
-      expectType<UrlRequestInput>(withExpressField);
+      expectTypeOf<UrlRequestInput>(withExpressField);
     }
   });
 });

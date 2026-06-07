@@ -1,12 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import {
   assertStaticSearchField,
   normalizeStaticSearchFieldType,
   normalizeStaticSearchFieldValue,
 } from './static-search-field-kind.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('static search field kind helpers', () => {
   it('accepts only object fields with explicit type values', () => {
@@ -50,7 +48,7 @@ describe('static search field kind helpers', () => {
   });
 
   it('normalizes many flags as runtime field types', () => {
-    expectType<'one' | 'many'>(normalizeStaticSearchFieldType(undefined, ['search', 'q']));
+    expectTypeOf<'one' | 'many'>(normalizeStaticSearchFieldType(undefined, ['search', 'q']));
     expect(normalizeStaticSearchFieldType(undefined, ['search', 'q'])).toBe('one');
     expect(normalizeStaticSearchFieldType(true, ['search', 'tags'])).toBe('many');
   });

@@ -1,11 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import type {
   ParsedPathLiteralSegment,
   ParsedPathParamSegment,
   ParsedPathSegment,
 } from './path-segment.js';
-
-function expectType<Value>(_value: Value): void {}
 
 describe('path segment contracts', () => {
   it('models parsed literal and param path segments as a discriminated union', () => {
@@ -17,7 +15,7 @@ describe('path segment contracts', () => {
       { kind: 'literal', value: 'users' },
       { kind: 'param', name: 'id', constraint: 'int' },
     ]);
-    expectType<ParsedPathSegment>(literal);
-    expectType<ParsedPathSegment>(param);
+    expectTypeOf<ParsedPathSegment>(literal);
+    expectTypeOf<ParsedPathSegment>(param);
   });
 });

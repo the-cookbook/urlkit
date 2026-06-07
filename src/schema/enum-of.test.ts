@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { compileRuntimeSchema } from './compile-runtime-schema.js';
 import type { InferRuntimeSchemaValue } from './contracts.js';
@@ -11,8 +11,6 @@ import {
   safeSerializeRuntimeSchemaValue,
 } from './safe-runtime-schema-value.js';
 import { serializeRuntimeSchemaValue } from './serialize-runtime-schema-value.js';
-
-function expectType<Value>(_value: Value): void {}
 
 describe('enumOf', () => {
   it('compiles to a normalized descriptor', () => {
@@ -48,14 +46,16 @@ describe('enumOf', () => {
     const requiredSort = optionalSort.required();
     const defaultedSort = optionalSort.default('newest');
 
-    expectType<'newest' | 'popular'>(undefined as unknown as InferRuntimeSchemaValue<typeof sort>);
-    expectType<'newest' | 'popular' | undefined>(
+    expectTypeOf<'newest' | 'popular'>(
+      undefined as unknown as InferRuntimeSchemaValue<typeof sort>,
+    );
+    expectTypeOf<'newest' | 'popular' | undefined>(
       undefined as InferRuntimeSchemaValue<typeof optionalSort>,
     );
-    expectType<'newest' | 'popular'>(
+    expectTypeOf<'newest' | 'popular'>(
       undefined as unknown as InferRuntimeSchemaValue<typeof requiredSort>,
     );
-    expectType<'newest' | 'popular'>(
+    expectTypeOf<'newest' | 'popular'>(
       undefined as unknown as InferRuntimeSchemaValue<typeof defaultedSort>,
     );
   });

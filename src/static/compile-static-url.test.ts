@@ -1,12 +1,10 @@
 import { createConstraint } from '@cookbook/pathkit/constraints';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { buildSearch } from '../search/build-search.js';
 import { parseSearch } from '../search/parse-search.js';
 import { compileStaticUrl } from './compile-static-url.js';
 import type { StaticUrlModeFromDescriptor } from './contracts.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 const expectInvalidDescriptor = (callback: () => unknown, path: readonly string[]): UrlKitError => {
   try {
@@ -46,7 +44,7 @@ describe('compileStaticUrl', () => {
       values: ['comments', 'share'],
     });
     expect(Object.isFrozen(compiled)).toBe(true);
-    expectType<'path'>({} as StaticUrlModeFromDescriptor<typeof descriptor>);
+    expectTypeOf<'path'>({} as StaticUrlModeFromDescriptor<typeof descriptor>);
   });
 
   it('preserves PathKit causes for invalid path patterns', () => {
@@ -129,7 +127,7 @@ describe('compileStaticUrl', () => {
     expect(compiled.pattern).toBeUndefined();
     expect(compiled.search).toBeDefined();
     expect(compiled.hash).toBeUndefined();
-    expectType<'pathless'>({} as StaticUrlModeFromDescriptor<typeof descriptor>);
+    expectTypeOf<'pathless'>({} as StaticUrlModeFromDescriptor<typeof descriptor>);
   });
 
   it('allows path-only descriptors', () => {

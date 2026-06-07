@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { array } from './array.js';
 import { boolean } from './boolean.js';
@@ -10,8 +10,6 @@ import { normalizeRuntimeSchemaValue } from './normalize-runtime-schema-value.js
 import { object } from './object.js';
 import { safeNormalizeRuntimeSchemaValue } from './safe-runtime-schema-value.js';
 import { string } from './string.js';
-
-function expectType<Value>(_value: Value): void {}
 
 describe('object', () => {
   it('compiles to a normalized descriptor with field descriptors', () => {
@@ -45,7 +43,7 @@ describe('object', () => {
 
     type Value = InferRuntimeSchemaValue<typeof schema>;
 
-    expectType<{
+    expectTypeOf<{
       readonly role: string;
       readonly active?: boolean;
       readonly page: number;

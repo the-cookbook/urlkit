@@ -1,9 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { createRouteUrlContract, parseSearch as parseRouteSearch } from './router-runtime.js';
 import { compileStaticUrl } from './static.js';
 import { array, enumOf, hash, int, search, string, url } from './index.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('spec API examples', () => {
   it('covers the standalone URLKit example', () => {
@@ -42,14 +40,12 @@ describe('spec API examples', () => {
 
     expect(href).toBe('/search?q=router&page=2&tags=typescript&tags=url&sort=relevance');
 
-    if (false) {
-      expectType<{
-        readonly q: string;
-        readonly page: number;
-        readonly tags: readonly string[];
-        readonly sort: 'relevance' | 'newest' | 'popular';
-      }>(state.search);
-    }
+    expectTypeOf<{
+      readonly q: string;
+      readonly page: number;
+      readonly tags: readonly string[];
+      readonly sort: 'relevance' | 'newest' | 'popular';
+    }>(state.search);
   });
 
   it('covers the pathless search contract example using url({ search })', () => {
@@ -159,7 +155,7 @@ describe('spec API examples', () => {
     });
 
     if (false) {
-      expectType<{
+      expectTypeOf<{
         readonly q: string;
         readonly page: number;
         readonly tags: readonly string[];

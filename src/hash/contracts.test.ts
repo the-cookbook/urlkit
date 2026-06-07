@@ -1,11 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import type {
   BuildHashOptions,
   CompiledHashDescriptor,
   NormalizedHashDescriptor,
 } from './contracts.js';
-
-function expectType<Value>(_value: Value): void {}
 
 describe('hash contracts', () => {
   it('models normalized and compiled hash descriptors', () => {
@@ -25,6 +23,6 @@ describe('hash contracts', () => {
 
     expect(compiled.parse('#comments')).toBe('comments');
     expect(options.defaults).toBe('omit');
-    expectType<'string' | 'enum'>(descriptor.kind);
+    expectTypeOf<'string' | 'enum'>(descriptor.kind);
   });
 });

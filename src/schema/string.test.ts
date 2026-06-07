@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { compileRuntimeSchema } from './compile-runtime-schema.js';
 import type { InferRuntimeSchemaValue } from './contracts.js';
@@ -6,8 +6,6 @@ import { normalizeRuntimeSchemaValue } from './normalize-runtime-schema-value.js
 import { parseRuntimeSchemaValue } from './parse-runtime-schema-value.js';
 import { serializeRuntimeSchemaValue } from './serialize-runtime-schema-value.js';
 import { string } from './string.js';
-
-function expectType<Value>(_value: Value): void {}
 
 describe('string', () => {
   it('compiles to a normalized descriptor', () => {
@@ -34,9 +32,9 @@ describe('string', () => {
     const required = optional.required();
     const defaulted = optional.default('fallback');
 
-    expectType<string | undefined>(undefined as InferRuntimeSchemaValue<typeof optional>);
-    expectType<string>(undefined as unknown as InferRuntimeSchemaValue<typeof required>);
-    expectType<string>(undefined as unknown as InferRuntimeSchemaValue<typeof defaulted>);
+    expectTypeOf<string | undefined>(undefined as InferRuntimeSchemaValue<typeof optional>);
+    expectTypeOf<string>(undefined as unknown as InferRuntimeSchemaValue<typeof required>);
+    expectTypeOf<string>(undefined as unknown as InferRuntimeSchemaValue<typeof defaulted>);
   });
 
   it('parses, normalizes, and serializes string values', () => {

@@ -1,8 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { parseSearch } from './parse-route-search.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 const schema = {
   q: { type: 'string' },
@@ -62,7 +60,7 @@ describe('router-runtime parseSearch', () => {
       startsAt: new Date('2026-01-01T10:30:00.000Z'),
     });
 
-    expectType<{
+    expectTypeOf<{
       readonly q: string;
       readonly page: number;
       readonly tags?: readonly string[];
@@ -94,7 +92,7 @@ describe('router-runtime parseSearch', () => {
       from: new Date('2026-06-02T00:00:00.000Z'),
       startsAt: new Date('2026-06-02T12:30:05.000Z'),
     });
-    expectType<{ readonly from?: Date; readonly startsAt?: Date }>(parsed);
+    expectTypeOf<{ readonly from?: Date; readonly startsAt?: Date }>(parsed);
   });
 
   it('can omit invalid optional declared fields without rejecting the full search', () => {
@@ -131,7 +129,7 @@ describe('router-runtime parseSearch', () => {
       tag: ['ts', 'url'],
       publishedOn: new Date('2026-06-02T00:00:00.000Z'),
     });
-    expectType<
+    expectTypeOf<
       Partial<{
         readonly page: number;
         readonly ref?: string;
