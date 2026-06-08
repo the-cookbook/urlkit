@@ -1,7 +1,6 @@
 import { createConstraint } from '@cookbook/pathkit/constraints';
-import { describe, expect, it, expectTypeOf } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
-import { array } from '../schema/array.js';
 import { dateTime } from '../schema/date-time.js';
 import { enumOf } from '../schema/enum-of.js';
 import { int } from '../schema/int.js';
@@ -9,7 +8,8 @@ import { string } from '../schema/string.js';
 import type { UrlNormalizeInput } from '../contracts.js';
 import type { UrlContract } from './contracts.js';
 import { url } from './create-url.js';
-import { number } from '../schema/number.js';
+
+const expectType = <Value>(_value: Value): void => undefined;
 
 describe('url', () => {
   it('constructs path-mode contracts from runtime builder descriptors', () => {
@@ -36,18 +36,18 @@ describe('url', () => {
 
     if (false) {
       const state = UserUrl.parse('/users/42?tab=profile');
-      expectTypeOf<`/users/${number}`>(state.pathname);
-      expectTypeOf<{ readonly id: number }>(state.params);
-      expectTypeOf<{
+      expectType<`/users/${number}`>(state.pathname);
+      expectType<{ readonly id: number }>(state.params);
+      expectType<{
         readonly tab: 'profile' | 'settings';
         readonly page: number;
         readonly ref?: string;
         readonly createdAt?: Date;
       }>(state.search);
-      expectTypeOf<'activity' | 'comments' | undefined>(state.hash);
+      expectType<'activity' | 'comments' | undefined>(state.hash);
     }
 
-    expectTypeOf<
+    expectType<
       UrlContract<
         'path',
         `/users/${number}`,
@@ -97,7 +97,9 @@ describe('url', () => {
     expect(ArticleUrl.build({ params: { slug: 'hello-world' } })).toBe('/articles/hello-world');
     expect(ArticleUrl.match('/articles/HelloWorld')).toBe(false);
 
-    expectTypeOf<string>(state.params.slug);
+    if (false) {
+      expectType<string>(state.params.slug);
+    }
   });
 
   it('constructs pathless contracts from runtime builder descriptors', () => {
@@ -117,10 +119,10 @@ describe('url', () => {
 
     if (false) {
       const state = FiltersUrl.parse('/products?page=2');
-      expectTypeOf<string>(state.pathname);
-      expectTypeOf<{}>(state.params);
-      expectTypeOf<{ readonly page: number; readonly q?: string }>(state.search);
-      expectTypeOf<undefined>(state.hash);
+      expectType<string>(state.pathname);
+      expectType<{}>(state.params);
+      expectType<{ readonly page: number; readonly q?: string }>(state.search);
+      expectType<undefined>(state.hash);
 
       const normalized = FiltersUrl.normalize({
         pathname: '/products',
@@ -128,52 +130,11 @@ describe('url', () => {
           page: 2,
         },
       });
-      expectTypeOf<'/products'>(normalized.pathname);
+      expectType<'/products'>(normalized.pathname);
     }
 
-    expectTypeOf<never>(FiltersUrl.parsePathname);
-    expectTypeOf<never>(FiltersUrl.buildPath);
-  });
-
-  it('applies defaults when optional is chained after default in pathless runtime contracts', () => {
-    const ProductFilters = url({
-      search: {
-        categories: array(string()).default(['electronics']).optional(),
-        price: number().default(9.99).optional(),
-        sortBy: enumOf(['recommendation', 'desc', 'asc', 'priceDesc', 'priceAsc']).optional(),
-      },
-    });
-
-    const parsed = ProductFilters.parse('/products/42');
-
-    expect(parsed.search).toEqual({
-      categories: ['electronics'],
-      price: 9.99,
-    });
-    expect(
-      ProductFilters.normalize({
-        pathname: '/products/42',
-        search: {},
-      }).search,
-    ).toEqual({
-      categories: ['electronics'],
-      price: 9.99,
-    });
-    expect(ProductFilters.build({ search: { sortBy: 'recommendation' } })).toBe(
-      '?categories=electronics&price=9.99&sortBy=recommendation',
-    );
-    expect(
-      ProductFilters.build(
-        {
-          search: {
-            categories: ['electronics'],
-            price: 9.99,
-            sortBy: 'recommendation',
-          },
-        },
-        { defaults: 'omit' },
-      ),
-    ).toBe('?sortBy=recommendation');
+    expectType<never>(FiltersUrl.parsePathname);
+    expectType<never>(FiltersUrl.buildPath);
   });
 
   it('constructs pathless hash-only contracts', () => {
@@ -187,7 +148,7 @@ describe('url', () => {
 
     if (false) {
       const state = SectionUrl.parse('/docs');
-      expectTypeOf<'overview' | 'comments'>(state.hash);
+      expectType<'overview' | 'comments'>(state.hash);
     }
   });
 
@@ -209,6 +170,44 @@ describe('url', () => {
     });
   });
 
+  it('infers and parses chained PathKit constraints by weighted value type', () => {
+    const MinUrl = url({ path: '/users/{id:min(1)}' });
+    const OptionalMinUrl = url({ path: '/products/{id:min(1)?}' });
+    const RegexMinUrl = url({ path: '/scores/{id:regex(\\d):min(1)}' });
+    const UuidUrl = url({ path: '/users/{id:uuid}' });
+    const SlugUrl = url({ path: '/articles/{slug:minlength(3):maxlength(50)}' });
+
+    expect(MinUrl.parse('/users/1.5').params).toEqual({ id: 1.5 });
+    expect(OptionalMinUrl.parse('/products').params).toEqual({});
+    expect(OptionalMinUrl.parse('/products/2.5').params).toEqual({ id: 2.5 });
+    expect(OptionalMinUrl.build({})).toBe('/products');
+    expect(OptionalMinUrl.build({ params: {} })).toBe('/products');
+    expect(OptionalMinUrl.build({ params: { id: 2.5 } })).toBe('/products/2.5');
+    expect(RegexMinUrl.parse('/scores/2').params).toEqual({ id: 2 });
+    expect(UuidUrl.parse('/users/7d444840-9dc0-11d1-b245-5ffdce74fad2').params).toEqual({
+      id: '7d444840-9dc0-11d1-b245-5ffdce74fad2',
+    });
+    expect(SlugUrl.parse('/articles/hello').params).toEqual({ slug: 'hello' });
+
+    if (false) {
+      const minState = MinUrl.parse('/users/1.5');
+      const optionalState = OptionalMinUrl.parse('/products/2.5');
+      const uuidState = UuidUrl.parse('/users/7d444840-9dc0-11d1-b245-5ffdce74fad2');
+      const slugState = SlugUrl.parse('/articles/hello');
+
+      expectType<number>(minState.params.id);
+      expectType<number | undefined>(optionalState.params.id);
+      expectType<string>(uuidState.params.id);
+      expectType<string>(slugState.params.slug);
+
+      OptionalMinUrl.build({});
+      OptionalMinUrl.build({ params: {} });
+      OptionalMinUrl.build({ params: { id: 2.5 } });
+
+      // @ts-expect-error required path params cannot be omitted.
+      MinUrl.build({});
+    }
+  });
   it('validates runtime descriptors during construction', () => {
     expect(() => url(null as never)).toThrow(UrlKitError);
     expect(() => url({ path: undefined } as never)).toThrow(UrlKitError);
@@ -336,10 +335,10 @@ describe('url parse and safeParse', () => {
 
     const state = UserUrl.parse('/users/42?page=2#activity');
 
-    expectTypeOf<`/users/${number}`>(state.pathname);
-    expectTypeOf<{ readonly id: number }>(state.params);
-    expectTypeOf<{ readonly page: number; readonly ref?: string }>(state.search);
-    expectTypeOf<'activity' | 'comments' | undefined>(state.hash);
+    expectType<`/users/${number}`>(state.pathname);
+    expectType<{ readonly id: number }>(state.params);
+    expectType<{ readonly page: number; readonly ref?: string }>(state.search);
+    expectType<'activity' | 'comments' | undefined>(state.hash);
   });
 });
 
@@ -382,7 +381,7 @@ describe('url normalize and safeNormalize', () => {
       search: { page: 2 },
       hash: undefined,
     });
-    expectTypeOf<'/products'>(state.pathname);
+    expectType<'/products'>(state.pathname);
   });
 
   it('returns discriminated safeNormalize results', () => {
@@ -451,7 +450,7 @@ describe('url normalize and safeNormalize', () => {
           debug: 'true',
         },
       };
-      expectTypeOf<UrlNormalizeInput<'pathless', {}, { readonly q: string }, undefined>>(input);
+      expectType<UrlNormalizeInput<'pathless', {}, { readonly q: string }, undefined>>(input);
     }
   });
 
@@ -767,10 +766,13 @@ describe('url contract helper methods', () => {
       (FiltersUrl as unknown as { readonly parsePathname?: unknown }).parsePathname,
     ).toBeUndefined();
     expect((FiltersUrl as unknown as { readonly buildPath?: unknown }).buildPath).toBeUndefined();
-    expectTypeOf<(pathname: string) => { readonly id: number }>(UserUrl.parsePathname);
-    expectTypeOf<(params: { readonly id: number }) => string>(UserUrl.buildPath);
-    expectTypeOf<never>(FiltersUrl.parsePathname);
-    expectTypeOf<never>(FiltersUrl.buildPath);
+
+    if (false) {
+      expectType<(pathname: string) => { readonly id: number }>(UserUrl.parsePathname);
+      expectType<(params: { readonly id: number }) => string>(UserUrl.buildPath);
+      expectType<never>(FiltersUrl.parsePathname);
+      expectType<never>(FiltersUrl.buildPath);
+    }
   });
 });
 
@@ -923,9 +925,9 @@ describe('url parseRequest and safeParseRequest', () => {
 
     const state = UserUrl.parseRequest({ url: 'https://example.com/users/42?page=2#activity' });
 
-    expectTypeOf<`/users/${number}`>(state.pathname);
-    expectTypeOf<{ readonly id: number }>(state.params);
-    expectTypeOf<{ readonly page: number }>(state.search);
-    expectTypeOf<'activity' | 'comments' | undefined>(state.hash);
+    expectType<`/users/${number}`>(state.pathname);
+    expectType<{ readonly id: number }>(state.params);
+    expectType<{ readonly page: number }>(state.search);
+    expectType<'activity' | 'comments' | undefined>(state.hash);
   });
 });

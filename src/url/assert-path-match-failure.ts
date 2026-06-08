@@ -1,5 +1,6 @@
 import { getConstraint } from '@cookbook/pathkit/constraints';
 import { UrlKitError } from '../errors/url-kit-error.js';
+import { getPathParamConstraints } from './path-param-constraints.js';
 import type { ParsedPathSegment } from './path-segment.js';
 
 interface PathParamValidationFailure {
@@ -71,32 +72,30 @@ function getPathParamValidationFailure(
     };
   }
 
-  if (!segment.constraint) {
-    return undefined;
+  for (const pathConstraint of getPathParamConstraints(segment)) {
+    const constraint = getConstraint(pathConstraint.type);
+
+    if (!constraint) {
+      return {
+        message: `Path constraint "${pathConstraint.type}" is not registered.`,
+      };
+    }
+
+    try {
+      constraint(segment.name, value, pathConstraint.params);
+    } catch (error) {
+      const causeMessage = getCauseMessage(error);
+
+      return {
+        message: causeMessage
+          ? `Path parameter "${segment.name}" is invalid: ${causeMessage}`
+          : `Path parameter "${segment.name}" is invalid.`,
+        cause: error,
+      };
+    }
   }
 
-  const constraint = getConstraint(segment.constraint);
-
-  if (!constraint) {
-    return {
-      message: `Path constraint "${segment.constraint}" is not registered.`,
-    };
-  }
-
-  try {
-    constraint(segment.name, value, segment.constraintParams ?? '');
-
-    return undefined;
-  } catch (error) {
-    const causeMessage = getCauseMessage(error);
-
-    return {
-      message: causeMessage
-        ? `Path parameter "${segment.name}" is invalid: ${causeMessage}`
-        : `Path parameter "${segment.name}" is invalid.`,
-      cause: error,
-    };
-  }
+  return undefined;
 }
 
 function getCauseMessage(error: unknown): string | undefined {

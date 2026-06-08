@@ -53,15 +53,22 @@ function appendLiteralSegments(
 }
 
 function toParsedParamSegment(token: ParameterSegment): ParsedPathSegment {
-  const constraint = token.constraints[0];
+  const constraints = token.constraints.map((constraint) => ({
+    type: constraint.type,
+    params: constraint.params,
+  }));
+  const firstConstraint = constraints[0];
 
   return {
     kind: 'param',
     name: token.name,
-    ...(constraint
+    ...(token.optional ? { optional: true as const } : {}),
+    ...(token.wildcard ? { wildcard: true as const } : {}),
+    ...(constraints.length ? { constraints } : {}),
+    ...(firstConstraint
       ? {
-          constraint: constraint.type,
-          ...(constraint.params ? { constraintParams: constraint.params } : {}),
+          constraint: firstConstraint.type,
+          ...(firstConstraint.params ? { constraintParams: firstConstraint.params } : {}),
         }
       : {}),
   };

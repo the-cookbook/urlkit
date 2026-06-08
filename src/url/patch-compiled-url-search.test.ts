@@ -11,7 +11,7 @@ import { patchCompiledUrlSearch } from './patch-compiled-url-search.js';
 describe('patchCompiledUrlSearch', () => {
   it('patches compiled search and preserves path and hash', () => {
     const compiled = compileUrlDescriptor(
-      compileStaticUrl({ path: '/search', search: { q: { type: 'string' } } }),
+      compileStaticUrl({ path: '/search', search: { q: 'string' } }),
     );
 
     expect(patchCompiledUrlSearch('/search?q=old&debug=true#top', { q: 'router' }, compiled)).toBe(

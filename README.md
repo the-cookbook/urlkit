@@ -5,102 +5,24 @@
 [![Bundle size](https://img.shields.io/bundlephobia/minzip/@cookbook/urlkit)](https://bundlephobia.com/package/@cookbook/urlkit)
 [![CI](https://github.com/the-cookbook/urlkit/actions/workflows/ci.yml/badge.svg)](https://github.com/the-cookbook/urlkit/actions/workflows/ci.yml)
 
-URLKit helps you define type-safe URL contracts for pathname params, search params, and hash fragments across browsers, servers, edge runtimes, and routers.
+Framework-agnostic typed URL contracts for parsing, validating, normalizing, matching, and building URL state.
 
-Use one contract to parse serialized URLs, validate URL input, normalize structured URL state, match URLs, parse `Request` objects, and build hrefs.
+URLKit owns typed URL state: path params, search params, hash fragments, request parsing, URL normalization, matching, and href building. It sits between `@cookbook/pathkit` and higher-level router packages, but it does not define routes, route IDs, route trees, loaders, middleware, React hooks, components, or framework adapters.
 
-> URLKit is framework-agnostic and sits between [`@cookbook/pathkit`](https://github.com/the-cookbook/pathkit) and higher-level router packages. It does not define routes, route IDs, route trees, loaders, middleware, React hooks, components, or framework adapters.
+## Status
 
-Without URLKit:
+`@cookbook/urlkit` is currently version `0.0.0`. The implementation is covered by type, unit, integration, documentation-example, and build checks, but the package should be treated as pre-1.0 until its public API is released.
 
-```ts
-const url = new URL(input, 'https://example.com');
+## Documentation
 
-const id = Number(url.pathname.split('/')[2]);
+- [Full API reference](./docs/api.md)
+- [Focused examples](./docs/examples.md)
+- [Troubleshooting](./docs/troubleshooting.md)
+- [Release readiness notes](./release-readiness.md)
 
-const pageValues = url.searchParams.getAll('page');
-const sortValues = url.searchParams.getAll('sort');
-const tagValues = url.searchParams.getAll('tag');
+## Real-world framework examples
 
-if (!Number.isInteger(id)) {
-  throw new Error('Invalid article id.');
-}
-
-if (pageValues.length > 1) {
-  throw new Error('Expected one page value.');
-}
-
-if (sortValues.length > 1) {
-  throw new Error('Expected one sort value.');
-}
-
-const page = Number(pageValues[0] ?? '1');
-const sort = sortValues[0] ?? 'newest';
-
-if (!Number.isInteger(page)) {
-  throw new Error('Invalid page.');
-}
-
-if (sort !== 'newest' && sort !== 'popular') {
-  throw new Error('Invalid sort.');
-}
-
-const hash = url.hash.slice(1) || undefined;
-
-if (hash !== undefined && hash !== 'comments' && hash !== 'share') {
-  throw new Error('Invalid hash.');
-}
-
-const state = {
-  pathname: url.pathname,
-  params: { id },
-  search: {
-    page,
-    tag: tagValues.length ? tagValues : undefined,
-    sort,
-  },
-  hash,
-};
-
-const href = `/articles/${state.params.id}?page=${state.search.page}&sort=${state.search.sort}`;
-```
-
-With URLKit:
-
-```ts
-import { array, enumOf, int, string, url } from '@cookbook/urlkit';
-
-const ArticleUrl = url({
-  path: '/articles/{id:int}',
-  search: {
-    page: int().default(1),
-    tag: array(string()).optional(),
-    sort: enumOf(['newest', 'popular']).default('newest'),
-  },
-  hash: enumOf(['comments', 'share']).optional(),
-});
-
-const state = ArticleUrl.parse('/articles/42?page=2&tag=ts&tag=urlkit&sort=popular#comments');
-
-// Fully typed:
-// state.params.id    -> number
-// state.search.page  -> number
-// state.search.tag   -> readonly string[] | undefined
-// state.search.sort  -> 'newest' | 'popular'
-// state.hash         -> 'comments' | 'share' | undefined
-
-const href = ArticleUrl.build({
-  params: { id: 42 },
-  search: {
-    page: 2,
-    tag: ['ts', 'urlkit'],
-    sort: 'popular',
-  },
-  hash: 'comments',
-});
-```
-
----
+Full integration examples are available under [`examples/integrations`](./examples/integrations). They show the same product catalog contracts used with Next.js, Express, Hono, Fastify, React Router, Remix, and TanStack Router, including local Express/Hono/Fastify middleware wrappers that accept a URLKit contract plus options.
 
 ## Table of contents
 
@@ -133,17 +55,6 @@ const href = ArticleUrl.build({
 - [TypeScript inference](#typescript-inference)
 - [Framework boundary](#framework-boundary)
 - [Testing and development](#testing-and-development)
-
----
-
-## Documentation
-
-- [Full API reference](./docs/api.md)
-- [Examples](./docs/examples.md)
-
-## Real-world framework examples
-
-Full integration examples are available under [`examples/integrations`](./examples/integrations). They show the same product catalog contracts used with Next.js, Express, Hono, Fastify, React Router, Remix, and TanStack Router, including local Express/Hono/Fastify middleware wrappers that accept a URLKit contract plus options.
 
 ## Installation
 
@@ -179,16 +90,13 @@ const href = UserUrl.build({
 
 ## Why URLKit?
 
-URLs start as strings, but application code needs input safety: validation, normalization, consistency, and predictable error handling.
-
-URLKit gives you one source of truth for:
+URLs usually cross boundaries as strings, but application code wants typed state. URLKit gives you one reusable contract for:
 
 - parsing serialized URLs into typed state
-- validating path params, search params, and hash fragments
-- normalizing structured URL state from framework, server, router, or test inputs
-- building canonical hrefs from typed state
-- matching URLs without routing dependencies
-- sharing consistent URL behavior across browsers, servers, edge runtimes, routers, CLI tools, and tests
+- normalizing structured params/search/hash from framework or server inputs
+- building canonical URLs from typed state
+- validating and matching URLs without routing dependencies
+- sharing the same URL contract across browser, server, edge, router, CLI, and test environments
 
 ## Package exports
 
@@ -216,8 +124,6 @@ import { createRouteUrlContract } from '@cookbook/urlkit/router-runtime';
 | `match`     | Serialized URL input: `string` or `URL` | Return `true`/`false` for ordinary URL validation.                        |
 
 `parse` intentionally does **not** accept structured objects. Use `normalize` for structured state.
-
-`match` returns `false` for expected URL validation failures. It does not hide unexpected non-URLKit dependency or implementation errors; those errors are rethrown so delegated failures, including PathKit failures, remain visible.
 
 ### `UrlState`
 
@@ -276,7 +182,7 @@ ArticleUrl.build({ params: { slug: 'post-1' } });
 // ArticleUrl.build({ pathname: '/articles/post-1' });
 ```
 
-Path params are inferred from the pattern. Built-in `int`, `decimal` and `range` path constraints parse to numbers in standalone `url(...)` contracts. PathKit does not expose a `{param:number}` built-in; use `{param:decimal}` for finite decimal path values.
+Path params are inferred from the pattern. URLKit follows PathKit constraint chains and infers from the highest weighted constraint anywhere in the chain: `int > decimal/range/min/max > string/custom`. Built-in numeric constraints (`int`, `decimal`, `range(...)`, `min(...)`, and `max(...)`) parse to numbers in standalone `url(...)` contracts. String constraints such as `regex(...)`, `uuid`, `minlength(...)`, `maxlength(...)`, and custom constraints infer `string` unless a numeric constraint also appears in the chain.
 
 ```ts
 const UserUrl = url({ path: '/users/{id:int}' });
@@ -285,9 +191,21 @@ const user = UserUrl.parse('/users/42');
 // user.params.id: number
 ```
 
+Numeric constraints can be used alone or chained with other constraints:
+
+```ts
+const ProductUrl = url({ path: '/products/{id:min(1):max(10)?}' });
+
+ProductUrl.parse('/products/2.5').params.id;
+// number | undefined
+
+ProductUrl.build({});
+// '/products'
+```
+
 ### Custom path constraints
 
-URLKit re-exports PathKit's `createConstraint` and provides global registration helpers for reusable path constraints. Custom constraints infer `string` params by default; built-in `int`, `decimal` and `range` still infer `number`. When a PathKit constraint rejects a value, URLKit wraps it as `UrlKitError` with `code: 'invalid-param'` and preserves the original PathKit error in `error.cause`.
+URLKit re-exports PathKit's `createConstraint` and provides global registration helpers for reusable path constraints. Custom constraints infer `string` params by default unless chained with a numeric constraint. Built-in `int`, `decimal`, `range(...)`, `min(...)`, and `max(...)` infer `number`. When a PathKit constraint rejects a value, URLKit wraps it as `UrlKitError` with `code: 'invalid-param'` and preserves the original PathKit error in `error.cause`.
 
 ```ts
 import { createConstraint, registerPathConstraint, url } from '@cookbook/urlkit';
@@ -326,7 +244,7 @@ const ArticleUrl = url({ path: '/articles/{slug:slug}' }, { pathConstraints: { s
 
 ## Pathless URL contracts
 
-Pathless contracts validate search/hash independently of pathname and are great for reusability. `pattern` is `undefined`, `params` is `{}`, and `parse` preserves the input pathname.
+Pathless contracts validate search/hash independently of pathname. `pattern` is `undefined`, `params` is `{}`, and `parse` preserves the input pathname.
 
 ```ts
 import { int, url } from '@cookbook/urlkit';
@@ -498,25 +416,23 @@ const Reports = search({
 });
 ```
 
-| Builder                                            | Serialized format                      |
-| -------------------------------------------------- | -------------------------------------- |
-| `date()`                                           | Date-only `YYYY-MM-DD`.                |
-| `dateTime()`                                       | Strict UTC `YYYY-MM-DDTHH:mm:ss.sssZ`. |
-| `date({ format: 'dd-MM-yyyy' })`                   | Strict custom date format string.      |
-| `dateTime({ format: "dd-MM-yyyy'T'HH:mm:ss'Z'" })` | Strict custom date-time format string. |
-| `date({ format: { parse, serialize } })`           | Custom runtime date codec.             |
-| `dateTime({ format: { parse, serialize } })`       | Custom runtime date-time codec.        |
-| `date({ format: 'unix-seconds' })`                 | Finite integer seconds.                |
-| `date({ format: 'unix-ms' })`                      | Finite integer milliseconds.           |
+| Builder                                       | Serialized format                      |
+| --------------------------------------------- | -------------------------------------- |
+| `date()`                                      | Date-only `YYYY-MM-DD`.                |
+| `dateTime()`                                  | Strict UTC `YYYY-MM-DDTHH:mm:ss.sssZ`. |
+| `date({ format: 'dd-MM-yyyy' })`              | Strict custom date format string.      |
+| `dateTime({ format: 'dd-MM-yyyy HH:mm:ss' })` | Strict custom date-time format string. |
+| `date({ format: { parse, serialize } })`      | Custom runtime date codec.             |
+| `dateTime({ format: { parse, serialize } })`  | Custom runtime date-time codec.        |
+| `date({ format: 'unix-seconds' })`            | Finite integer seconds.                |
+| `date({ format: 'unix-ms' })`                 | Finite integer milliseconds.           |
 
 Custom date and date-time format strings are available in runtime-builder schemas and static router descriptors. Supported tokens are `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`, and `SSS`. Static date defaults use serialized values, not `Date` instances. Static descriptors may use format strings, but not custom `{ parse, serialize }` codecs.
-
-Date-time values are UTC instants. Custom `dateTime` and static `date-time` format strings parse into `Date` values using UTC fields and serialize from UTC fields. Local `Date` display methods such as `toString()` or `getHours()` may show a timezone-adjusted value; use `toISOString()` or UTC getters when asserting URL state.
 
 ```ts
 const CustomDate = search({
   from: date({ format: 'dd-MM-yyyy' }),
-  at: dateTime({ format: "dd-MM-yyyy'T'HH:mm:ss'Z'" }).optional(),
+  at: dateTime({ format: 'dd-MM-yyyy HH:mm:ss' }).optional(),
 });
 
 CustomDate.build({
@@ -525,7 +441,7 @@ CustomDate.build({
     at: new Date('2026-06-02T12:30:05.000Z'),
   },
 });
-// '?from=02-06-2026&at=02-06-2026T12%3A30%3A05Z'
+// '?from=02-06-2026&at=02-06-2026+12%3A30%3A05'
 ```
 
 ## Object search
@@ -638,10 +554,9 @@ Good:
 
 ```ts
 const searchDescriptor = {
-  page: { type: 'int', default: 1 },
+  page: { value: 'int', default: 1 },
   sort: {
-    type: 'enum',
-    values: ['newest', 'popular'],
+    value: { type: 'enum', values: ['newest', 'popular'] },
     default: 'newest',
   },
 } as const;
@@ -665,7 +580,7 @@ import { compileStaticUrl } from '@cookbook/urlkit/static';
 const ProductUrl = compileStaticUrl({
   path: '/products/{id:int}',
   search: searchDescriptor,
-  hash: { type: 'enum', values: ['details', 'reviews'], optional: true },
+  hash: ['details', 'reviews'],
 });
 
 ProductUrl.parse('/products/42?sort=popular#details');
@@ -687,8 +602,8 @@ import {
 const routeDescriptor = {
   path: '/articles/{slug:regex([a-z0-9-]+)}',
   search: {
-    ref: { type: 'string', optional: true },
-    page: { type: 'int', default: 1 },
+    ref: { type: 'one', optional: true },
+    page: { value: 'int', default: 1 },
     publishedOn: {
       type: 'date',
       format: 'dd-MM-yyyy',
@@ -696,11 +611,11 @@ const routeDescriptor = {
     },
     scheduledAt: {
       type: 'date-time',
-      format: "dd-MM-yyyy'T'HH:mm:ss'Z'",
+      format: 'dd-MM-yyyy HH:mm:ss',
       optional: true,
     },
   },
-  hash: { type: 'enum', values: ['comments', 'share'], optional: true },
+  hash: ['comments', 'share'],
 } as const;
 
 const ArticleUrl = createRouteUrlContract(routeDescriptor);

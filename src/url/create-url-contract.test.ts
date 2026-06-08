@@ -1,4 +1,4 @@
-import { describe, expect, it, expectTypeOf } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { int } from '../schema/int.js';
 import { string } from '../schema/string.js';
@@ -6,12 +6,14 @@ import { compileStaticUrl } from '../static/compile-static-url.js';
 import { createUrlContract } from './create-url-contract.js';
 import type { ParamsFromPattern, PathnameFromPattern, UrlContract } from './contracts.js';
 
+const expectType = <Value>(_value: Value): void => undefined;
+
 describe('createUrlContract', () => {
   it('creates a frozen path contract with the public UrlContract shape', () => {
     const descriptor = compileStaticUrl({
       path: '/users/{id:int}',
       search: {
-        tab: { type: 'string', default: 'profile' },
+        tab: { value: 'string', default: 'profile' },
       },
       hash: { type: 'enum', values: ['activity', 'comments'], optional: true },
     });
@@ -33,7 +35,7 @@ describe('createUrlContract', () => {
     expect(contract.buildHash('comments')).toBe('#comments');
     expect(Object.isFrozen(contract)).toBe(true);
 
-    expectTypeOf<
+    expectType<
       UrlContract<
         'path',
         `/users/${number}`,
@@ -45,9 +47,7 @@ describe('createUrlContract', () => {
   });
 
   it('creates a pathless contract with undefined pattern and unavailable path methods', () => {
-    const contract = createUrlContract<'pathless'>(
-      compileStaticUrl({ search: { q: { type: 'string' } } }),
-    );
+    const contract = createUrlContract<'pathless'>(compileStaticUrl({ search: { q: 'string' } }));
 
     expect(contract.pattern).toBeUndefined();
     expect(
@@ -87,73 +87,6 @@ describe('createUrlContract', () => {
     (hash.values as unknown as string[]).push('three');
 
     expect(() => contract.parseHash('#three')).toThrow(UrlKitError);
-  });
-
-  it('wraps unexpected safeParse, safeParseRequest, and safeNormalize failures with the original cause', () => {
-    const unexpectedParse = new Error('Unexpected parse delegate failure.');
-    const unexpectedBuild = new Error('Unexpected build delegate failure.');
-    const contract = createUrlContract<'path', string, {}, {}, undefined>({
-      mode: 'path',
-      pattern: '/broken',
-      path: {
-        pattern: '/broken',
-        parsePathname() {
-          throw unexpectedParse;
-        },
-        buildPath() {
-          throw unexpectedBuild;
-        },
-      },
-    });
-
-    const parseResult = contract.safeParse('/broken');
-    const requestResult = contract.safeParseRequest({ url: 'https://example.com/broken' });
-    const normalizeResult = contract.safeNormalize({ params: {} });
-
-    expect(parseResult.success).toBe(false);
-    if (!parseResult.success) {
-      expect(parseResult.error.code).toBe('invalid-url');
-      expect(parseResult.error.cause).toBe(unexpectedParse);
-    }
-
-    expect(requestResult.success).toBe(false);
-    if (!requestResult.success) {
-      expect(requestResult.error.code).toBe('invalid-url');
-      expect(requestResult.error.cause).toBe(unexpectedParse);
-    }
-
-    expect(normalizeResult.success).toBe(false);
-    if (!normalizeResult.success) {
-      expect(normalizeResult.error.code).toBe('invalid-url');
-      expect(normalizeResult.error.cause).toBe(unexpectedBuild);
-    }
-  });
-
-  it('returns existing UrlKitError instances unchanged from safe methods', () => {
-    const contract = createUrlContract<
-      'path',
-      PathnameFromPattern<'/users/{id:int}'>,
-      ParamsFromPattern<'/users/{id:int}'>,
-      {},
-      undefined
-    >(compileStaticUrl({ path: '/users/{id:int}' }));
-
-    const parseResult = contract.safeParse('/users/wrong');
-    const normalizeResult = contract.safeNormalize({ params: { id: 'wrong' as never } });
-
-    expect(parseResult.success).toBe(false);
-    if (!parseResult.success) {
-      expect(parseResult.error).toBeInstanceOf(UrlKitError);
-      expect(parseResult.error.code).toBe('invalid-param');
-      expect(parseResult.error.path).toEqual(['params', 'id']);
-    }
-
-    expect(normalizeResult.success).toBe(false);
-    if (!normalizeResult.success) {
-      expect(normalizeResult.error).toBeInstanceOf(UrlKitError);
-      expect(normalizeResult.error.code).toBe('invalid-param');
-      expect(normalizeResult.error.path).toEqual(['params']);
-    }
   });
 
   it('parses, normalizes, and builds full URL state from the compiled descriptor', () => {

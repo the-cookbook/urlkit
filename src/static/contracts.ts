@@ -39,7 +39,7 @@ export type InferStaticUrlHashBuildInput<Descriptor extends StaticUrlDescriptor>
     ? InferStaticHashBuildInput<HashDescriptor>
     : undefined;
 
-export type StaticSearchDescriptor = Record<string, StaticSearchField>;
+export type StaticSearchDescriptor = Record<string, StaticSearchFieldInput>;
 
 export interface StaticSearchFieldCommon {
   readonly many?: true;
@@ -106,6 +106,14 @@ export type StaticSearchFieldDescriptor =
   | StaticEnumSearchFieldDescriptor;
 
 export type StaticSearchField = StaticSearchFieldDescriptor & StaticSearchPresence;
+
+export type StaticSearchValueField = StaticSearchFieldCommon &
+  StaticSearchPresence & {
+    readonly value: StaticSearchValue;
+    readonly type?: never;
+  };
+
+export type StaticSearchFieldInput = StaticSearchValue | StaticSearchField | StaticSearchValueField;
 
 export type StaticPrimitiveSearchValue = 'string' | 'number' | 'int' | 'boolean';
 
@@ -239,31 +247,42 @@ type InferStaticEnumHashBuildInput<Descriptor extends StaticEnumHashDescriptor> 
       ? Descriptor['values'][number] | undefined
       : Descriptor['values'][number];
 
-type InferStaticSearchFieldValue<Field extends StaticSearchField> = Field['many'] extends true
-  ? readonly InferStaticSearchValue<Field>[]
-  : InferStaticSearchValue<Field>;
+type InferStaticSearchFieldValue<Field extends StaticSearchFieldInput> = Field extends {
+  readonly many: true;
+}
+  ? readonly InferStaticSearchValue<StaticSearchFieldValueDescriptor<Field>>[]
+  : InferStaticSearchValue<StaticSearchFieldValueDescriptor<Field>>;
 
-type InferStaticSearchValue<Value> = Value extends { readonly type: 'string' }
+type StaticSearchFieldValueDescriptor<Field> = Field extends { readonly value: infer Value }
+  ? Value
+  : Field;
+
+type InferStaticSearchValue<Value> = Value extends 'string'
   ? string
-  : Value extends { readonly type: 'number' }
+  : Value extends 'number'
     ? number
-    : Value extends { readonly type: 'int' }
+    : Value extends 'int'
       ? number
-      : Value extends { readonly type: 'boolean' }
+      : Value extends 'boolean'
         ? boolean
-        : Value extends StaticDateSearchValue | StaticDateTimeSearchValue
-          ? Date
-          : Value extends StaticEnumSearchValue
-            ? Value['values'][number]
-            : never;
+        : Value extends { readonly type: 'string' }
+          ? string
+          : Value extends { readonly type: 'number' }
+            ? number
+            : Value extends { readonly type: 'int' }
+              ? number
+              : Value extends { readonly type: 'boolean' }
+                ? boolean
+                : Value extends StaticDateSearchValue | StaticDateTimeSearchValue
+                  ? Date
+                  : Value extends StaticEnumSearchValue
+                    ? Value['values'][number]
+                    : never;
 
-type IsOptionalStaticSearchField<Field extends StaticSearchField> = 'default' extends keyof Field
-  ? false
-  : Field['optional'] extends true
-    ? true
-    : false;
+type IsOptionalStaticSearchField<Field extends StaticSearchFieldInput> =
+  'default' extends keyof Field ? false : Field extends { readonly optional: true } ? true : false;
 
-type IsRequiredStaticSearchBuildField<Field extends StaticSearchField> =
-  'default' extends keyof Field ? false : Field['optional'] extends true ? false : true;
+type IsRequiredStaticSearchBuildField<Field extends StaticSearchFieldInput> =
+  'default' extends keyof Field ? false : Field extends { readonly optional: true } ? false : true;
 
 type Simplify<Value> = { readonly [Key in keyof Value]: Value[Key] } & {};

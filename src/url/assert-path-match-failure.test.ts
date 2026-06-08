@@ -84,4 +84,21 @@ describe('assertPathMatchFailure', () => {
 
     throw new Error('Expected invalid-param.');
   });
+
+  it('keeps PathKit as the source of truth for chained path constraint failures', () => {
+    expect(() =>
+      assertPathMatchFailure('/users/{id:int:min(1)}', '/users/1.5', [
+        { kind: 'literal', value: 'users' },
+        {
+          kind: 'param',
+          name: 'id',
+          constraint: 'int',
+          constraints: [
+            { type: 'int', params: '' },
+            { type: 'min', params: '1' },
+          ],
+        },
+      ]),
+    ).toThrow(expect.objectContaining({ code: 'path-mismatch', path: ['pathname'] }));
+  });
 });

@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@cookbook/urlkit": "file:../../..",
-    "@cookbook/pathkit": "^0.2.1",
+    "@cookbook/pathkit": "^0.4.0",
     "@remix-run/node": "^2.17.5",
     "@remix-run/react": "^2.17.5",
     "@remix-run/serve": "^2.17.5",

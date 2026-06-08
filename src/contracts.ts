@@ -116,13 +116,14 @@ export type PathBasedBuildInputWithParams<
   HashInputProperty<HashInput>;
 
 export type PathBasedBuildInputWithoutParams<
+  Params,
   Search,
   Hash,
   SearchInput = Partial<Search>,
   HashInput = Hash,
 > = {
   readonly pathname?: never;
-  readonly params?: never | EmptyParams;
+  readonly params?: Params;
 } & SearchInputProperty<SearchInput> &
   HashInputProperty<HashInput>;
 
@@ -132,9 +133,10 @@ export type PathBasedBuildInput<
   Hash,
   SearchInput = Partial<Search>,
   HashInput = Hash,
-> = keyof Params extends never
-  ? PathBasedBuildInputWithoutParams<Search, Hash, SearchInput, HashInput>
-  : PathBasedBuildInputWithParams<Params, Search, Hash, SearchInput, HashInput>;
+> =
+  RequiredKeys<Params> extends never
+    ? PathBasedBuildInputWithoutParams<Params, Search, Hash, SearchInput, HashInput>
+    : PathBasedBuildInputWithParams<Params, Search, Hash, SearchInput, HashInput>;
 
 export type PathlessBuildInput<Search, Hash, SearchInput = Partial<Search>, HashInput = Hash> = {
   readonly pathname?: string;
@@ -166,13 +168,14 @@ export type PathBasedNormalizeInputWithParams<
   HashInputProperty<HashInput>;
 
 export type PathBasedNormalizeInputWithoutParams<
+  Params,
   Search,
   Hash,
   SearchInput = Partial<Search>,
   HashInput = Hash,
 > = {
   readonly pathname?: never;
-  readonly params?: never | EmptyParams;
+  readonly params?: Params;
 } & SearchInputProperty<SearchInput> &
   HashInputProperty<HashInput>;
 
@@ -182,9 +185,10 @@ export type PathBasedNormalizeInput<
   Hash,
   SearchInput = Partial<Search>,
   HashInput = Hash,
-> = keyof Params extends never
-  ? PathBasedNormalizeInputWithoutParams<Search, Hash, SearchInput, HashInput>
-  : PathBasedNormalizeInputWithParams<Params, Search, Hash, SearchInput, HashInput>;
+> =
+  RequiredKeys<Params> extends never
+    ? PathBasedNormalizeInputWithoutParams<Params, Search, Hash, SearchInput, HashInput>
+    : PathBasedNormalizeInputWithParams<Params, Search, Hash, SearchInput, HashInput>;
 
 export type PathlessNormalizeInput<
   Search,
@@ -226,7 +230,7 @@ export type BuildHashArguments<HashInput> = undefined extends HashInput
   : [hash: HashInput, options?: BuildUrlOptions];
 
 type RequiredKeys<Input> = {
-  [Key in keyof Input]-?: EmptyParams extends Pick<Input, Key> ? never : Key;
+  [Key in keyof Input]-?: {} extends Pick<Input, Key> ? never : Key;
 }[keyof Input];
 
 export type NormalizeUrlState<
@@ -248,6 +252,5 @@ export type PathnameFromPathlessNormalizeInput<Input> = Input extends {
     : string
   : string;
 
-export type PathBuildMethod<Params> = keyof Params extends never
-  ? (params?: never | EmptyParams) => string
-  : (params: Params) => string;
+export type PathBuildMethod<Params> =
+  RequiredKeys<Params> extends never ? (params?: Params) => string : (params: Params) => string;

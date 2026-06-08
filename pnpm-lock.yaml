@@ -8,8 +8,8 @@ importers:
   .:
     dependencies:
       '@cookbook/pathkit':
-        specifier: ^0.3.1
-        version: 0.3.1
+        specifier: ^0.4.0
+        version: 0.4.0
     devDependencies:
       '@changesets/cli':
         specifier: ^2.31.0
@@ -323,10 +323,10 @@ packages:
       conventional-commits-parser:
         optional: true
 
-  '@cookbook/pathkit@0.3.1':
+  '@cookbook/pathkit@0.4.0':
     resolution:
       {
-        integrity: sha512-T+e/axRwpbjYPCfd77X4jJ1oIhXCek0N7j0+YEJ3Cids9kRhfqh9HBIYjlBOzeKqRUjxCOV0XgdjoHW4GmnP2Q==,
+        integrity: sha512-3bkrWdrBTTIY0blYfML6BjMcB7X2hWLFf5LudcTbcb0sWgdJ51YJcDVozUEXC84iS5l2xXltwZ9QiMnyNIRtZw==,
       }
     engines: { node: '>=20.0.0' }
 
@@ -3112,7 +3112,7 @@ snapshots:
     optionalDependencies:
       conventional-commits-parser: 6.4.0
 
-  '@cookbook/pathkit@0.3.1': {}
+  '@cookbook/pathkit@0.4.0': {}
 
   '@emnapi/core@1.10.0':
     dependencies:

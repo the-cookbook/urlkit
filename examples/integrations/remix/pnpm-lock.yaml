@@ -8,8 +8,8 @@ importers:
   .:
     dependencies:
       '@cookbook/pathkit':
-        specifier: ^0.2.1
-        version: 0.2.1
+        specifier: ^0.4.0
+        version: 0.4.0
       '@cookbook/urlkit':
         specifier: file:../../..
         version: file:../../..
@@ -284,10 +284,10 @@ packages:
       }
     engines: { node: '>=6.9.0' }
 
-  '@cookbook/pathkit@0.2.1':
+  '@cookbook/pathkit@0.4.0':
     resolution:
       {
-        integrity: sha512-r9f+KzXYp4cE4pY36+oB7t/ySfGXhJwIWYEBlAh+9yXf2Pm60zYngcSu10M9ew3Iqkqo6NK37oIwLz7ec2eGfQ==,
+        integrity: sha512-3bkrWdrBTTIY0blYfML6BjMcB7X2hWLFf5LudcTbcb0sWgdJ51YJcDVozUEXC84iS5l2xXltwZ9QiMnyNIRtZw==,
       }
     engines: { node: '>=20.0.0' }
 
@@ -4933,11 +4933,11 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@cookbook/pathkit@0.2.1': {}
+  '@cookbook/pathkit@0.4.0': {}
 
   '@cookbook/urlkit@file:../../..':
     dependencies:
-      '@cookbook/pathkit': 0.2.1
+      '@cookbook/pathkit': 0.4.0
 
   '@emotion/hash@0.9.2': {}
 

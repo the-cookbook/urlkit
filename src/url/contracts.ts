@@ -193,15 +193,18 @@ type ExtractRawPathParams<Pattern extends string> =
     ? RawParamFromToken<Token> & ExtractRawPathParams<Rest>
     : {};
 
-type RawParamFromToken<Token extends string> = Token extends `*${infer Name}`
-  ? Readonly<Record<CleanPathParamName<Name>, string>>
-  : Token extends `${infer Name}:${string}`
-    ? Readonly<Record<CleanPathParamName<Name>, string>>
-    : Readonly<Record<CleanPathParamName<Token>, string>>;
+type RawParamFromToken<Token extends string> =
+  IsOptionalPathParamToken<Token> extends true
+    ? Readonly<Partial<Record<PathParamNameFromToken<Token>, string>>>
+    : Readonly<Record<PathParamNameFromToken<Token>, string>>;
 
 export type PathnameFromPattern<Pattern extends string> =
   Pattern extends `${infer Before}{${infer Param}}${infer After}`
-    ? `${Before}${PathParamValue<Param>}${PathnameFromPattern<After>}`
+    ? IsOptionalPathParamToken<Param> extends true
+      ?
+          | `${TrimTrailingSlash<Before>}${PathnameFromPattern<After>}`
+          | `${Before}${PathParamValue<Param>}${PathnameFromPattern<After>}`
+      : `${Before}${PathParamValue<Param>}${PathnameFromPattern<After>}`
     : Pattern;
 
 export type ParamsFromPattern<Pattern extends string> = Simplify<ExtractPathParams<Pattern>>;
@@ -211,26 +214,80 @@ type ExtractPathParams<Pattern extends string> =
     ? ParamFromToken<Token> & ExtractPathParams<Rest>
     : {};
 
-type ParamFromToken<Token extends string> = Token extends `*${infer Name}`
-  ? Readonly<Record<CleanPathParamName<Name>, string>>
-  : Token extends `${infer Name}:${infer Constraint}`
-    ? Readonly<Record<CleanPathParamName<Name>, PathParamValueFromConstraint<Constraint>>>
-    : Readonly<Record<CleanPathParamName<Token>, string>>;
+type ParamFromToken<Token extends string> =
+  IsOptionalPathParamToken<Token> extends true
+    ? Readonly<Partial<Record<PathParamNameFromToken<Token>, PathParamValue<Token>>>>
+    : Readonly<Record<PathParamNameFromToken<Token>, PathParamValue<Token>>>;
+
+type StripWildcardPathParam<Token extends string> = Token extends `*${infer Name}` ? Name : Token;
+
+type StripOptionalPathParam<Token extends string> = Token extends `${infer Value}?` ? Value : Token;
+
+type NormalizedPathParamToken<Token extends string> = StripOptionalPathParam<
+  StripWildcardPathParam<Token>
+>;
+
+type IsOptionalPathParamToken<Token extends string> =
+  StripWildcardPathParam<Token> extends `${string}?` ? true : false;
+
+type PathParamNameFromToken<Token extends string> =
+  NormalizedPathParamToken<Token> extends `${infer Name}:${string}`
+    ? CleanPathParamName<Name>
+    : CleanPathParamName<NormalizedPathParamToken<Token>>;
+
+type ConstraintChainFromToken<Token extends string> =
+  NormalizedPathParamToken<Token> extends `${string}:${infer ConstraintChain}`
+    ? ConstraintChain
+    : '';
 
 type CleanPathParamName<Name extends string> = Name extends `${infer Clean}?` ? Clean : Name;
 
-type PathParamValue<Param extends string> = Param extends `${string}:${infer Constraint}`
-  ? PathParamValueFromConstraint<Constraint>
-  : string;
+type PathParamValue<Param extends string> = PathParamValueFromConstraintChain<
+  ConstraintChainFromToken<Param>
+>;
 
-type PathParamValueFromConstraint<Constraint extends string> = Constraint extends 'int'
-  ? number
-  : Constraint extends `decimal`
-    ? number
-    : Constraint extends `range(${number},${number})`
-      ? number
-      : Constraint extends `regex(${string})`
-        ? string
-        : string;
+type PathParamValueFromConstraintChain<ConstraintChain extends string> =
+  ConstraintChainHasNumberProducer<ConstraintChain> extends true ? number : string;
+
+type ConstraintChainHasNumberProducer<ConstraintChain extends string> =
+  ConstraintChainHasExact<ConstraintChain, 'int'> extends true
+    ? true
+    : ConstraintChainHasExact<ConstraintChain, 'decimal'> extends true
+      ? true
+      : ConstraintChainHasParameterized<ConstraintChain, 'range'> extends true
+        ? true
+        : ConstraintChainHasParameterized<ConstraintChain, 'min'> extends true
+          ? true
+          : ConstraintChainHasParameterized<ConstraintChain, 'max'> extends true
+            ? true
+            : false;
+
+type ConstraintChainHasExact<
+  ConstraintChain extends string,
+  Name extends string,
+> = ConstraintChain extends Name
+  ? true
+  : ConstraintChain extends `${Name}:${string}`
+    ? true
+    : ConstraintChain extends `${string}:${Name}`
+      ? true
+      : ConstraintChain extends `${string}:${Name}:${string}`
+        ? true
+        : false;
+
+type ConstraintChainHasParameterized<
+  ConstraintChain extends string,
+  Name extends string,
+> = ConstraintChain extends `${Name}(${string})`
+  ? true
+  : ConstraintChain extends `${Name}(${string}):${string}`
+    ? true
+    : ConstraintChain extends `${string}:${Name}(${string})`
+      ? true
+      : ConstraintChain extends `${string}:${Name}(${string}):${string}`
+        ? true
+        : false;
+
+type TrimTrailingSlash<Value extends string> = Value extends `${infer Prefix}/` ? Prefix : Value;
 
 type Simplify<Value> = { readonly [Key in keyof Value]: Value[Key] } & {};

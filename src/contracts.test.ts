@@ -107,6 +107,29 @@ describe('shared contracts', () => {
     expect(buildInput.search?.q).toBe('router');
   });
 
+  it('models path-based build and normalize inputs with only optional params', () => {
+    interface Params {
+      readonly id?: number;
+    }
+
+    interface Search {
+      readonly tab?: string;
+    }
+
+    const buildWithoutParams: PathBasedBuildInput<Params, Search, undefined> = {};
+    const buildWithParams: PathBasedBuildInput<Params, Search, undefined> = {
+      params: { id: 1 },
+    };
+    const normalizeWithoutParams: PathBasedNormalizeInput<Params, Search, undefined> = {};
+    const normalizeWithParams: PathBasedNormalizeInput<Params, Search, undefined> = buildWithParams;
+
+    expectTypeOf<UrlBuildInput<'path', Params, Search, undefined>>(buildWithoutParams);
+    expectTypeOf<UrlBuildInput<'path', Params, Search, undefined>>(buildWithParams);
+    expectTypeOf<UrlNormalizeInput<'path', Params, Search, undefined>>(normalizeWithoutParams);
+    expectTypeOf<UrlNormalizeInput<'path', Params, Search, undefined>>(normalizeWithParams);
+    expect(buildWithParams.params?.id).toBe(1);
+  });
+
   it('models pathless build and normalize inputs', () => {
     interface Search {
       readonly page: number;
@@ -162,10 +185,18 @@ describe('shared contracts', () => {
       readonly id: number;
     }
 
+    interface OptionalParams {
+      readonly id?: number;
+    }
+
     const withParams: PathBuildMethod<Params> = (params) => `/users/${params.id}`;
+    const withOptionalParams: PathBuildMethod<OptionalParams> = (params) =>
+      params?.id === undefined ? '/users' : `/users/${params.id}`;
     const withoutParams: PathBuildMethod<EmptyParams> = () => '/search';
 
     expect(withParams({ id: 1 })).toBe('/users/1');
+    expect(withOptionalParams()).toBe('/users');
+    expect(withOptionalParams({ id: 1 })).toBe('/users/1');
     expect(withoutParams()).toBe('/search');
   });
 

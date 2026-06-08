@@ -15,10 +15,10 @@ import type {
   StaticSearchValue,
 } from './contracts.js';
 import {
-  assertStaticSearchField,
   getStaticSearchFieldDefault,
   hasStaticSearchFieldDefault,
   isStaticSearchFieldOptional,
+  normalizeStaticSearchField,
   normalizeStaticSearchFieldType,
   normalizeStaticSearchFieldValue,
 } from './static-search-field-kind.js';
@@ -42,17 +42,17 @@ export function createStaticSearchSchema(descriptor: StaticSearchDescriptor): Ru
 
 function createStaticSearchField(key: string, field: unknown): RuntimeSearchField {
   const path = ['search', key];
-  assertStaticSearchField(field, path);
+  const normalizedField = normalizeStaticSearchField(field, path);
 
-  const fieldType = normalizeStaticSearchFieldType(field.many, path);
-  const valueDescriptor = normalizeStaticSearchFieldValue(field, path);
+  const fieldType = normalizeStaticSearchFieldType(normalizedField.many, path);
+  const valueDescriptor = normalizeStaticSearchFieldValue(normalizedField, path);
   const value = createStaticSearchValueSchema(valueDescriptor, path);
-  const hasDefault = hasStaticSearchFieldDefault(field);
+  const hasDefault = hasStaticSearchFieldDefault(normalizedField);
   const defaultValue = hasDefault
     ? normalizeStaticSearchDefault(
         fieldType,
         valueDescriptor,
-        getStaticSearchFieldDefault(field),
+        getStaticSearchFieldDefault(normalizedField),
         path,
       )
     : undefined;
@@ -60,7 +60,7 @@ function createStaticSearchField(key: string, field: unknown): RuntimeSearchFiel
   return Object.freeze({
     type: fieldType,
     value,
-    ...(isStaticSearchFieldOptional(field) ? { optional: true } : {}),
+    ...(isStaticSearchFieldOptional(normalizedField) ? { optional: true } : {}),
     ...(hasDefault ? { default: defaultValue } : {}),
   });
 }

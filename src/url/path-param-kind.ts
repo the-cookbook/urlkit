@@ -1,20 +1,24 @@
+import { hasAnyPathParamConstraint, hasPathParamConstraint } from './path-param-constraints.js';
 import type { ParsedPathParamSegment } from './path-segment.js';
 
 export type PathParamKind = 'string' | 'int' | 'decimal' | 'range' | 'regex';
 
+const decimalConstraints = ['decimal', 'range', 'min', 'max'] as const;
+
 export function getPathParamKind(segment: ParsedPathParamSegment): PathParamKind {
-  switch (segment.constraint) {
-    case 'int':
-      return 'int';
-    case 'decimal':
-      return 'decimal';
-    case 'range':
-      return 'range';
-    case 'regex':
-      return 'regex';
-    default:
-      return 'string';
+  if (hasPathParamConstraint(segment, 'int')) {
+    return 'int';
   }
+
+  if (hasAnyPathParamConstraint(segment, decimalConstraints)) {
+    return 'decimal';
+  }
+
+  if (hasPathParamConstraint(segment, 'regex')) {
+    return 'regex';
+  }
+
+  return 'string';
 }
 
 export function isNumericPathParamKind(kind: PathParamKind): kind is 'int' | 'decimal' | 'range' {

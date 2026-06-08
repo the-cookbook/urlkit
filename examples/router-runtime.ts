@@ -309,11 +309,11 @@ function captureUrlKitError(operation: () => unknown): UrlKitError | undefined {
 }
 
 export const brokenStaticDescriptors = {
-  legacyValueField: captureUrlKitError(() =>
+  invalidValueField: captureUrlKitError(() =>
     createRouteUrlContract({
       path: '/legacy',
       search: {
-        page: { value: 'int', default: 1 },
+        created: { value: 'date', optional: true },
       },
     } as unknown as StaticUrlDescriptor),
   ),

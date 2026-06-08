@@ -60,16 +60,24 @@ describe('compileStaticSearch', () => {
     });
   });
 
-  it('rejects old direct and shorthand static search value forms', () => {
-    expect(() => compileStaticSearch({ q: 'string' } as never)).toThrow(
-      'Static search field must use the object form',
-    );
+  it('supports shorthand and value static search field forms', () => {
+    const schema = compileStaticSearch({
+      q: 'string',
+      page: { value: 'int', default: 1 },
+      sort: { value: { type: 'enum', values: ['newest', 'popular'] }, default: 'newest' },
+    } as const);
+
+    expect(parseSearch('?q=router&sort=popular', { schema }).search).toEqual({
+      q: 'router',
+      page: 1,
+      sort: 'popular',
+    });
     expect(() => compileStaticSearch({ q: { type: 'many' } } as never)).toThrow(
       'Static search field type is invalid.',
     );
     expect(() =>
       compileStaticSearch({ created: { value: 'date', optional: true } } as never),
-    ).toThrow('Static search field must define a type.');
+    ).toThrow('Static search field value is invalid.');
   });
 
   it('supports static date and date-time format strings', () => {

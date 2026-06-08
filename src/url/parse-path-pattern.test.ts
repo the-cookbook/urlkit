@@ -7,14 +7,107 @@ describe('parsePathPattern', () => {
       { kind: 'literal', value: 'teams' },
       { kind: 'param', name: 'teamId' },
       { kind: 'literal', value: 'users' },
-      { kind: 'param', name: 'userId', constraint: 'int' },
+      {
+        kind: 'param',
+        name: 'userId',
+        constraint: 'int',
+        constraints: [{ type: 'int', params: '' }],
+      },
     ]);
   });
 
   it('parses regex constraints without splitting regex internals', () => {
     expect(parsePathPattern('/posts/{slug:regex([a-z0-9-]+)}')).toEqual([
       { kind: 'literal', value: 'posts' },
-      { kind: 'param', name: 'slug', constraint: 'regex', constraintParams: '[a-z0-9-]+' },
+      {
+        kind: 'param',
+        name: 'slug',
+        constraint: 'regex',
+        constraintParams: '[a-z0-9-]+',
+        constraints: [{ type: 'regex', params: '[a-z0-9-]+' }],
+      },
+    ]);
+  });
+
+  it('preserves chained path constraints from PathKit', () => {
+    expect(parsePathPattern('/users/{id:min(1):int:decimal}')).toEqual([
+      { kind: 'literal', value: 'users' },
+      {
+        kind: 'param',
+        name: 'id',
+        constraint: 'min',
+        constraintParams: '1',
+        constraints: [
+          { type: 'min', params: '1' },
+          { type: 'int', params: '' },
+          { type: 'decimal', params: '' },
+        ],
+      },
+    ]);
+
+    expect(parsePathPattern('/users/{id:regex(\\d):min(1)}')).toEqual([
+      { kind: 'literal', value: 'users' },
+      {
+        kind: 'param',
+        name: 'id',
+        constraint: 'regex',
+        constraintParams: '\\d',
+        constraints: [
+          { type: 'regex', params: '\\d' },
+          { type: 'min', params: '1' },
+        ],
+      },
+    ]);
+  });
+
+  it('preserves standalone numeric and string constraints', () => {
+    expect(parsePathPattern('/users/{id:min(1)}')).toEqual([
+      { kind: 'literal', value: 'users' },
+      {
+        kind: 'param',
+        name: 'id',
+        constraint: 'min',
+        constraintParams: '1',
+        constraints: [{ type: 'min', params: '1' }],
+      },
+    ]);
+
+    expect(parsePathPattern('/articles/{slug:minlength(3):maxlength(50)}')).toEqual([
+      { kind: 'literal', value: 'articles' },
+      {
+        kind: 'param',
+        name: 'slug',
+        constraint: 'minlength',
+        constraintParams: '3',
+        constraints: [
+          { type: 'minlength', params: '3' },
+          { type: 'maxlength', params: '50' },
+        ],
+      },
+    ]);
+  });
+
+  it('preserves optional and wildcard metadata from PathKit', () => {
+    expect(parsePathPattern('/users/{id:min(1)?}')).toEqual([
+      { kind: 'literal', value: 'users' },
+      {
+        kind: 'param',
+        name: 'id',
+        optional: true,
+        constraint: 'min',
+        constraintParams: '1',
+        constraints: [{ type: 'min', params: '1' }],
+      },
+    ]);
+
+    expect(parsePathPattern('/files/{*path?}')).toEqual([
+      { kind: 'literal', value: 'files' },
+      {
+        kind: 'param',
+        name: 'path',
+        optional: true,
+        wildcard: true,
+      },
     ]);
   });
 

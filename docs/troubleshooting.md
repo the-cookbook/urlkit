@@ -1,56 +1,40 @@
-# @cookbook/urlkit troubleshooting
+# Troubleshooting
 
-## Defaults disappear when chained with `optional()` or `required()`
+## My path param inferred as `number`
 
-`default(value)` already means missing input can be accepted and normalized to the default value. It is the strongest presence rule.
-
-Prefer the concise form:
+`min(...)` and `max(...)` are numeric value constraints, so URLKit infers `number` when they appear anywhere in a path constraint chain:
 
 ```ts
-const ProductFilters = url({
-  search: {
-    categories: array(string()).default(['electronics']),
-    price: number().default(9.99),
-    sortBy: enumOf(['recommendation', 'desc', 'asc', 'priceDesc', 'priceAsc']).optional(),
-  },
-});
+url({ path: '/products/{id:min(1):max(10)}' });
+// id: number
 ```
 
-These equivalent chains are also supported:
+For string length validation, use `minlength(...)` and `maxlength(...)`:
 
 ```ts
-int().optional().default(1);
-int().default(1).optional();
-int().required().default(1);
-int().default(1).required();
+url({ path: '/articles/{slug:minlength(3):maxlength(50)}' });
+// slug: string
 ```
 
-All defaulted variants apply the default during `parse()` and `normalize()`:
+## My optional path param still requires `params`
+
+Optional path params should not force a build input to include `params`:
 
 ```ts
-const parsed = ProductFilters.parse('/products/42');
+const ProductUrl = url({ path: '/products/{id:min(1)?}' });
 
-parsed.search;
-// { categories: ['electronics'], price: 9.99 }
+ProductUrl.build({});
+// '/products'
+
+ProductUrl.build({ params: { id: 2 } });
+// '/products/2'
 ```
 
-`build()` includes missing defaulted search values by default and can omit values equal to defaults with `{ defaults: 'omit' }`:
+Required path params still require `params`:
 
 ```ts
-ProductFilters.build({ search: { sortBy: 'recommendation' } });
-// '?categories=electronics&price=9.99&sortBy=recommendation'
+const ProductUrl = url({ path: '/products/{id:min(1)}' });
 
-ProductFilters.build(
-  {
-    search: {
-      categories: ['electronics'],
-      price: 9.99,
-      sortBy: 'recommendation',
-    },
-  },
-  { defaults: 'omit' },
-);
-// '?sortBy=recommendation'
+ProductUrl.build({ params: { id: 2 } });
+// '/products/2'
 ```
-
-If defaults are not appearing, check that the field is actually defaulted. `optional()` alone produces `undefined` for missing input and is omitted from built search strings.

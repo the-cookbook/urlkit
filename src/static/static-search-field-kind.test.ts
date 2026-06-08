@@ -2,12 +2,17 @@ import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import {
   assertStaticSearchField,
+  normalizeStaticSearchField,
   normalizeStaticSearchFieldType,
   normalizeStaticSearchFieldValue,
 } from './static-search-field-kind.js';
 
 describe('static search field kind helpers', () => {
-  it('accepts only object fields with explicit type values', () => {
+  it('accepts shorthand, value fields, and explicit type fields', () => {
+    expect(() => assertStaticSearchField('string', ['search', 'q'])).not.toThrow();
+    expect(() =>
+      assertStaticSearchField({ value: 'int', default: 1 }, ['search', 'page']),
+    ).not.toThrow();
     expect(() => assertStaticSearchField({ type: 'int' }, ['search', 'page'])).not.toThrow();
     expect(() =>
       assertStaticSearchField({ type: 'date', format: 'dd-MM-yyyy', optional: true }, [
@@ -19,16 +24,20 @@ describe('static search field kind helpers', () => {
       assertStaticSearchField({ type: 'string', many: true, optional: true }, ['search', 'tag']),
     ).not.toThrow();
 
-    expect(() => assertStaticSearchField('string', ['search', 'q'])).toThrow(UrlKitError);
-    expect(() => assertStaticSearchField({ value: 'int' }, ['search', 'page'])).toThrow(
-      'Static search field must define a type.',
-    );
     expect(() => assertStaticSearchField({ type: 'many' }, ['search', 'tag'])).toThrow(
       'Static search field type is invalid.',
     );
+    expect(() =>
+      assertStaticSearchField({ value: 'string', type: 'string' }, ['search', 'q']),
+    ).toThrow('Static search field cannot combine value with type.');
   });
 
-  it('normalizes field object values', () => {
+  it('normalizes field values', () => {
+    expect(normalizeStaticSearchField('string', ['search', 'q'])).toEqual({ type: 'string' });
+    expect(normalizeStaticSearchField({ value: 'int', default: 1 }, ['search', 'page'])).toEqual({
+      type: 'int',
+      default: 1,
+    });
     expect(normalizeStaticSearchFieldValue({ type: 'int' }, ['search', 'page'])).toBe('int');
     expect(
       normalizeStaticSearchFieldValue({ type: 'date', format: 'dd-MM-yyyy', optional: true }, [

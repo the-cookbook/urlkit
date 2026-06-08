@@ -1,10 +1,12 @@
-import { describe, expect, it, expectTypeOf } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { enumOf } from '../schema/enum-of.js';
 import { int } from '../schema/int.js';
 import { string } from '../schema/string.js';
 import { compileRuntimeUrlDescriptor } from './compile-runtime-url-descriptor.js';
 import type { NormalizedUrlDescriptor } from './contracts.js';
+
+const expectType = <Value>(_value: Value): void => undefined;
 
 describe('compileRuntimeUrlDescriptor', () => {
   it('compiles path-based runtime descriptors into normalized URL descriptors', () => {
@@ -27,7 +29,7 @@ describe('compileRuntimeUrlDescriptor', () => {
     });
     expect(Object.isFrozen(descriptor)).toBe(true);
 
-    expectTypeOf<NormalizedUrlDescriptor<'path'>>(descriptor);
+    expectType<NormalizedUrlDescriptor<'path'>>(descriptor);
   });
 
   it('compiles pathless runtime descriptors', () => {
@@ -42,7 +44,7 @@ describe('compileRuntimeUrlDescriptor', () => {
     expect(descriptor.path).toBeUndefined();
     expect(descriptor.search).toBeDefined();
 
-    expectTypeOf<NormalizedUrlDescriptor<'pathless'>>(descriptor);
+    expectType<NormalizedUrlDescriptor<'pathless'>>(descriptor);
   });
 
   it('uses parsed standalone params for path patterns', () => {
