@@ -9,6 +9,78 @@ Framework-agnostic typed URL contracts for parsing, validating, normalizing, mat
 
 URLKit owns typed URL state: path params, search params, hash fragments, request parsing, URL normalization, matching, and href building. It sits between `@cookbook/pathkit` and higher-level router packages, but it does not define routes, route IDs, route trees, loaders, middleware, React hooks, components, or framework adapters.
 
+## **Without** URLKit
+
+```ts
+const rawUrl = new URL(
+  '/articles/42?page=2&tag=ts&tag=urlkit&sort=popular#comments',
+  'https://your-app.com',
+);
+
+const id = Number(rawUrl.pathname.split('/').at(-1));
+const pageValues = rawUrl.searchParams.getAll('page');
+const tagValues = rawUrl.searchParams.getAll('tag');
+const sortValues = rawUrl.searchParams.getAll('sort');
+const hash = rawUrl.hash ? rawUrl.hash.slice(1) : undefined;
+
+if (!Number.isInteger(id)) {
+  throw new Error('Invalid article id.');
+}
+
+if (pageValues.length > 1) {
+  throw new Error('Expected only one page value.');
+}
+
+if (sortValues.length > 1) {
+  throw new Error('Expected only one sort value.');
+}
+
+const page = Number(pageValues[0] ?? '1');
+const sort = sortValues[0] ?? 'newest';
+
+if (!Number.isInteger(page)) {
+  throw new Error('Invalid page.');
+}
+
+if (sort !== 'newest' && sort !== 'popular') {
+  throw new Error('Invalid sort.');
+}
+
+if (hash !== undefined && hash !== 'comments' && hash !== 'share') {
+  throw new Error('Invalid hash.');
+}
+
+...
+
+```
+
+## **With** URLKit
+
+```ts
+const ArticleUrl = url({
+  path: '/articles/{id:int}',
+  search: {
+    page: int().default(1),
+    tag: array(string()).optional(),
+    sort: enumOf(['newest', 'popular']).default('newest'),
+  },
+  hash: enumOf(['comments', 'share']).optional(),
+});
+
+const { params, search, hash } = ArticleUrl.parse('/articles/42?page=2&tag=ts&tag=urlkit&sort=popular#comments');
+
+// params.id: number
+// search.page: number
+// search.tag: string[] | undefined
+// search.sort: "newest" | "popular"
+// hash: "comments" | "share" | undefined
+
+...
+
+```
+
+Define the URL shape **once**. URLKit validates the path, parses params, applies defaults, handles repeated query values, validates the hash, and returns typed URL state you can use right away.
+
 ## Documentation
 
 - [Full API reference](./docs/api.md)
