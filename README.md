@@ -3,6 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@cookbook/urlkit.svg)](https://www.npmjs.com/package/@cookbook/urlkit)
 [![npm downloads](https://img.shields.io/npm/dm/@cookbook/urlkit.svg)](https://www.npmjs.com/package/@cookbook/urlkit)
 [![Bundle size](https://img.shields.io/bundlephobia/minzip/@cookbook/urlkit)](https://bundlephobia.com/package/@cookbook/urlkit)
+[![license](https://img.shields.io/npm/l/@cookbook/urlkit.svg)](https://github.com/the-cookbook/urlkit/blob/main/LICENSE)
 [![CI](https://github.com/the-cookbook/urlkit/actions/workflows/ci.yml/badge.svg)](https://github.com/the-cookbook/urlkit/actions/workflows/ci.yml)
 
 Framework-agnostic URL contracts for parsing, validating, normalizing, matching, and building URL state.
