@@ -1,5 +1,43 @@
 # @cookbook/urlkit
 
+## 2.0.1
+
+### Patch Changes
+
+- d66e68b: Improve chained PathKit constraint handling for path params while keeping PathKit as the runtime source of truth.
+
+  URLKit now preserves full PathKit constraint chains from `tokenize()` and infers path parameter types from the highest weighted constraint anywhere in the chain. Numeric constraints include `int`, `decimal`, `range(...)`, `min(...)`, and `max(...)`; string constraints such as `regex(...)`, `uuid`, `minlength(...)`, `maxlength(...)`, and custom constraints infer `string` unless combined with a numeric constraint.
+
+  Path constraint matching, constraint syntax, and runtime validation remain delegated to PathKit. URLKit only reads the PathKit-compatible constraint chain for inference/coercion after PathKit accepts the path.
+
+  The API documentation now explicitly documents PathKit-compatible `regex(...)` syntax: regex patterns must be provided as raw regex sources, without JavaScript `/.../` delimiters. For example, `/posts/{slug:regex([a-z0-9-]+)}` is valid, while `/posts/{slug:regex(/[a-z0-9-]+/)}` is not. In TypeScript string literals, backslashes must still be escaped, such as `'/scores/{id:regex(\\d):min(1)}'`.
+
+  This also improves optional constrained path params, generated pathname types, examples, API docs, and regression coverage for chained constraint inference.
+
+- d66e68b: Fix optional path params so trailing `?` markers are treated as parameter optionality rather than part of constraint names.
+
+  Runtime path parsing now preserves optional and wildcard metadata from PathKit `tokenize` output, while generated URLKit types infer optional constrained and unconstrained params correctly. Built-in numeric constraints such as `{id:int?}` infer `id?: number`, custom constraints such as `{slug:slug?}` infer optional strings, and generated pathnames include both omitted and present shapes such as `/products | /products/${number}`.
+
+  Also updates path build/normalize input typing so contracts whose path params are all optional can build or normalize without a `params` object, and adds regression tests, usage examples, API docs, and troubleshooting guidance for optional path params.
+
+- d66e68b: Reject undefined path build parameters consistently.
+
+  Path build parameter normalization now treats both `undefined` and `null` as missing required path parameter values and throws `UrlKitError` with code `missing-param`, instead of silently omitting `undefined` values before delegating path building.
+
+- fa4f3af: Fix runtime schema builder chaining so defaulted fields keep their default behavior when `.optional()` or `.required()` is called after `.default(...)`.
+
+  Defaults now act as the strongest presence rule: `schema.default(value)`, `schema.optional().default(value)`, and `schema.default(value).optional()` all normalize missing input to the configured default and infer a non-undefined parsed value.
+
+  This fixes pathless and path-based URL contracts where defaulted search fields such as `array(string()).default(['foo']).optional()` or `int().default(1).optional()` were previously treated as optional and omitted during parsing/normalization.
+
+  The release also adds regression coverage for parse, normalize, build default omission, schema-builder chaining, and the documented troubleshooting guidance for defaulted fields.
+
+- d66e68b: Restore clean static search descriptor shorthand support.
+
+  Static search descriptors now accept the documented concise forms used by router-runtime definitions, including primitive shorthand fields such as `q: 'string'`, value-wrapper fields such as `page: { value: 'int', default: 1 }`, and enum value wrappers such as `sort: { value: { type: 'enum', values: ['newest', 'popular'] }, default: 'newest' }`.
+
+  The explicit `{ type, many, optional, default }` form remains supported. Ambiguous descriptors that combine `value` and `type` in the same field are rejected with `invalid-descriptor`.
+
 ## 2.0.0
 
 ### Major Changes
