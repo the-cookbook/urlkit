@@ -6,10 +6,10 @@ const path = Object.freeze(['search', 'value']);
 
 describe('normalizeStaticSearchDefault', () => {
   it('validates primitive defaults', () => {
-    expect(normalizeStaticSearchDefault('one', 'string', 'router', path)).toBe('router');
-    expect(normalizeStaticSearchDefault('one', 'number', 1.5, path)).toBe(1.5);
-    expect(normalizeStaticSearchDefault('one', 'int', 2, path)).toBe(2);
-    expect(normalizeStaticSearchDefault('one', 'boolean', false, path)).toBe(false);
+    expect(normalizeStaticSearchDefault('one', { type: 'string' }, 'router', path)).toBe('router');
+    expect(normalizeStaticSearchDefault('one', { type: 'number' }, 1.5, path)).toBe(1.5);
+    expect(normalizeStaticSearchDefault('one', { type: 'int' }, 2, path)).toBe(2);
+    expect(normalizeStaticSearchDefault('one', { type: 'boolean' }, false, path)).toBe(false);
   });
 
   it('validates enum defaults', () => {
@@ -94,12 +94,18 @@ describe('normalizeStaticSearchDefault', () => {
   });
 
   it('rejects invalid defaults', () => {
-    expect(() => normalizeStaticSearchDefault('one', 'string', 1, path)).toThrow(UrlKitError);
+    expect(() => normalizeStaticSearchDefault('one', { type: 'string' }, 1, path)).toThrow(
+      UrlKitError,
+    );
     expect(() =>
-      normalizeStaticSearchDefault('one', 'number', Number.POSITIVE_INFINITY, path),
+      normalizeStaticSearchDefault('one', { type: 'number' }, Number.POSITIVE_INFINITY, path),
     ).toThrow(UrlKitError);
-    expect(() => normalizeStaticSearchDefault('one', 'int', 1.5, path)).toThrow(UrlKitError);
-    expect(() => normalizeStaticSearchDefault('one', 'boolean', 'true', path)).toThrow(UrlKitError);
+    expect(() => normalizeStaticSearchDefault('one', { type: 'int' }, 1.5, path)).toThrow(
+      UrlKitError,
+    );
+    expect(() => normalizeStaticSearchDefault('one', { type: 'boolean' }, 'true', path)).toThrow(
+      UrlKitError,
+    );
     expect(() => normalizeStaticSearchDefault('one', { type: 'date' }, '2026-02-31', path)).toThrow(
       UrlKitError,
     );
@@ -135,6 +141,8 @@ describe('normalizeStaticSearchDefault', () => {
   });
 
   it('rejects non-array many defaults', () => {
-    expect(() => normalizeStaticSearchDefault('many', 'string', 'tag', path)).toThrow(UrlKitError);
+    expect(() => normalizeStaticSearchDefault('many', { type: 'string' }, 'tag', path)).toThrow(
+      UrlKitError,
+    );
   });
 });

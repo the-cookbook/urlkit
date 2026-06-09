@@ -68,7 +68,7 @@ import {
 | `options.arrayFormat`     | `'repeat' \| 'comma'`              | Contract-level default array search format for parsing and building.            |
 | `options.pathConstraints` | `PathConstraintMap`                | Per-contract custom PathKit constraints, registered before path compilation.    |
 
-Standalone `url(...)` path params default to parsed mode. PathKit owns path pattern matching, constraint parsing, and runtime constraint validation. URLKit delegates those runtime semantics to PathKit, then infers/coerces accepted path params from the highest weighted constraint anywhere in the chain: `int > decimal/range/min/max > string/custom`. Numeric constraints (`int`, `decimal`, `range(...)`, `min(...)`, and `max(...)`) parse to numbers. String constraints (`regex(...)`, `uuid`, `minlength(...)`, `maxlength(...)`, and custom constraints) parse as strings unless a numeric constraint also appears in the chain.
+Standalone `url(...)` path params default to parsed mode. URLKit follows PathKit constraint chains and infers from the highest weighted constraint anywhere in the chain: `int > decimal/range/min/max > string/custom`. Numeric constraints (`int`, `decimal`, `range(...)`, `min(...)`, and `max(...)`) parse to numbers. String constraints (`regex(...)`, `uuid`, `minlength(...)`, `maxlength(...)`, and custom constraints) parse as strings unless a numeric constraint also appears in the chain.
 
 ```ts
 import { enumOf, int, string, url } from '@cookbook/urlkit';
@@ -89,28 +89,29 @@ const state = UserUrl.parse('/users/42?page=2#activity');
 
 ### Chained path constraints
 
-PathKit owns path constraint syntax, matching, and runtime validation. URLKit does not reimplement PathKit constraint behavior. URLKit only reads the PathKit-compatible constraint chain to infer and coerce accepted path parameter values.
+PathKit owns path constraint syntax, matching, and runtime validation. URLKit delegates those concerns to PathKit and only reads PathKit-compatible constraint chains to infer/coerce parsed params.
 
-| Constraint                 | Runtime owner | URLKit parsed param type                                       |
-| -------------------------- | ------------- | -------------------------------------------------------------- |
-| `int`                      | PathKit       | `number`                                                       |
-| `decimal`                  | PathKit       | `number`                                                       |
-| `range(...)`               | PathKit       | `number`                                                       |
-| `min(...)`                 | PathKit       | `number`                                                       |
-| `max(...)`                 | PathKit       | `number`                                                       |
-| `regex(...)`               | PathKit       | `string`, unless a numeric constraint also exists in the chain |
-| `uuid`                     | PathKit       | `string`, unless a numeric constraint also exists in the chain |
-| `minlength(...)`           | PathKit       | `string`, unless a numeric constraint also exists in the chain |
-| `maxlength(...)`           | PathKit       | `string`, unless a numeric constraint also exists in the chain |
-| custom PathKit constraints | PathKit       | `string`, unless a numeric constraint also exists in the chain |
+#### PathKit built-in constraints
 
-When constraints are chained, URLKit uses the highest weighted constraint anywhere in the chain. Constraint position does not matter for URLKit inference:
+| Constraint          | PathKit behavior                                                      | URLKit parsed param type | Notes                                                                           |
+| ------------------- | --------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------- |
+| `int`               | Matches integer values.                                               | `number`                 | Does not accept constraint parameters.                                          |
+| `decimal`           | Matches decimal numeric values.                                       | `number`                 | Does not accept constraint parameters.                                          |
+| `min(value)`        | Validates that the numeric value is greater than or equal to `value`. | `number`                 | Can be used alone or chained with `int`/`decimal`. The comparison is inclusive. |
+| `max(value)`        | Validates that the numeric value is less than or equal to `value`.    | `number`                 | Can be used alone or chained with `int`/`decimal`. The comparison is inclusive. |
+| `range(min,max)`    | Validates that the numeric value is inside an inclusive range.        | `number`                 | Both `min` and `max` are required.                                              |
+| `uuid`              | Matches canonical hyphenated UUID values.                             | `string`                 | Does not enforce a specific UUID version.                                       |
+| `minlength(length)` | Validates that the value has at least `length` characters.            | `string`                 | Length validation, not numeric validation.                                      |
+| `maxlength(length)` | Validates that the value has no more than `length` characters.        | `string`                 | Length validation, not numeric validation.                                      |
+| `list(a\|b\|c)`     | Matches one value from a pipe-separated list.                         | `string`                 | Matching is exact.                                                              |
+| `regex(pattern)`    | Matches a custom regex source.                                        | `string`                 | `pattern` is raw regex source, without JavaScript `/.../` delimiters.           |
+
+Custom PathKit constraints infer `string` unless a numeric built-in constraint also appears in the chain.
+
+When constraints are chained, URLKit uses the highest weighted constraint anywhere in the chain:
 
 ```ts
-url({ path: '/scores/{id:regex(\\d):min(1)}' });
-// id: number
-
-url({ path: '/scores/{id:min(1):regex(\\d)}' });
+url({ path: '/users/{id:regex(\\d):min(1)}' });
 // id: number
 
 url({ path: '/articles/{slug:minlength(3):maxlength(50)}' });
@@ -121,14 +122,14 @@ url({ path: '/products/{id:min(1)?}' });
 // params: { readonly id?: number }
 ```
 
-The `regex` constraint pattern must be provided as a raw regex source, without JavaScript regex delimiters `/.../`:
+The `regex` constraint pattern must be provided as raw regex source. Do not include JavaScript regex delimiters:
 
 ```txt
 /posts/{slug:regex(/[a-z0-9-]+/)} // ERROR
-/posts/{slug:regex([a-z0-9-]+)} // CORRECT
+/posts/{slug:regex([a-z0-9-]+)}   // CORRECT
 ```
 
-In a TypeScript string literal, escape backslashes for regex character classes:
+Inside TypeScript string literals, escape backslashes as needed:
 
 ```ts
 url({ path: '/scores/{id:regex(\\d):min(1)}' });
@@ -458,9 +459,9 @@ interface UrlContract<Mode, Pathname, Params, Search, Hash> {
 ## `parse`
 
 | Item       | Details                                                                                        |
-| ---------- | ---------------------------------------------------------------------------------------------- | --------------------------------- |
+| ---------- | ---------------------------------------------------------------------------------------------- |
 | Purpose    | Parse serialized URL input and return typed URL state.                                         |
-| Parameters | `input: string                                                                                 | URL`, `options?: ParseUrlOptions` |
+| Parameters | `input: string \| URL`, `options?: ParseUrlOptions`                                            |
 | Returns    | `UrlState<Pathname, Params, Search, Hash>`                                                     |
 | Throws     | `UrlKitError` for invalid URL, path mismatch, invalid params, invalid search, or invalid hash. |
 
@@ -483,9 +484,9 @@ if (!result.success) {
 ## `parseRequest` and `safeParseRequest`
 
 | Item       | Details                                                                                |
-| ---------- | -------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| ---------- | -------------------------------------------------------------------------------------- |
 | Purpose    | Parse web-standard `Request` or request-like `{ url: string }`.                        |
-| Parameters | `input: Request                                                                        | UrlRequestInput`, `options?: ParseRequestOptions` |
+| Parameters | `input: Request \| UrlRequestInput`, `options?: ParseRequestOptions`                   |
 | Options    | `baseUrl` for relative request-like URLs; `unknownSearch` and `arrayFormat` overrides. |
 | Throws     | `parseRequest` throws `UrlKitError`; `safeParseRequest` returns safe failure.          |
 
@@ -770,10 +771,10 @@ Static descriptors are plain data and are suitable for router tooling and static
 const compiled = compileStaticUrl({
   path: '/search',
   search: {
-    q: 'string',
-    page: { value: 'int', default: 1 },
+    q: { type: 'string' },
+    page: { type: 'int', default: 1 },
   },
-  hash: ['results', 'filters'],
+  hash: { type: 'enum', values: ['results', 'filters'], optional: true },
 } as const);
 ```
 
@@ -789,11 +790,12 @@ Static search field forms:
 
 ```ts
 const search = {
-  q: 'string',
-  page: { value: 'int', default: 1 },
-  tags: { value: 'string', many: true, optional: true },
+  q: { type: 'string' },
+  page: { type: 'int', default: 1 },
+  tags: { type: 'string', many: true, optional: true },
   sort: {
-    value: { type: 'enum', values: ['newest', 'popular'] },
+    type: 'enum',
+    values: ['newest', 'popular'],
     default: 'newest',
   },
   startsAt: { type: 'date-time', optional: true },
@@ -810,19 +812,32 @@ const search = {
 } as const;
 ```
 
-Supported static values:
+Supported static search field types:
 
-- `string`
-- `number`
-- `int`
-- `boolean`
-- `date`
-- `date-time`
-- `unix-seconds`
-- `unix-ms`
-- `{ type: 'date', format: ... }`
-- `{ type: 'date-time', format: ... }`
-- `{ type: 'enum', values: [...] }`
+| Field type              | Example                                                |
+| ----------------------- | ------------------------------------------------------ |
+| `string`                | `{ type: 'string' }`                                   |
+| `number`                | `{ type: 'number' }`                                   |
+| `int`                   | `{ type: 'int' }`                                      |
+| `boolean`               | `{ type: 'boolean' }`                                  |
+| `date`                  | `{ type: 'date' }`                                     |
+| `date` with format      | `{ type: 'date', format: 'unix-seconds' }`             |
+| `date-time`             | `{ type: 'date-time' }`                                |
+| `date-time` with format | `{ type: 'date-time', format: 'dd-MM-yyyy HH:mm:ss' }` |
+| `enum`                  | `{ type: 'enum', values: ['newest', 'popular'] }`      |
+| many values             | `{ type: 'string', many: true }`                       |
+| optional value          | `{ type: 'string', optional: true }`                   |
+| default value           | `{ type: 'int', default: 1 }`                          |
+
+Static search descriptors are object-only. These legacy forms are invalid and rejected at runtime:
+
+```ts
+search: {
+  q: 'string',
+  page: { value: 'int', default: 1 },
+  tags: { type: 'many', value: 'string' },
+}
+```
 
 Static date and date-time formats may use built-in static formats or strict format strings such as `dd-MM-yyyy` and `dd-MM-yyyy HH:mm:ss`. Static descriptors do not support runtime `{ parse, serialize }` codecs. Static date defaults must be serialized values, not `Date` instances.
 
@@ -837,7 +852,7 @@ Static date and date-time formats may use built-in static formats or strict form
 Static hash forms:
 
 ```ts
-const optionalEnum = ['comments', 'share'] as const;
+const optionalEnum = { type: 'enum', values: ['comments', 'share'], optional: true } as const;
 const stringHash = { type: 'string', optional: true } as const;
 const enumHash = { type: 'enum', values: ['overview', 'comments'], default: 'overview' } as const;
 ```
@@ -855,10 +870,53 @@ interface StaticSearchDescriptor {
   readonly [key: string]: StaticSearchField;
 }
 
-type StaticHashDescriptor =
-  | readonly string[]
-  | StaticStringHashDescriptor
-  | StaticEnumHashDescriptor;
+interface StaticSearchFieldBase {
+  readonly many?: true;
+  readonly optional?: true;
+  readonly default?: unknown;
+}
+
+interface StaticStringSearchField extends StaticSearchFieldBase {
+  readonly type: 'string';
+}
+
+interface StaticNumberSearchField extends StaticSearchFieldBase {
+  readonly type: 'number';
+}
+
+interface StaticIntSearchField extends StaticSearchFieldBase {
+  readonly type: 'int';
+}
+
+interface StaticBooleanSearchField extends StaticSearchFieldBase {
+  readonly type: 'boolean';
+}
+
+interface StaticDateSearchField extends StaticSearchFieldBase {
+  readonly type: 'date';
+  readonly format?: StaticDateFormat;
+}
+
+interface StaticDateTimeSearchField extends StaticSearchFieldBase {
+  readonly type: 'date-time';
+  readonly format?: StaticDateTimeFormat;
+}
+
+interface StaticEnumSearchField extends StaticSearchFieldBase {
+  readonly type: 'enum';
+  readonly values: readonly string[];
+}
+
+type StaticSearchField =
+  | StaticStringSearchField
+  | StaticNumberSearchField
+  | StaticIntSearchField
+  | StaticBooleanSearchField
+  | StaticDateSearchField
+  | StaticDateTimeSearchField
+  | StaticEnumSearchField;
+
+type StaticHashDescriptor = StaticStringHashDescriptor | StaticEnumHashDescriptor;
 ```
 
 Exported static inference helpers include:
@@ -904,10 +962,10 @@ Router-runtime APIs are low-level primitives for router packages. They are frame
 const ArticleUrl = createRouteUrlContract({
   path: '/articles/{slug:regex([a-z0-9-]+)}',
   search: {
-    ref: { type: 'one', optional: true },
-    page: { value: 'int', default: 1 },
+    ref: { type: 'string', optional: true },
+    page: { type: 'int', default: 1 },
   },
-  hash: ['comments', 'share'],
+  hash: { type: 'enum', values: ['comments', 'share'], optional: true },
 } as const);
 
 const state = ArticleUrl.parse('/articles/post-1?ref=email#comments');
@@ -936,14 +994,14 @@ UserUrl.parse('/users/42').params.id;
 ```ts
 parseSearch('?page=2', {
   schema: {
-    page: { value: 'int', default: 1 },
+    page: { type: 'int', default: 1 },
   },
 });
 // { page: 2 }
 
 parseSearch('?tags=ts%2Crouter', {
   schema: {
-    tags: { value: 'string', many: true, optional: true },
+    tags: { type: 'string', many: true, optional: true },
   },
   arrayFormat: 'comma',
 });
@@ -963,7 +1021,7 @@ parseSearch('?from=02-06-2026&startsAt=02-06-2026+12%3A30%3A05', {
 
 parseSearch('/articles/1?page=2&publishedOn=02-06-2026&startsAt=foo', {
   schema: {
-    page: { value: 'int', default: 1 },
+    page: { type: 'int', default: 1 },
     publishedOn: { type: 'date', format: 'dd-MM-yyyy', optional: true },
     startsAt: { type: 'date-time', format: 'dd-MM-yyyy HH:mm:ss', optional: true },
   },
@@ -987,9 +1045,9 @@ parseSearch('?filter.role=admin');
 
 ```ts
 const schema = {
-  page: { value: 'int', default: 1 },
-  q: { value: 'string', optional: true },
-  tags: { value: 'string', many: true, optional: true },
+  page: { type: 'int', default: 1 },
+  q: { type: 'string', optional: true },
+  tags: { type: 'string', many: true, optional: true },
   startsAt: {
     type: 'date-time',
     format: 'dd-MM-yyyy HH:mm:ss',

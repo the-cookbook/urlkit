@@ -11,8 +11,17 @@ import {
 import type {
   InferStaticHash,
   InferStaticSearch,
+  StaticBooleanSearchField,
+  StaticDateSearchField,
+  StaticDateTimeSearchField,
+  StaticEnumSearchField,
   StaticHashDescriptor,
+  StaticIntSearchField,
+  StaticNumberSearchField,
   StaticSearchDescriptor,
+  StaticSearchField,
+  StaticSearchFieldBase,
+  StaticStringSearchField,
   StaticUrlDescriptor,
 } from './static.js';
 
@@ -50,6 +59,30 @@ describe('static public exports', () => {
       {} as InferStaticSearch<typeof search>,
     );
     expectTypeOf<'comments' | 'share' | undefined>({} as InferStaticHash<typeof hash>);
+
+    const fields = {
+      q: { type: 'string' },
+      page: { type: 'int', default: 1 },
+      score: { type: 'number', optional: true },
+      active: { type: 'boolean' },
+      publishedOn: { type: 'date', optional: true },
+      scheduledAt: { type: 'date-time', optional: true },
+      sort: { type: 'enum', values: ['newest', 'popular'], default: 'newest' },
+    } as const satisfies Record<
+      string,
+      | StaticSearchFieldBase
+      | StaticStringSearchField
+      | StaticNumberSearchField
+      | StaticIntSearchField
+      | StaticBooleanSearchField
+      | StaticDateSearchField
+      | StaticDateTimeSearchField
+      | StaticEnumSearchField
+      | StaticSearchField
+    >;
+
+    expect(fields.page.default).toBe(1);
+
     expect(compileStaticUrl(descriptor).mode).toBe('path');
   });
 });

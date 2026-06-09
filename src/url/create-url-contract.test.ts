@@ -13,7 +13,7 @@ describe('createUrlContract', () => {
     const descriptor = compileStaticUrl({
       path: '/users/{id:int}',
       search: {
-        tab: { value: 'string', default: 'profile' },
+        tab: { type: 'string', default: 'profile' },
       },
       hash: { type: 'enum', values: ['activity', 'comments'], optional: true },
     });
@@ -47,7 +47,9 @@ describe('createUrlContract', () => {
   });
 
   it('creates a pathless contract with undefined pattern and unavailable path methods', () => {
-    const contract = createUrlContract<'pathless'>(compileStaticUrl({ search: { q: 'string' } }));
+    const contract = createUrlContract<'pathless'>(
+      compileStaticUrl({ search: { q: { type: 'string' } } }),
+    );
 
     expect(contract.pattern).toBeUndefined();
     expect(

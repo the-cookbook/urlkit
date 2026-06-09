@@ -39,108 +39,57 @@ export type InferStaticUrlHashBuildInput<Descriptor extends StaticUrlDescriptor>
     ? InferStaticHashBuildInput<HashDescriptor>
     : undefined;
 
-export type StaticSearchDescriptor = Record<string, StaticSearchFieldInput>;
+export type StaticSearchDescriptor = Record<string, StaticSearchField>;
 
-export interface StaticSearchFieldCommon {
+export interface StaticSearchFieldBase {
   readonly many?: true;
+  readonly optional?: true;
+  readonly default?: unknown;
 }
 
-export interface StaticSearchRequiredPresence {
-  readonly optional?: never;
-  readonly default?: never;
-}
-
-export interface StaticSearchOptionalPresence {
-  readonly optional: true;
-  readonly default?: never;
-}
-
-export interface StaticSearchDefaultPresence {
-  readonly optional?: never;
-  readonly default: unknown;
-}
-
-export type StaticSearchPresence =
-  | StaticSearchRequiredPresence
-  | StaticSearchOptionalPresence
-  | StaticSearchDefaultPresence;
-
-export interface StaticStringSearchFieldDescriptor extends StaticSearchFieldCommon {
+export interface StaticStringSearchField extends StaticSearchFieldBase {
   readonly type: 'string';
 }
 
-export interface StaticNumberSearchFieldDescriptor extends StaticSearchFieldCommon {
+export interface StaticNumberSearchField extends StaticSearchFieldBase {
   readonly type: 'number';
 }
 
-export interface StaticIntSearchFieldDescriptor extends StaticSearchFieldCommon {
+export interface StaticIntSearchField extends StaticSearchFieldBase {
   readonly type: 'int';
 }
 
-export interface StaticBooleanSearchFieldDescriptor extends StaticSearchFieldCommon {
+export interface StaticBooleanSearchField extends StaticSearchFieldBase {
   readonly type: 'boolean';
 }
 
-export interface StaticDateSearchFieldDescriptor extends StaticSearchFieldCommon {
+export interface StaticDateSearchField extends StaticSearchFieldBase {
   readonly type: 'date';
   readonly format?: StaticDateFormat;
 }
 
-export interface StaticDateTimeSearchFieldDescriptor extends StaticSearchFieldCommon {
+export interface StaticDateTimeSearchField extends StaticSearchFieldBase {
   readonly type: 'date-time';
   readonly format?: StaticDateTimeFormat;
 }
 
-export interface StaticEnumSearchFieldDescriptor extends StaticSearchFieldCommon {
+export interface StaticEnumSearchField extends StaticSearchFieldBase {
   readonly type: 'enum';
   readonly values: readonly string[];
 }
 
-export type StaticSearchFieldDescriptor =
-  | StaticStringSearchFieldDescriptor
-  | StaticNumberSearchFieldDescriptor
-  | StaticIntSearchFieldDescriptor
-  | StaticBooleanSearchFieldDescriptor
-  | StaticDateSearchFieldDescriptor
-  | StaticDateTimeSearchFieldDescriptor
-  | StaticEnumSearchFieldDescriptor;
-
-export type StaticSearchField = StaticSearchFieldDescriptor & StaticSearchPresence;
-
-export type StaticSearchValueField = StaticSearchFieldCommon &
-  StaticSearchPresence & {
-    readonly value: StaticSearchValue;
-    readonly type?: never;
-  };
-
-export type StaticSearchFieldInput = StaticSearchValue | StaticSearchField | StaticSearchValueField;
-
-export type StaticPrimitiveSearchValue = 'string' | 'number' | 'int' | 'boolean';
+export type StaticSearchField =
+  | StaticStringSearchField
+  | StaticNumberSearchField
+  | StaticIntSearchField
+  | StaticBooleanSearchField
+  | StaticDateSearchField
+  | StaticDateTimeSearchField
+  | StaticEnumSearchField;
 
 export type BuiltInStaticDateFormat = 'date' | 'date-time' | 'unix-seconds' | 'unix-ms';
 export type StaticDateFormat = BuiltInStaticDateFormat | string;
 export type StaticDateTimeFormat = 'date-time' | string;
-
-export interface StaticDateSearchValue {
-  readonly type: 'date';
-  readonly format?: StaticDateFormat;
-}
-
-export interface StaticDateTimeSearchValue {
-  readonly type: 'date-time';
-  readonly format?: StaticDateTimeFormat;
-}
-
-export interface StaticEnumSearchValue {
-  readonly type: 'enum';
-  readonly values: readonly string[];
-}
-
-export type StaticSearchValue =
-  | StaticPrimitiveSearchValue
-  | StaticDateSearchValue
-  | StaticDateTimeSearchValue
-  | StaticEnumSearchValue;
 
 export type InferStaticSearch<Descriptor extends StaticSearchDescriptor> = Simplify<
   {
@@ -247,42 +196,31 @@ type InferStaticEnumHashBuildInput<Descriptor extends StaticEnumHashDescriptor> 
       ? Descriptor['values'][number] | undefined
       : Descriptor['values'][number];
 
-type InferStaticSearchFieldValue<Field extends StaticSearchFieldInput> = Field extends {
-  readonly many: true;
-}
-  ? readonly InferStaticSearchValue<StaticSearchFieldValueDescriptor<Field>>[]
-  : InferStaticSearchValue<StaticSearchFieldValueDescriptor<Field>>;
+type InferStaticSearchFieldValue<Field extends StaticSearchField> = Field['many'] extends true
+  ? readonly InferStaticSearchValue<Field>[]
+  : InferStaticSearchValue<Field>;
 
-type StaticSearchFieldValueDescriptor<Field> = Field extends { readonly value: infer Value }
-  ? Value
-  : Field;
-
-type InferStaticSearchValue<Value> = Value extends 'string'
+type InferStaticSearchValue<Value> = Value extends { readonly type: 'string' }
   ? string
-  : Value extends 'number'
+  : Value extends { readonly type: 'number' }
     ? number
-    : Value extends 'int'
+    : Value extends { readonly type: 'int' }
       ? number
-      : Value extends 'boolean'
+      : Value extends { readonly type: 'boolean' }
         ? boolean
-        : Value extends { readonly type: 'string' }
-          ? string
-          : Value extends { readonly type: 'number' }
-            ? number
-            : Value extends { readonly type: 'int' }
-              ? number
-              : Value extends { readonly type: 'boolean' }
-                ? boolean
-                : Value extends StaticDateSearchValue | StaticDateTimeSearchValue
-                  ? Date
-                  : Value extends StaticEnumSearchValue
-                    ? Value['values'][number]
-                    : never;
+        : Value extends StaticDateSearchField | StaticDateTimeSearchField
+          ? Date
+          : Value extends StaticEnumSearchField
+            ? Value['values'][number]
+            : never;
 
-type IsOptionalStaticSearchField<Field extends StaticSearchFieldInput> =
-  'default' extends keyof Field ? false : Field extends { readonly optional: true } ? true : false;
+type IsOptionalStaticSearchField<Field extends StaticSearchField> = 'default' extends keyof Field
+  ? false
+  : Field['optional'] extends true
+    ? true
+    : false;
 
-type IsRequiredStaticSearchBuildField<Field extends StaticSearchFieldInput> =
-  'default' extends keyof Field ? false : Field extends { readonly optional: true } ? false : true;
+type IsRequiredStaticSearchBuildField<Field extends StaticSearchField> =
+  'default' extends keyof Field ? false : Field['optional'] extends true ? false : true;
 
 type Simplify<Value> = { readonly [Key in keyof Value]: Value[Key] } & {};

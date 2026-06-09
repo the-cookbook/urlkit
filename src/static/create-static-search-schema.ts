@@ -12,13 +12,13 @@ import type {
   StaticDateFormat,
   StaticDateTimeFormat,
   StaticSearchDescriptor,
-  StaticSearchValue,
+  StaticSearchField,
 } from './contracts.js';
 import {
+  assertStaticSearchField,
   getStaticSearchFieldDefault,
   hasStaticSearchFieldDefault,
   isStaticSearchFieldOptional,
-  normalizeStaticSearchField,
   normalizeStaticSearchFieldType,
   normalizeStaticSearchFieldValue,
 } from './static-search-field-kind.js';
@@ -42,17 +42,17 @@ export function createStaticSearchSchema(descriptor: StaticSearchDescriptor): Ru
 
 function createStaticSearchField(key: string, field: unknown): RuntimeSearchField {
   const path = ['search', key];
-  const normalizedField = normalizeStaticSearchField(field, path);
+  assertStaticSearchField(field, path);
 
-  const fieldType = normalizeStaticSearchFieldType(normalizedField.many, path);
-  const valueDescriptor = normalizeStaticSearchFieldValue(normalizedField, path);
+  const fieldType = normalizeStaticSearchFieldType(field.many, path);
+  const valueDescriptor = normalizeStaticSearchFieldValue(field, path);
   const value = createStaticSearchValueSchema(valueDescriptor, path);
-  const hasDefault = hasStaticSearchFieldDefault(normalizedField);
+  const hasDefault = hasStaticSearchFieldDefault(field);
   const defaultValue = hasDefault
     ? normalizeStaticSearchDefault(
         fieldType,
         valueDescriptor,
-        getStaticSearchFieldDefault(normalizedField),
+        getStaticSearchFieldDefault(field),
         path,
       )
     : undefined;
@@ -60,28 +60,28 @@ function createStaticSearchField(key: string, field: unknown): RuntimeSearchFiel
   return Object.freeze({
     type: fieldType,
     value,
-    ...(isStaticSearchFieldOptional(normalizedField) ? { optional: true } : {}),
+    ...(isStaticSearchFieldOptional(field) ? { optional: true } : {}),
     ...(hasDefault ? { default: defaultValue } : {}),
   });
 }
 
 function createStaticSearchValueSchema(
-  value: StaticSearchValue,
+  value: StaticSearchField,
   path: readonly string[],
 ): AnyRuntimeSchemaBuilder {
-  if (value === 'string') {
+  if (value.type === 'string') {
     return string();
   }
 
-  if (value === 'number') {
+  if (value.type === 'number') {
     return number();
   }
 
-  if (value === 'int') {
+  if (value.type === 'int') {
     return int();
   }
 
-  if (value === 'boolean') {
+  if (value.type === 'boolean') {
     return boolean();
   }
 

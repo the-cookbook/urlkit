@@ -9,7 +9,9 @@ Framework-agnostic typed URL contracts for parsing, validating, normalizing, mat
 
 URLKit owns typed URL state: path params, search params, hash fragments, request parsing, URL normalization, matching, and href building. It sits between `@cookbook/pathkit` and higher-level router packages, but it does not define routes, route IDs, route trees, loaders, middleware, React hooks, components, or framework adapters.
 
-**Live Playground**: [https://the-cookbook.github.io/urlkit-playground/](https://the-cookbook.github.io/urlkit-playground/)
+## Status
+
+`@cookbook/urlkit` is currently version `0.0.0`. The implementation is covered by type, unit, integration, documentation-example, and build checks, but the package should be treated as pre-1.0 until its public API is released.
 
 ## Documentation
 
@@ -180,7 +182,24 @@ ArticleUrl.build({ params: { slug: 'post-1' } });
 // ArticleUrl.build({ pathname: '/articles/post-1' });
 ```
 
-Path params are inferred from the pattern. URLKit follows PathKit constraint chains and infers from the highest weighted constraint anywhere in the chain: `int > decimal/range/min/max > string/custom`. Built-in numeric constraints (`int`, `decimal`, `range(...)`, `min(...)`, and `max(...)`) parse to numbers in standalone `url(...)` contracts. String constraints such as `regex(...)`, `uuid`, `minlength(...)`, `maxlength(...)`, and custom constraints infer `string` unless a numeric constraint also appears in the chain.
+Path params are inferred from the pattern. PathKit owns path constraint syntax, matching, and runtime validation. URLKit delegates those concerns to PathKit and only reads PathKit-compatible constraint chains to infer/coerce parsed params.
+
+Built-in PathKit constraint inference in URLKit:
+
+| Constraint          | URLKit parsed param type | Notes                                        |
+| ------------------- | ------------------------ | -------------------------------------------- |
+| `int`               | `number`                 | Integer values.                              |
+| `decimal`           | `number`                 | Decimal numeric values.                      |
+| `min(value)`        | `number`                 | Inclusive numeric minimum.                   |
+| `max(value)`        | `number`                 | Inclusive numeric maximum.                   |
+| `range(min,max)`    | `number`                 | Inclusive numeric range.                     |
+| `uuid`              | `string`                 | Canonical hyphenated UUID values.            |
+| `minlength(length)` | `string`                 | Minimum string length.                       |
+| `maxlength(length)` | `string`                 | Maximum string length.                       |
+| `list(a\| b\| c)`   | `string`                 | Exact pipe-separated list values.            |
+| `regex(pattern)`    | `string`                 | Raw regex source without `/.../` delimiters. |
+
+Custom PathKit constraints infer `string` unless a numeric built-in constraint also appears in the chain.
 
 ```ts
 const UserUrl = url({ path: '/users/{id:int}' });
@@ -199,6 +218,19 @@ ProductUrl.parse('/products/2.5').params.id;
 
 ProductUrl.build({});
 // '/products'
+```
+
+The `regex` constraint receives raw regex source, not a JavaScript regex literal:
+
+```txt
+/posts/{slug:regex(/[a-z0-9-]+/)} // ERROR
+/posts/{slug:regex([a-z0-9-]+)}   // CORRECT
+```
+
+Inside TypeScript string literals, escape backslashes as needed:
+
+```ts
+url({ path: '/scores/{id:regex(\\d):min(1)}' });
 ```
 
 ### Custom path constraints
@@ -552,9 +584,10 @@ Good:
 
 ```ts
 const searchDescriptor = {
-  page: { value: 'int', default: 1 },
+  page: { type: 'int', default: 1 },
   sort: {
-    value: { type: 'enum', values: ['newest', 'popular'] },
+    type: 'enum',
+    values: ['newest', 'popular'],
     default: 'newest',
   },
 } as const;
@@ -578,7 +611,7 @@ import { compileStaticUrl } from '@cookbook/urlkit/static';
 const ProductUrl = compileStaticUrl({
   path: '/products/{id:int}',
   search: searchDescriptor,
-  hash: ['details', 'reviews'],
+  hash: { type: 'enum', values: ['details', 'reviews'], optional: true },
 });
 
 ProductUrl.parse('/products/42?sort=popular#details');
@@ -600,8 +633,8 @@ import {
 const routeDescriptor = {
   path: '/articles/{slug:regex([a-z0-9-]+)}',
   search: {
-    ref: { type: 'one', optional: true },
-    page: { value: 'int', default: 1 },
+    ref: { type: 'string', optional: true },
+    page: { type: 'int', default: 1 },
     publishedOn: {
       type: 'date',
       format: 'dd-MM-yyyy',
@@ -613,7 +646,7 @@ const routeDescriptor = {
       optional: true,
     },
   },
-  hash: ['comments', 'share'],
+  hash: { type: 'enum', values: ['comments', 'share'], optional: true },
 } as const;
 
 const ArticleUrl = createRouteUrlContract(routeDescriptor);

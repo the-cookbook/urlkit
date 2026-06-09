@@ -311,14 +311,15 @@ import { compileStaticUrl } from '@cookbook/urlkit/static';
 const compiled = compileStaticUrl({
   path: '/search',
   search: {
-    q: 'string',
-    page: { value: 'int', default: 1 },
+    q: { type: 'string' },
+    page: { type: 'int', default: 1 },
     sort: {
-      value: { type: 'enum', values: ['newest', 'popular'] },
+      type: 'enum',
+      values: ['newest', 'popular'],
       default: 'newest',
     },
   },
-  hash: ['results', 'filters'],
+  hash: { type: 'enum', values: ['results', 'filters'], optional: true },
 } as const);
 
 compiled.pattern;
@@ -333,8 +334,8 @@ import { createRouteUrlContract } from '@cookbook/urlkit/router-runtime';
 const ArticleUrl = createRouteUrlContract({
   path: '/articles/{slug:regex([a-z0-9-]+)}',
   search: {
-    ref: { type: 'one', optional: true },
-    page: { value: 'int', default: 1 },
+    ref: { type: 'string', optional: true },
+    page: { type: 'int', default: 1 },
     publishedOn: {
       type: 'date',
       format: 'dd-MM-yyyy',
@@ -346,7 +347,7 @@ const ArticleUrl = createRouteUrlContract({
       optional: true,
     },
   },
-  hash: ['comments', 'share'],
+  hash: { type: 'enum', values: ['comments', 'share'], optional: true },
 } as const);
 
 ArticleUrl.parse(

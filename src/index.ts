@@ -23,8 +23,17 @@ export { createRouteUrlContract } from './runtime/create-route-url-contract.js';
 export type { RouteUrlContract } from './runtime/create-route-url-contract.js';
 export type { CreateRouteUrlContractOptions } from './runtime/contracts.js';
 export type {
+  CompileStaticUrlOptions,
   StaticUrlDescriptor,
   StaticSearchDescriptor,
+  StaticSearchFieldBase,
+  StaticStringSearchField,
+  StaticNumberSearchField,
+  StaticIntSearchField,
+  StaticBooleanSearchField,
+  StaticDateSearchField,
+  StaticDateTimeSearchField,
+  StaticEnumSearchField,
   StaticSearchField,
   StaticHashDescriptor,
 } from './static/contracts.js';

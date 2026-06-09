@@ -8,12 +8,12 @@ import type {
   BuiltInStaticDateFormat,
   StaticDateFormat,
   StaticDateTimeFormat,
-  StaticSearchValue,
+  StaticSearchField,
 } from './contracts.js';
 
 export function normalizeStaticSearchDefault(
   fieldType: 'one' | 'many',
-  valueDescriptor: StaticSearchValue,
+  valueDescriptor: StaticSearchField,
   defaultValue: unknown,
   path: readonly string[],
 ): unknown {
@@ -33,11 +33,11 @@ export function normalizeStaticSearchDefault(
 }
 
 function normalizeSingleStaticSearchDefault(
-  valueDescriptor: StaticSearchValue,
+  valueDescriptor: StaticSearchField,
   defaultValue: unknown,
   path: readonly string[],
 ): unknown {
-  if (valueDescriptor === 'string') {
+  if (valueDescriptor.type === 'string') {
     if (typeof defaultValue === 'string') {
       return defaultValue;
     }
@@ -47,7 +47,7 @@ function normalizeSingleStaticSearchDefault(
     });
   }
 
-  if (valueDescriptor === 'number') {
+  if (valueDescriptor.type === 'number') {
     if (typeof defaultValue === 'number' && Number.isFinite(defaultValue)) {
       return defaultValue;
     }
@@ -59,7 +59,7 @@ function normalizeSingleStaticSearchDefault(
     );
   }
 
-  if (valueDescriptor === 'int') {
+  if (valueDescriptor.type === 'int') {
     if (typeof defaultValue === 'number' && Number.isInteger(defaultValue)) {
       return defaultValue;
     }
@@ -71,7 +71,7 @@ function normalizeSingleStaticSearchDefault(
     );
   }
 
-  if (valueDescriptor === 'boolean') {
+  if (valueDescriptor.type === 'boolean') {
     if (typeof defaultValue === 'boolean') {
       return defaultValue;
     }

@@ -127,7 +127,7 @@ describe('shared contracts', () => {
     expectTypeOf<UrlBuildInput<'path', Params, Search, undefined>>(buildWithParams);
     expectTypeOf<UrlNormalizeInput<'path', Params, Search, undefined>>(normalizeWithoutParams);
     expectTypeOf<UrlNormalizeInput<'path', Params, Search, undefined>>(normalizeWithParams);
-    expect(buildWithParams.params?.id).toBe(1);
+    expect(buildWithParams.params).toEqual({ id: 1 });
   });
 
   it('models pathless build and normalize inputs', () => {
@@ -190,8 +190,13 @@ describe('shared contracts', () => {
     }
 
     const withParams: PathBuildMethod<Params> = (params) => `/users/${params.id}`;
-    const withOptionalParams: PathBuildMethod<OptionalParams> = (params) =>
-      params?.id === undefined ? '/users' : `/users/${params.id}`;
+    const withOptionalParams: PathBuildMethod<OptionalParams> = (params) => {
+      if (!params || !('id' in params) || params.id === undefined) {
+        return '/users';
+      }
+
+      return `/users/${params.id}`;
+    };
     const withoutParams: PathBuildMethod<EmptyParams> = () => '/search';
 
     expect(withParams({ id: 1 })).toBe('/users/1');

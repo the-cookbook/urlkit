@@ -36,7 +36,7 @@ describe('coercePathParam', () => {
           kind: 'param',
           name: 'id',
           constraints: [
-            { type: 'regex', params: '\\d' },
+            { type: 'regex', params: '/\\d/' },
             { type: 'min', params: '1' },
           ],
         },

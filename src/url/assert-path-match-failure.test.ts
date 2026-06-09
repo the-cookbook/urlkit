@@ -85,7 +85,7 @@ describe('assertPathMatchFailure', () => {
     throw new Error('Expected invalid-param.');
   });
 
-  it('keeps PathKit as the source of truth for chained path constraint failures', () => {
+  it('throws path-mismatch when PathKit rejects a chained constraint match structurally', () => {
     expect(() =>
       assertPathMatchFailure('/users/{id:int:min(1)}', '/users/1.5', [
         { kind: 'literal', value: 'users' },

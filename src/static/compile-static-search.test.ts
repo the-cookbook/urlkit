@@ -60,24 +60,39 @@ describe('compileStaticSearch', () => {
     });
   });
 
-  it('supports shorthand and value static search field forms', () => {
-    const schema = compileStaticSearch({
-      q: 'string',
-      page: { value: 'int', default: 1 },
-      sort: { value: { type: 'enum', values: ['newest', 'popular'] }, default: 'newest' },
-    } as const);
-
-    expect(parseSearch('?q=router&sort=popular', { schema }).search).toEqual({
-      q: 'router',
-      page: 1,
-      sort: 'popular',
-    });
+  it('rejects invalid legacy static search field forms', () => {
+    expect(() => compileStaticSearch({ q: 'string' } as never)).toThrow(
+      'Static search field must use the object form',
+    );
+    expect(() => compileStaticSearch({ page: { value: 'int', default: 1 } } as never)).toThrow(
+      'Static search field must define a type.',
+    );
+    expect(() =>
+      compileStaticSearch({
+        sort: { value: { type: 'enum', values: ['newest', 'popular'] }, default: 'newest' },
+      } as never),
+    ).toThrow('Static search field must define a type.');
+    expect(() => compileStaticSearch({ q: { type: 'one' } } as never)).toThrow(
+      'Static search field type is invalid.',
+    );
     expect(() => compileStaticSearch({ q: { type: 'many' } } as never)).toThrow(
       'Static search field type is invalid.',
     );
-    expect(() =>
-      compileStaticSearch({ created: { value: 'date', optional: true } } as never),
-    ).toThrow('Static search field value is invalid.');
+  });
+
+  it('rejects invalid static search field forms through the public static compiler', () => {
+    const invalidDescriptors = [
+      { q: 'string' },
+      { page: { value: 'int', default: 1 } },
+      { tags: { type: 'many', value: 'string' } },
+      { q: { type: 'string', optional: false } },
+      { tags: { type: 'string', many: false } },
+      { page: { type: 'int', optional: true, default: 1 } },
+    ] as const;
+
+    for (const descriptor of invalidDescriptors) {
+      expect(() => compileStaticSearch(descriptor as never)).toThrow(UrlKitError);
+    }
   });
 
   it('supports static date and date-time format strings', () => {

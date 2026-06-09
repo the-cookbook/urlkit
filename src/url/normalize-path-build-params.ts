@@ -14,7 +14,7 @@ export function normalizePathBuildParams(
   const normalized: Record<string, string | number | boolean> = {};
 
   for (const [key, value] of Object.entries(params)) {
-    if (value === undefined || value === null) {
+    if (value == null) {
       throw new UrlKitError('missing-param', `Path parameter "${key}" is required.`, {
         path: ['params', key],
       });

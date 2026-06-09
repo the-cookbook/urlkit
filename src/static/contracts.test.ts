@@ -5,6 +5,15 @@ import type {
   InferStaticSearch,
   InferStaticUrlHash,
   InferStaticUrlSearch,
+  StaticBooleanSearchField,
+  StaticDateSearchField,
+  StaticDateTimeSearchField,
+  StaticEnumSearchField,
+  StaticIntSearchField,
+  StaticNumberSearchField,
+  StaticSearchField,
+  StaticSearchFieldBase,
+  StaticStringSearchField,
   StaticUrlModeFromDescriptor,
 } from './contracts.js';
 
@@ -15,6 +24,18 @@ describe('static contracts', () => {
     };
 
     expect(options.pathConstraints).toEqual({});
+  });
+
+  it('exports explicit static search field contracts', () => {
+    expectTypeOf<StaticSearchFieldBase>({ many: true });
+    expectTypeOf<StaticStringSearchField>({ type: 'string' });
+    expectTypeOf<StaticNumberSearchField>({ type: 'number' });
+    expectTypeOf<StaticIntSearchField>({ type: 'int' });
+    expectTypeOf<StaticBooleanSearchField>({ type: 'boolean' });
+    expectTypeOf<StaticDateSearchField>({ type: 'date', format: 'unix-seconds' });
+    expectTypeOf<StaticDateTimeSearchField>({ type: 'date-time' });
+    expectTypeOf<StaticEnumSearchField>({ type: 'enum', values: ['newest', 'popular'] });
+    expectTypeOf<StaticSearchField>({ type: 'string', optional: true });
   });
 
   it('infers static search fields', () => {

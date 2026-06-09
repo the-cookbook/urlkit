@@ -1,34 +1,22 @@
 import { UrlKitError } from '../errors/url-kit-error.js';
-import type {
-  StaticDateFormat,
-  StaticDateTimeFormat,
-  StaticSearchField,
-  StaticSearchValue,
-} from './contracts.js';
+import type { StaticDateFormat, StaticDateTimeFormat, StaticSearchField } from './contracts.js';
 
 export function assertStaticSearchField(
   field: unknown,
   path: readonly string[],
 ): asserts field is StaticSearchField {
-  normalizeStaticSearchField(field, path);
-}
-
-export function normalizeStaticSearchField(
-  field: unknown,
-  path: readonly string[],
-): StaticSearchField {
-  if (typeof field === 'string') {
-    const normalized = { type: field } as StaticSearchField;
-    normalizeStaticSearchFieldValue(normalized, path);
-    return Object.freeze(normalized);
-  }
-
   if (!isRecord(field)) {
     throw new UrlKitError(
       'invalid-descriptor',
-      'Static search field must use the string shorthand, { value, many, optional, default }, or { type, many, optional, default } form.',
+      'Static search field must use the object form { type, many, optional, default }.',
       { path },
     );
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(field, 'type')) {
+    throw new UrlKitError('invalid-descriptor', 'Static search field must define a type.', {
+      path,
+    });
   }
 
   assertLiteralTrueFlag(field.many, 'many', path);
@@ -42,40 +30,15 @@ export function normalizeStaticSearchField(
     );
   }
 
-  if (Object.prototype.hasOwnProperty.call(field, 'value')) {
-    if (Object.prototype.hasOwnProperty.call(field, 'type')) {
-      throw new UrlKitError(
-        'invalid-descriptor',
-        'Static search field cannot combine value with type.',
-        { path },
-      );
-    }
-
-    return normalizeStaticSearchValueField(field, path);
-  }
-
-  if (!Object.prototype.hasOwnProperty.call(field, 'type')) {
-    throw new UrlKitError(
-      'invalid-descriptor',
-      'Static search field must define a type or value.',
-      {
-        path,
-      },
-    );
-  }
-
-  const normalized = field as unknown as StaticSearchField;
-  normalizeStaticSearchFieldValue(normalized, path);
-
-  return Object.freeze({ ...normalized });
+  normalizeStaticSearchFieldValue(field as unknown as StaticSearchField, path);
 }
 
 export function normalizeStaticSearchFieldValue(
   field: StaticSearchField,
   path: readonly string[],
-): StaticSearchValue {
+): StaticSearchField {
   if (isStaticPrimitiveSearchType(field.type)) {
-    return field.type;
+    return Object.freeze({ type: field.type });
   }
 
   if (isStaticDateField(field)) {
@@ -131,42 +94,6 @@ export function normalizeStaticSearchFieldType(
   throw new UrlKitError('invalid-descriptor', 'Static search field many flag must be true.', {
     path,
   });
-}
-
-function normalizeStaticSearchValueField(
-  field: Record<string, unknown>,
-  path: readonly string[],
-): StaticSearchField {
-  const value = normalizeStaticSearchValue(field.value, path);
-  const normalized = {
-    ...toStaticSearchFieldDescriptor(value),
-    ...(field.many === true ? { many: true as const } : {}),
-    ...(field.optional === true ? { optional: true as const } : {}),
-    ...(Object.prototype.hasOwnProperty.call(field, 'default') ? { default: field.default } : {}),
-  } as StaticSearchField;
-
-  return Object.freeze(normalized);
-}
-
-function normalizeStaticSearchValue(value: unknown, path: readonly string[]): StaticSearchValue {
-  if (isStaticPrimitiveSearchType(value)) {
-    return value;
-  }
-
-  if (!isRecord(value)) {
-    throw new UrlKitError('invalid-descriptor', 'Static search field value is invalid.', { path });
-  }
-
-  const normalized = value as unknown as StaticSearchField;
-  return normalizeStaticSearchFieldValue(normalized, path);
-}
-
-function toStaticSearchFieldDescriptor(value: StaticSearchValue): StaticSearchField {
-  if (typeof value === 'string') {
-    return { type: value } as StaticSearchField;
-  }
-
-  return { ...value };
 }
 
 function assertLiteralTrueFlag(input: unknown, name: string, path: readonly string[]): void {

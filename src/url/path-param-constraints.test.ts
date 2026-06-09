@@ -12,15 +12,15 @@ describe('path param constraints', () => {
       kind: 'param',
       name: 'id',
       constraint: 'regex',
-      constraintParams: '\\d',
+      constraintParams: '/\\d/',
       constraints: [
-        { type: 'regex', params: '\\d' },
+        { type: 'regex', params: '/\\d/' },
         { type: 'min', params: '1' },
       ],
     };
 
     expect(getPathParamConstraints(segment)).toEqual([
-      { type: 'regex', params: '\\d' },
+      { type: 'regex', params: '/\\d/' },
       { type: 'min', params: '1' },
     ]);
     expect(hasPathParamConstraint(segment, 'min')).toBe(true);

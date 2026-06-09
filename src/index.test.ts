@@ -31,6 +31,15 @@ import type {
   ParseUrlOptions,
   SearchArrayFormat,
   PatchSearchOptions,
+  StaticBooleanSearchField,
+  StaticDateSearchField,
+  StaticDateTimeSearchField,
+  StaticEnumSearchField,
+  StaticIntSearchField,
+  StaticNumberSearchField,
+  StaticSearchField,
+  StaticSearchFieldBase,
+  StaticStringSearchField,
   PathBuildMethod,
   PathConstraintMap,
   RegisterPathConstraintOptions,
@@ -147,6 +156,15 @@ describe('main public exports', () => {
     });
     expectTypeOf<ConstraintValidation>(constraint);
     expectTypeOf<PathConstraintMap>({ urlkitindexconstraint: constraint });
+    expectTypeOf<StaticSearchFieldBase>({ optional: true });
+    expectTypeOf<StaticStringSearchField>({ type: 'string' });
+    expectTypeOf<StaticNumberSearchField>({ type: 'number' });
+    expectTypeOf<StaticIntSearchField>({ type: 'int' });
+    expectTypeOf<StaticBooleanSearchField>({ type: 'boolean' });
+    expectTypeOf<StaticDateSearchField>({ type: 'date' });
+    expectTypeOf<StaticDateTimeSearchField>({ type: 'date-time' });
+    expectTypeOf<StaticEnumSearchField>({ type: 'enum', values: ['newest', 'popular'] });
+    expectTypeOf<StaticSearchField>({ type: 'string' });
   });
 
   it('exports the custom date format codec contract', () => {
