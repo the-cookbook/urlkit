@@ -34,10 +34,10 @@ importers:
         version: 5.9.3
 
 packages:
-  '@cookbook/pathkit@0.4.0':
+  '@cookbook/pathkit@0.4.1':
     resolution:
       {
-        integrity: sha512-3bkrWdrBTTIY0blYfML6BjMcB7X2hWLFf5LudcTbcb0sWgdJ51YJcDVozUEXC84iS5l2xXltwZ9QiMnyNIRtZw==,
+        integrity: sha512-F/NCJS+F92UEnZ72Hj7OEqD9Sno8XZg23cybCKZd6FnDsHTcHYV3xkX09Hx6BWAsKmLuZbIGTAT7KXA8NoPpuw==,
       }
     engines: { node: '>=20.0.0' }
 
@@ -516,11 +516,11 @@ packages:
       }
 
 snapshots:
-  '@cookbook/pathkit@0.4.0': {}
+  '@cookbook/pathkit@0.4.1': {}
 
   '@cookbook/urlkit@file:../../..':
     dependencies:
-      '@cookbook/pathkit': 0.4.0
+      '@cookbook/pathkit': 0.4.1
 
   '@emnapi/runtime@1.10.0':
     dependencies:
