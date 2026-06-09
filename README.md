@@ -9,9 +9,7 @@ Framework-agnostic typed URL contracts for parsing, validating, normalizing, mat
 
 URLKit owns typed URL state: path params, search params, hash fragments, request parsing, URL normalization, matching, and href building. It sits between `@cookbook/pathkit` and higher-level router packages, but it does not define routes, route IDs, route trees, loaders, middleware, React hooks, components, or framework adapters.
 
-## Status
-
-`@cookbook/urlkit` is currently version `0.0.0`. The implementation is covered by type, unit, integration, documentation-example, and build checks, but the package should be treated as pre-1.0 until its public API is released.
+**Live Playground**: [https://the-cookbook.github.io/urlkit-playground/](https://the-cookbook.github.io/urlkit-playground/)
 
 ## Documentation
 
