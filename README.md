@@ -6,6 +6,10 @@
 [![license](https://img.shields.io/npm/l/@cookbook/urlkit.svg)](https://github.com/the-cookbook/urlkit/blob/main/LICENSE)
 [![CI](https://github.com/the-cookbook/urlkit/actions/workflows/ci.yml/badge.svg)](https://github.com/the-cookbook/urlkit/actions/workflows/ci.yml)
 
+<div align="center">
+  <img src="/assets/statepus.png" alt="Cookbook URLKit" style="width:420px;" />
+</div>
+
 Framework-agnostic URL contracts for parsing, validating, normalizing, matching, and building URL state.
 
 URLKit defines reusable URL contracts once, then uses them to parse, validate, normalize, match, and build path params, search params, hash fragments, requests, hrefs, filters, and other URL-driven application state wherever URLs are consumed.
