@@ -21,6 +21,7 @@ import type {
   SearchArrayFormat,
   UnknownSearchBehavior,
   UrlPathMatchOptions,
+  UrlPathWildcardFormat,
 } from '../contracts.js';
 import type { HashSchema, NormalizedHashDescriptor } from '../hash/contracts.js';
 import type {
@@ -61,25 +62,39 @@ export interface UrlContract<
   Hash,
   SearchInput = Partial<Search>,
   HashInput = Hash,
+  PathPattern extends string = string,
 > {
   readonly pattern: Mode extends 'path' ? string : undefined;
 
-  parse(input: string | URL, options?: ParseUrlOptions): UrlState<Pathname, Params, Search, Hash>;
-
-  safeParse(
+  parse<const Options extends ParseUrlOptions | undefined = undefined>(
     input: string | URL,
-    options?: ParseUrlOptions,
-  ): UrlSafeParseResult<Pathname, Params, Search, Hash>;
+    options?: Options,
+  ): UrlState<Pathname, PathParamsFromOptions<PathPattern, Params, Options>, Search, Hash>;
 
-  parseRequest(
-    input: Request | UrlRequestInput,
-    options?: ParseRequestOptions,
-  ): UrlState<Pathname, Params, Search, Hash>;
+  safeParse<const Options extends ParseUrlOptions | undefined = undefined>(
+    input: string | URL,
+    options?: Options,
+  ): UrlSafeParseResult<
+    Pathname,
+    PathParamsFromOptions<PathPattern, Params, Options>,
+    Search,
+    Hash
+  >;
 
-  safeParseRequest(
+  parseRequest<const Options extends ParseRequestOptions | undefined = undefined>(
     input: Request | UrlRequestInput,
-    options?: ParseRequestOptions,
-  ): UrlSafeParseResult<Pathname, Params, Search, Hash>;
+    options?: Options,
+  ): UrlState<Pathname, PathParamsFromOptions<PathPattern, Params, Options>, Search, Hash>;
+
+  safeParseRequest<const Options extends ParseRequestOptions | undefined = undefined>(
+    input: Request | UrlRequestInput,
+    options?: Options,
+  ): UrlSafeParseResult<
+    Pathname,
+    PathParamsFromOptions<PathPattern, Params, Options>,
+    Search,
+    Hash
+  >;
 
   normalize<
     const Input extends UrlNormalizeInput<Mode, Params, Search, Hash, SearchInput, HashInput>,
@@ -105,7 +120,10 @@ export interface UrlContract<
   match(input: string | URL, options?: ParseUrlOptions): boolean;
 
   readonly parsePathname: Mode extends 'path'
-    ? (pathname: string, options?: UrlPathMatchOptions) => Params
+    ? <const Options extends UrlPathMatchOptions | undefined = undefined>(
+        pathname: string,
+        options?: Options,
+      ) => PathParamsFromOptions<PathPattern, Params, Options>
     : never;
 
   readonly buildPath: Mode extends 'path' ? PathBuildMethod<Params> : never;
@@ -151,8 +169,14 @@ export interface CompiledPath<
   Params = ParamsFromPattern<Pattern>,
 > {
   readonly pattern: Pattern;
-  parsePathname(pathname: string, options?: UrlPathMatchOptions): Params;
-  matchPathname(pathname: string, options?: UrlPathMatchOptions): PathMatchResult<Params>;
+  parsePathname<const Options extends UrlPathMatchOptions | undefined = undefined>(
+    pathname: string,
+    options?: Options,
+  ): ParamsFromPatternWithOptions<Pattern, Options>;
+  matchPathname<const Options extends UrlPathMatchOptions | undefined = undefined>(
+    pathname: string,
+    options?: Options,
+  ): PathMatchResult<ParamsFromPatternWithOptions<Pattern, Options>>;
   buildPath: PathBuildMethod<Params>;
 }
 
@@ -171,6 +195,12 @@ export type ParamsFromRuntimeDescriptor<Descriptor> = Descriptor extends {
 }
   ? ParamsFromPattern<Pattern>
   : EmptyParams;
+
+export type PathPatternFromRuntimeDescriptor<Descriptor> = Descriptor extends {
+  readonly path: infer Pattern extends string;
+}
+  ? Pattern
+  : string;
 
 export type SearchFromRuntimeDescriptor<Descriptor> = Descriptor extends {
   readonly search: infer Search extends RuntimeSearchSchema;
@@ -228,15 +258,37 @@ export type PathnameFromPattern<Pattern extends string> =
 
 export type ParamsFromPattern<Pattern extends string> = Simplify<ExtractPathParams<Pattern>>;
 
-type ExtractPathParams<Pattern extends string> =
-  Pattern extends `${string}{${infer Token}}${infer Rest}`
-    ? ParamFromToken<Token> & ExtractPathParams<Rest>
-    : {};
+export type ParamsFromPatternWithOptions<Pattern extends string, Options> = Simplify<
+  ExtractPathParams<Pattern, WildcardFormatFromPathMatchOptions<Options>>
+>;
 
-type ParamFromToken<Token extends string> =
+export type PathParamsFromOptions<
+  PathPattern extends string,
+  Params,
+  Options,
+> = string extends PathPattern ? Params : ParamsFromPatternWithOptions<PathPattern, Options>;
+
+type WildcardFormatFromPathMatchOptions<Options> = Options extends {
+  readonly wildcardFormat: 'array';
+}
+  ? 'array'
+  : 'string';
+
+type ExtractPathParams<
+  Pattern extends string,
+  WildcardFormat extends UrlPathWildcardFormat = 'string',
+> = Pattern extends `${string}{${infer Token}}${infer Rest}`
+  ? ParamFromToken<Token, WildcardFormat> & ExtractPathParams<Rest, WildcardFormat>
+  : {};
+
+type ParamFromToken<Token extends string, WildcardFormat extends UrlPathWildcardFormat> =
   IsOptionalPathParamToken<Token> extends true
-    ? Readonly<Partial<Record<PathParamNameFromToken<Token>, PathParamValue<Token>>>>
-    : Readonly<Record<PathParamNameFromToken<Token>, PathParamValue<Token>>>;
+    ? Readonly<
+        Partial<Record<PathParamNameFromToken<Token>, PathParamValue<Token, WildcardFormat>>>
+      >
+    : Readonly<Record<PathParamNameFromToken<Token>, PathParamValue<Token, WildcardFormat>>>;
+
+type IsWildcardPathParamToken<Token extends string> = Token extends `*${string}` ? true : false;
 
 type StripWildcardPathParam<Token extends string> = Token extends `*${infer Name}` ? Name : Token;
 
@@ -261,7 +313,14 @@ type ConstraintChainFromToken<Token extends string> =
 
 type CleanPathParamName<Name extends string> = Name extends `${infer Clean}?` ? Clean : Name;
 
-type PathParamValue<Param extends string> = PathParamValueFromConstraintChain<
+type PathParamValue<Param extends string, WildcardFormat extends UrlPathWildcardFormat = 'string'> =
+  IsWildcardPathParamToken<Param> extends true
+    ? WildcardFormat extends 'array'
+      ? readonly PathParamScalarValue<Param>[]
+      : PathParamScalarValue<Param>
+    : PathParamScalarValue<Param>;
+
+type PathParamScalarValue<Param extends string> = PathParamValueFromConstraintChain<
   ConstraintChainFromToken<Param>
 >;
 

@@ -62,7 +62,6 @@ describe('url', () => {
       >
     >(UserUrl);
   });
-
   it('supports custom PathKit constraints in runtime URL contracts', () => {
     const slug = createConstraint({
       parse(paramName, value) {
@@ -267,7 +266,7 @@ describe('url parse and safeParse', () => {
 
     if (!failure.success) {
       expect(failure.error).toBeInstanceOf(UrlKitError);
-      expect(failure.error.code).toBe('path-mismatch');
+      expect(failure.error.code).toBe('invalid-param');
     }
   });
 
@@ -299,6 +298,100 @@ describe('url parse and safeParse', () => {
         tag: ['react,router'],
       },
     );
+  });
+
+  it('decodes wildcard segments after splitting path separators', () => {
+    const FilesUrl = url({
+      path: '/dashboard/files/{*path}',
+    });
+
+    const defaultState = FilesUrl.parse('/dashboard/files/a%2Fb/c');
+    const state = FilesUrl.parse('/dashboard/files/a%2Fb/c', {
+      decode: true,
+      wildcardFormat: 'array',
+    });
+
+    const safeParseState = FilesUrl.safeParse('/dashboard/files/a%2Fb/c', {
+      decode: true,
+      wildcardFormat: 'array',
+    });
+
+    expect(defaultState.params).toEqual({
+      path: 'a%2Fb/c',
+    });
+    expectType<{ readonly path: string }>(defaultState.params);
+
+    expect(state).toEqual({
+      hash: undefined,
+      params: { path: ['a/b', 'c'] },
+      pathname: '/dashboard/files/a%2Fb/c',
+      search: {},
+    });
+    expectType<{ readonly path: readonly string[] }>(state.params);
+
+    expect(safeParseState).toEqual({
+      success: true,
+      data: {
+        hash: undefined,
+        params: { path: ['a/b', 'c'] },
+        pathname: '/dashboard/files/a%2Fb/c',
+        search: {},
+      },
+    });
+
+    if (safeParseState.success) {
+      expectType<{ readonly path: readonly string[] }>(safeParseState.data.params);
+    }
+  });
+
+  it('supports path match options and per-call overrides in combination', () => {
+    const ApiUrl = url(
+      {
+        path: '/API',
+      },
+      {
+        pathMatch: {
+          end: false,
+          sensitive: false,
+        },
+      },
+    );
+
+    expect(ApiUrl.parse('/api/users').pathname).toBe('/api');
+    expect(ApiUrl.match('/api/users')).toBe(true);
+    expect(ApiUrl.match('/api/users', { sensitive: true })).toBe(false);
+    expect(ApiUrl.match('/api/users', { end: true })).toBe(false);
+    expect(ApiUrl.match('/apix/users')).toBe(false);
+  });
+
+  it('respects trailing path option overrides', () => {
+    const UserUrl = url({ path: '/users/{id:int}' });
+
+    expect(UserUrl.match('/users/42/')).toBe(true);
+    expect(UserUrl.match('/users/42/', { trailing: false })).toBe(false);
+  });
+
+  it('throws strict path constraint errors when requested', () => {
+    const UserUrl = url({ path: '/users/{id:int}' });
+
+    expect(UserUrl.match('/users/wrong')).toBe(false);
+    expect(() => UserUrl.match('/users/wrong', { strict: true })).toThrow(UrlKitError);
+  });
+
+  it('supports custom decoders with wildcard arrays', () => {
+    const FilesUrl = url({
+      path: '/dashboard/files/{*path}',
+    });
+
+    const params = FilesUrl.parsePathname('/dashboard/files/alpha-beta/release-notes', {
+      decode: (value: string) => value.replaceAll('-', ' '),
+      wildcardFormat: 'array',
+    });
+
+    expect(params).toEqual({
+      path: ['alpha beta', 'release notes'],
+    });
+    expectType<{ readonly path: readonly string[] }>(params);
   });
 
   it('uses contract-level unknownSearch and method-level overrides', () => {
@@ -756,6 +849,22 @@ describe('url contract helper methods', () => {
     expect(SearchUrl.replaceSearch(input, { q: 'router' })).toBe('/products?q=router#top');
   });
 
+  it('decodes wildcard segments after splitting path separators', () => {
+    const FilesUrl = url({
+      path: '/dashboard/files/{*path}',
+    });
+
+    const params = FilesUrl.parsePathname('/dashboard/files/a%2Fb/c', {
+      decode: true,
+      wildcardFormat: 'array',
+    });
+
+    expect(params).toEqual({
+      path: ['a/b', 'c'],
+    });
+    expectType<{ readonly path: readonly string[] }>(params);
+  });
+
   it('keeps path methods mode-aware by type', () => {
     const UserUrl = url({ path: '/users/{id:int}' });
     const FiltersUrl = url({ search: { q: string().optional() } });
@@ -841,7 +950,7 @@ describe('url parseRequest and safeParseRequest', () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.code).toBe('path-mismatch');
+      expect(result.error.code).toBe('invalid-param');
     }
   });
 
@@ -879,6 +988,49 @@ describe('url parseRequest and safeParseRequest', () => {
         { arrayFormat: 'comma' },
       ).search,
     ).toEqual({ tag: ['react', 'router'] });
+  });
+
+  it('decodes wildcard segments after splitting path separators', () => {
+    const FilesUrl = url({
+      path: '/dashboard/files/{*path}',
+    });
+
+    const state = FilesUrl.parseRequest(
+      { url: 'https://example.com/dashboard/files/a%2Fb/c' },
+      {
+        decode: true,
+        wildcardFormat: 'array',
+      },
+    );
+    const safeParseState = FilesUrl.safeParseRequest(
+      { url: 'https://example.com/dashboard/files/a%2Fb/c' },
+      {
+        decode: true,
+        wildcardFormat: 'array',
+      },
+    );
+
+    expect(state).toEqual({
+      pathname: '/dashboard/files/a%2Fb/c',
+      params: { path: ['a/b', 'c'] },
+      hash: undefined,
+      search: {},
+    });
+    expectType<{ readonly path: readonly string[] }>(state.params);
+
+    expect(safeParseState).toEqual({
+      success: true,
+      data: {
+        pathname: '/dashboard/files/a%2Fb/c',
+        params: { path: ['a/b', 'c'] },
+        hash: undefined,
+        search: {},
+      },
+    });
+
+    if (safeParseState.success) {
+      expectType<{ readonly path: readonly string[] }>(safeParseState.data.params);
+    }
   });
 
   it('passes unknownSearch options through ParseRequestOptions', () => {

@@ -21,7 +21,7 @@ export function compilePath<Pattern extends string>(
   }
 
   const paramsMode = options.params ?? 'parsed';
-  const { segments, matcherCache, builder } = compilePathPattern(pattern);
+  const { segments, pathParamNames, matcherCache, builder } = compilePathPattern(pattern);
 
   return Object.freeze({
     pattern,
@@ -72,7 +72,7 @@ export function compilePath<Pattern extends string>(
         params: Object.freeze(coercePathParams(result.params, segments, paramsMode)),
       });
     } catch (error) {
-      throw mapPathKitMatchError(error);
+      throw mapPathKitMatchError(error, pathParamNames);
     }
   }
 }
@@ -149,12 +149,16 @@ function compilePathPattern<Pattern extends string>(
   pattern: Pattern,
 ): {
   readonly segments: ReturnType<typeof parsePathPattern>;
+  readonly pathParamNames: readonly string[];
   readonly matcherCache: ReturnType<typeof createPathMatchCache>;
   readonly builder: ReturnType<typeof compile>;
 } {
   try {
+    const segments = parsePathPattern(pattern);
+
     return Object.freeze({
-      segments: parsePathPattern(pattern),
+      segments,
+      pathParamNames: getPathParamNames(segments),
       matcherCache: createValidatedPathMatchCache(pattern),
       builder: compile(pattern),
     });
@@ -168,6 +172,12 @@ function compilePathPattern<Pattern extends string>(
       cause: error,
     });
   }
+}
+
+function getPathParamNames(segments: ReturnType<typeof parsePathPattern>): readonly string[] {
+  return Object.freeze(
+    segments.flatMap((segment) => (segment.kind === 'param' ? [segment.name] : [])),
+  );
 }
 
 function createValidatedPathMatchCache(pattern: string): ReturnType<typeof createPathMatchCache> {

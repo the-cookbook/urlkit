@@ -45,10 +45,11 @@ export function createUrlContract<
   Hash = string | undefined,
   SearchInput = Partial<Search>,
   HashInput = Hash,
+  PathPattern extends string = string,
 >(
   descriptor: NormalizedUrlDescriptor<Mode>,
   options: CreateUrlContractOptions = {},
-): UrlContract<Mode, Pathname, Params, Search, Hash, SearchInput, HashInput> {
+): UrlContract<Mode, Pathname, Params, Search, Hash, SearchInput, HashInput, PathPattern> {
   const compiled = compileUrlDescriptor(descriptor);
   const unknownSearch = options.unknownSearch ?? 'strip';
   const arrayFormat = options.arrayFormat ?? 'repeat';
@@ -249,7 +250,8 @@ export function createUrlContract<
     Search,
     Hash,
     SearchInput,
-    HashInput
+    HashInput,
+    PathPattern
   >;
 }
 

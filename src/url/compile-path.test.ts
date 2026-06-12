@@ -124,17 +124,21 @@ describe('compilePath', () => {
     expectUrlKitError(() => path.buildPath({ id: 'abc' } as never), 'invalid-param', ['params']);
   });
 
-  it('throws path-mismatch when PathKit rejects constrained params as non-matches', () => {
+  it('throws invalid-param when PathKit rejects constrained params with strict validation', () => {
     const intPath = compilePath('/users/{id:int}');
     const decimalPath = compilePath('/prices/{amount:decimal}');
     const rangePath = compilePath('/users/{id:range(1,10)}');
     const regexPath = compilePath('/posts/{slug:regex([a-z0-9-]+)}');
 
-    expectUrlKitError(() => intPath.parsePathname('/users/abc'), 'path-mismatch', ['pathname']);
-    expectUrlKitError(() => decimalPath.parsePathname('/prices/abc'), 'path-mismatch', [
-      'pathname',
+    expectUrlKitError(() => intPath.parsePathname('/users/abc'), 'invalid-param', ['params', 'id']);
+    expectUrlKitError(() => decimalPath.parsePathname('/prices/abc'), 'invalid-param', [
+      'params',
+      'amount',
     ]);
-    expectUrlKitError(() => rangePath.parsePathname('/users/abc'), 'path-mismatch', ['pathname']);
+    expectUrlKitError(() => rangePath.parsePathname('/users/abc'), 'invalid-param', [
+      'params',
+      'id',
+    ]);
     expectUrlKitError(() => regexPath.parsePathname('/posts/Post'), 'invalid-param', [
       'params',
       'slug',
