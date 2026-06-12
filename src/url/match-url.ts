@@ -7,16 +7,24 @@ export function matchCompiledUrl(
   input: string | URL,
   compiled: CompiledUrlDescriptor,
   unknownSearch: UnknownSearchBehavior,
-  options: Pick<ParseUrlOptions, 'arrayFormat' | 'invalidSearch'> = {},
+  options: ParseUrlOptions = {},
 ): boolean {
   try {
     parseCompiledUrl(input, compiled, unknownSearch, options);
     return true;
   } catch (error) {
-    if (error instanceof UrlKitError) {
-      return false;
+    if (shouldRethrowMatchError(error, options)) {
+      throw error;
     }
 
     return false;
   }
+}
+
+function shouldRethrowMatchError(error: unknown, options: ParseUrlOptions): boolean {
+  if (!(error instanceof UrlKitError)) {
+    return false;
+  }
+
+  return error.code === 'invalid-param' && (options.strict === true || Boolean(options.decode));
 }

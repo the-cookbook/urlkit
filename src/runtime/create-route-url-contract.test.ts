@@ -399,9 +399,9 @@ describe('createRouteUrlContract', () => {
   it('keeps route concepts outside the router-runtime options contract', () => {
     createRouteUrlContract({ path: '/users/{id}' } as const);
 
-    expectTypeOf<'params' | 'unknownSearch' | 'arrayFormat' | 'pathConstraints' | never>(
-      {} as keyof import('./contracts.js').CreateRouteUrlContractOptions,
-    );
+    expectTypeOf<
+      'params' | 'unknownSearch' | 'arrayFormat' | 'pathConstraints' | 'pathMatch' | never
+    >({} as keyof import('./contracts.js').CreateRouteUrlContractOptions);
   });
 
   it('supports contract-level arrayFormat options', () => {

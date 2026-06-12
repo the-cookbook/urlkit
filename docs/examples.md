@@ -87,6 +87,60 @@ ArticleUrl.parse('/articles/hello').params.slug;
 
 See [`examples/optional-path-params.ts`](../examples/optional-path-params.ts) for optional params, chained numeric constraints, UUIDs, and length constraints.
 
+## Path match options
+
+Use `pathMatch` to set shared path options.
+
+```ts
+import { url } from '@cookbook/urlkit';
+
+const ApiUrl = url({ path: '/api' }, { pathMatch: { end: false } });
+
+ApiUrl.parse('/api/users').pathname;
+// '/api'
+```
+
+Per-call options override shared options.
+
+```ts
+ApiUrl.match('/api/users', { end: true });
+// false
+```
+
+Wildcard params are strings by default.
+
+```ts
+const FileUrl = url({ path: '/files/{*path}' });
+
+FileUrl.parse('/files/docs/readme').params;
+// { path: 'docs/readme' }
+```
+
+Use `wildcardFormat: 'array'` to return wildcard params as path segments.
+
+```ts
+FileUrl.parse('/files/docs/readme', { wildcardFormat: 'array' }).params;
+// { path: ['docs', 'readme'] }
+```
+
+Use `decode: true` to decode path params with `decodeURIComponent`.
+
+```ts
+const UserUrl = url({ path: '/users/{name}' });
+
+UserUrl.parse('/users/John%20Doe', { decode: true }).params;
+// { name: 'John Doe' }
+```
+
+Use a custom decoder when path params need app-specific decoding.
+
+```ts
+UserUrl.parse('/users/John-Doe', {
+  decode: (value) => value.replaceAll('-', ' '),
+}).params;
+// { name: 'John Doe' }
+```
+
 ## Pathless search contract
 
 ```ts

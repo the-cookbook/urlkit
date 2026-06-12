@@ -203,4 +203,40 @@ describe('parseCompiledUrl', () => {
       unknownSearch: { debug: 'true' },
     });
   });
+
+  it('uses consumed path as pathname when end is false', () => {
+    const compiled = compileUrlDescriptor(compileRuntimeUrlDescriptor({ path: '/api' }));
+
+    expect(parseCompiledUrl('/api/users?page=2', compiled, 'strip', { end: false })).toEqual({
+      pathname: '/api',
+      params: {},
+      search: {},
+      hash: undefined,
+    });
+  });
+
+  it('passes PathKit match options to path parsing', () => {
+    const files = compileUrlDescriptor(compileRuntimeUrlDescriptor({ path: '/files/{*path}' }));
+    const user = compileUrlDescriptor(compileRuntimeUrlDescriptor({ path: '/Users/{name}' }));
+
+    expect(
+      parseCompiledUrl('/files/docs/guides/readme', files, 'strip', {
+        wildcardFormat: 'array',
+      }),
+    ).toEqual({
+      pathname: '/files/docs/guides/readme',
+      params: { path: ['docs', 'guides', 'readme'] },
+      search: {},
+      hash: undefined,
+    });
+    expect(parseCompiledUrl('/users/John%20Doe', user, 'strip', { decode: true })).toEqual({
+      pathname: '/users/John%20Doe',
+      params: { name: 'John Doe' },
+      search: {},
+      hash: undefined,
+    });
+    expect(() => parseCompiledUrl('/users/jane', user, 'strip', { sensitive: true })).toThrow(
+      UrlKitError,
+    );
+  });
 });

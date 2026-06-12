@@ -20,6 +20,7 @@ import type {
   UrlState,
   SearchArrayFormat,
   UnknownSearchBehavior,
+  UrlPathMatchOptions,
 } from '../contracts.js';
 import type { HashSchema, NormalizedHashDescriptor } from '../hash/contracts.js';
 import type {
@@ -47,6 +48,7 @@ export interface CreateUrlOptions {
   readonly unknownSearch?: UnknownSearchBehavior;
   readonly arrayFormat?: SearchArrayFormat;
   readonly pathConstraints?: PathConstraintMap;
+  readonly pathMatch?: UrlPathMatchOptions;
 }
 
 export interface CreateUrlContractOptions extends CreateUrlOptions {}
@@ -102,7 +104,9 @@ export interface UrlContract<
 
   match(input: string | URL, options?: ParseUrlOptions): boolean;
 
-  readonly parsePathname: Mode extends 'path' ? (pathname: string) => Params : never;
+  readonly parsePathname: Mode extends 'path'
+    ? (pathname: string, options?: UrlPathMatchOptions) => Params
+    : never;
 
   readonly buildPath: Mode extends 'path' ? PathBuildMethod<Params> : never;
 
@@ -126,14 +130,29 @@ export interface UrlContract<
 export interface CompilePathOptions {
   readonly params?: 'raw' | 'parsed';
   readonly pathConstraints?: PathConstraintMap;
+  readonly pathMatch?: UrlPathMatchOptions;
 }
+
+export interface PathMatchSuccess<Params> {
+  readonly match: true;
+  readonly path: string;
+  readonly params: Params;
+}
+
+export interface PathMatchFailure {
+  readonly match: false;
+  readonly params: null;
+}
+
+export type PathMatchResult<Params> = PathMatchSuccess<Params> | PathMatchFailure;
 
 export interface CompiledPath<
   Pattern extends string = string,
   Params = ParamsFromPattern<Pattern>,
 > {
   readonly pattern: Pattern;
-  parsePathname(pathname: string): Params;
+  parsePathname(pathname: string, options?: UrlPathMatchOptions): Params;
+  matchPathname(pathname: string, options?: UrlPathMatchOptions): PathMatchResult<Params>;
   buildPath: PathBuildMethod<Params>;
 }
 

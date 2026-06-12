@@ -4,6 +4,10 @@ import { createRuntimeSchemaBuilder } from '../schema/create-schema-builder.js';
 import { int } from '../schema/int.js';
 import { string } from '../schema/string.js';
 import { compileSearchSchema } from './compile-search-schema.js';
+import { buildCompiledSearch } from './build-compiled-search.js';
+import { normalizeCompiledSearch } from './normalize-compiled-search.js';
+import { parseCompiledSearch } from './parse-compiled-search.js';
+import { parseRawSearch } from './parse-raw-search.js';
 
 describe('compileSearchSchema', () => {
   it('compiles direct runtime schema fields as one fields', () => {
@@ -92,11 +96,7 @@ describe('compileSearchSchema', () => {
     });
   });
 
-  it('does not rerun descriptor validation during repeated compiled parse/build/normalize calls', async () => {
-    const { parseCompiledSearch } = await import('./parse-compiled-search.js');
-    const { parseRawSearch } = await import('./parse-raw-search.js');
-    const { buildCompiledSearch } = await import('./build-compiled-search.js');
-    const { normalizeCompiledSearch } = await import('./normalize-compiled-search.js');
+  it('does not rerun descriptor validation during repeated compiled parse/build/normalize calls', () => {
     let validations = 0;
     const schema = createRuntimeSchemaBuilder<string, 'tracked'>({
       kind: 'tracked',

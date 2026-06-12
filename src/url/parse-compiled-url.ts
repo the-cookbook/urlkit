@@ -6,15 +6,21 @@ import { parseUrl } from './parse-url.js';
 import { resolveUrlUnknownSearch } from './resolve-url-unknown-search.js';
 import type { CompiledUrlDescriptor } from './compile-url-descriptor.js';
 import { markUrlState } from './url-state-brand.js';
+import { UrlKitError } from '../errors/url-kit-error.js';
+
+interface ParsedUrlPath<Params> {
+  readonly pathname: string;
+  readonly params: Params;
+}
 
 export function parseCompiledUrl<Pathname, Params, Search, Hash>(
   input: string | URL,
   compiled: CompiledUrlDescriptor,
   unknownSearch: UnknownSearchBehavior,
-  options: Pick<ParseUrlOptions, 'arrayFormat' | 'invalidSearch'> = {},
+  options: ParseUrlOptions = {},
 ): UrlState<Pathname, Params, Search, Hash> {
   const parsedUrl = parseUrl(input);
-  const params = parseUrlParams<Params>(parsedUrl.pathname, compiled);
+  const pathResult = parseUrlPath<Params>(parsedUrl.pathname, compiled, options);
   const searchResult = parseUrlSearch<Search>(
     parsedUrl.searchParams,
     compiled,
@@ -24,8 +30,8 @@ export function parseCompiledUrl<Pathname, Params, Search, Hash>(
   const hash = parseUrlHash<Hash>(parsedUrl.hash, compiled);
 
   const state = {
-    pathname: parsedUrl.pathname as Pathname,
-    params,
+    pathname: pathResult.pathname as Pathname,
+    params: pathResult.params,
     search: searchResult.search,
     hash,
     ...(searchResult.unknownSearch ? { unknownSearch: searchResult.unknownSearch } : {}),
@@ -34,12 +40,33 @@ export function parseCompiledUrl<Pathname, Params, Search, Hash>(
   return Object.freeze(markUrlState(state));
 }
 
-function parseUrlParams<Params>(pathname: string, compiled: CompiledUrlDescriptor): Params {
+function parseUrlPath<Params>(
+  pathname: string,
+  compiled: CompiledUrlDescriptor,
+  options: ParseUrlOptions,
+): ParsedUrlPath<Params> {
   if (compiled.mode === 'path' && compiled.path) {
-    return compiled.path.parsePathname(pathname) as Params;
+    const result = compiled.path.matchPathname(pathname, {
+      ...options,
+      strict: options.strict ?? true,
+    });
+
+    if (!result.match) {
+      throw new UrlKitError('path-mismatch', 'Pathname does not match the URL pattern.', {
+        path: ['pathname'],
+      });
+    }
+
+    return Object.freeze({
+      pathname: result.path,
+      params: result.params as Params,
+    });
   }
 
-  return Object.freeze({}) as Params;
+  return Object.freeze({
+    pathname,
+    params: Object.freeze({}) as Params,
+  });
 }
 
 function parseUrlSearch<Search>(

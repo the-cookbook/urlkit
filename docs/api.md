@@ -67,6 +67,7 @@ import {
 | `options.unknownSearch`   | `UnknownSearchBehavior`            | Contract-level default unknown search behavior.                                 |
 | `options.arrayFormat`     | `'repeat' \| 'comma'`              | Contract-level default array search format for parsing and building.            |
 | `options.pathConstraints` | `PathConstraintMap`                | Per-contract custom PathKit constraints, registered before path compilation.    |
+| `options.pathMatch`       | `UrlPathMatchOptions`              | Contract-level path matching options. Per-call options override these.          |
 
 Standalone `url(...)` path params default to parsed mode. URLKit follows PathKit constraint chains and infers from the highest weighted constraint anywhere in the chain: `int > decimal/range/min/max > string/custom`. Numeric constraints (`int`, `decimal`, `range(...)`, `min(...)`, and `max(...)`) parse to numbers. String constraints (`regex(...)`, `uuid`, `minlength(...)`, `maxlength(...)`, and custom constraints) parse as strings unless a numeric constraint also appears in the chain.
 
@@ -133,6 +134,79 @@ Inside TypeScript string literals, escape backslashes as needed:
 
 ```ts
 url({ path: '/scores/{id:regex(\\d):min(1)}' });
+```
+
+## Path match options
+
+Path match options work with `parse`, `safeParse`, `parseRequest`, `safeParseRequest`, `match`, and `parsePathname`. They do not affect `normalize` or `build`.
+
+URLKit always uses `/` as the path delimiter.
+
+```ts
+type UrlPathWildcardFormat = 'string' | 'array';
+
+type DecodePathParam = (value: string) => string;
+
+interface UrlPathMatchOptions {
+  readonly trailing?: boolean;
+  readonly sensitive?: boolean;
+  readonly strict?: boolean;
+  readonly end?: boolean;
+  readonly wildcardFormat?: UrlPathWildcardFormat;
+  readonly decode?: boolean | DecodePathParam;
+}
+```
+
+| Option           | Default    | What it controls                                                                                                               |
+| ---------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `trailing`       | `true`     | Whether the pathname may end with a trailing `/`.                                                                              |
+| `sensitive`      | `false`    | When enabled, path matching is case-sensitive.                                                                                 |
+| `strict`         | `false`    | When enabled, path constraint mismatches throw instead of returning a failed match.                                            |
+| `end`            | `true`     | Controls whether matching must cover the full pathname or may stop at a path segment boundary.                                 |
+| `wildcardFormat` | `'string'` | Controls whether wildcard params are returned as one string or as path segment arrays.                                         |
+| `decode`         | `false`    | How matched path params are decoded: `false` keeps raw values, `true` uses `decodeURIComponent`, or a custom decoder function. |
+
+Set contract-level options with `pathMatch`:
+
+```ts
+const ApiUrl = url({ path: '/api' }, { pathMatch: { end: false } });
+
+ApiUrl.parse('/api/users').pathname;
+// '/api'
+```
+
+Per-call options override contract options.
+
+```ts
+ApiUrl.match('/api/users', { end: true });
+// false
+```
+
+Use `wildcardFormat: 'array'` when you want wildcard params as path segments.
+
+```ts
+const FileUrl = url({ path: '/files/{*path}' });
+
+FileUrl.parse('/files/docs/readme', { wildcardFormat: 'array' }).params;
+// { path: ['docs', 'readme'] }
+```
+
+Use `decode: true` to decode path params with `decodeURIComponent`.
+
+```ts
+const UserUrl = url({ path: '/users/{name}' });
+
+UserUrl.parse('/users/John%20Doe', { decode: true }).params;
+// { name: 'John Doe' }
+```
+
+Use a custom decoder when path params need app-specific decoding.
+
+```ts
+UserUrl.parse('/users/John-Doe', {
+  decode: (value) => value.replaceAll('-', ' '),
+}).params;
+// { name: 'John Doe' }
 ```
 
 ## Custom path constraints
@@ -438,7 +512,9 @@ interface UrlContract<Mode, Pathname, Params, Search, Hash> {
   safeNormalize(input, options?: NormalizeUrlOptions): UrlSafeNormalizeResult<...>;
   build(input, options?: BuildUrlOptions): string;
   match(input: string | URL, options?: ParseUrlOptions): boolean;
-  readonly parsePathname: Mode extends 'path' ? (pathname: string) => Params : never;
+  readonly parsePathname: Mode extends 'path'
+    ? (pathname: string, options?: UrlPathMatchOptions) => Params
+    : never;
   readonly buildPath: Mode extends 'path' ? PathBuildMethod<Params> : never;
   parseSearch(input: string | URLSearchParams, options?: ParseUrlOptions): Search;
   buildSearch(search: Partial<Search>, options?: BuildSearchOptions): string;
@@ -483,12 +559,12 @@ if (!result.success) {
 
 ## `parseRequest` and `safeParseRequest`
 
-| Item       | Details                                                                                |
-| ---------- | -------------------------------------------------------------------------------------- |
-| Purpose    | Parse web-standard `Request` or request-like `{ url: string }`.                        |
-| Parameters | `input: Request \| UrlRequestInput`, `options?: ParseRequestOptions`                   |
-| Options    | `baseUrl` for relative request-like URLs; `unknownSearch` and `arrayFormat` overrides. |
-| Throws     | `parseRequest` throws `UrlKitError`; `safeParseRequest` returns safe failure.          |
+| Item       | Details                                                                                             |
+| ---------- | --------------------------------------------------------------------------------------------------- |
+| Purpose    | Parse web-standard `Request` or request-like `{ url: string }`.                                     |
+| Parameters | `input: Request \| UrlRequestInput`, `options?: ParseRequestOptions`                                |
+| Options    | `baseUrl` for relative request-like URLs; `unknownSearch`, `arrayFormat`, and path match overrides. |
+| Throws     | `parseRequest` throws `UrlKitError`; `safeParseRequest` returns safe failure.                       |
 
 ```ts
 UserUrl.parseRequest(new Request('https://example.com/users/42'));
@@ -635,7 +711,7 @@ interface RegisterPathConstraintOptions {
   readonly overwrite?: boolean;
 }
 
-interface ParseUrlOptions {
+interface ParseUrlOptions extends UrlPathMatchOptions {
   readonly unknownSearch?: UnknownSearchBehavior;
   readonly arrayFormat?: SearchArrayFormat;
   readonly invalidSearch?: 'error' | 'omit';
@@ -950,13 +1026,13 @@ Router-runtime APIs are low-level primitives for router packages. They are frame
 
 ## `createRouteUrlContract`
 
-| Item                | Details                                                                                                                                            |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Signature           | `createRouteUrlContract<Descriptor, Options>(descriptor, options?: CreateRouteUrlContractOptions): UrlContract<...>`                               |
-| Purpose             | Create a URL contract from a static route-compatible descriptor.                                                                                   |
-| Options             | `params?: 'raw' \| 'parsed'`, `unknownSearch?: UnknownSearchBehavior`, `arrayFormat?: 'repeat' \| 'comma'`, `pathConstraints?: PathConstraintMap`. |
-| Default params mode | `raw`                                                                                                                                              |
-| Throws              | `invalid-descriptor` for invalid static descriptors.                                                                                               |
+| Item                | Details                                                                                                                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signature           | `createRouteUrlContract<Descriptor, Options>(descriptor, options?: CreateRouteUrlContractOptions): UrlContract<...>`                                                                  |
+| Purpose             | Create a URL contract from a static route-compatible descriptor.                                                                                                                      |
+| Options             | `params?: 'raw' \| 'parsed'`, `unknownSearch?: UnknownSearchBehavior`, `arrayFormat?: 'repeat' \| 'comma'`, `pathConstraints?: PathConstraintMap`, `pathMatch?: UrlPathMatchOptions`. |
+| Default params mode | `raw`                                                                                                                                                                                 |
+| Throws              | `invalid-descriptor` for invalid static descriptors.                                                                                                                                  |
 
 ```ts
 const ArticleUrl = createRouteUrlContract({

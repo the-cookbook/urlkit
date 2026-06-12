@@ -219,6 +219,7 @@ const siteCss = `
   .filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: end; }
   label { display: grid; gap: 6px; font-weight: 700; }
   .checkbox-label { display: flex; align-items: center; gap: 8px; padding-bottom: 12px; }
+  .checkbox-label input { width: auto; }
   input, select { width: 100%; border: 1px solid #cbbca8; border-radius: 12px; padding: 10px 12px; font: inherit; background: white; }
   .quick-links { margin-top: 18px; }
 

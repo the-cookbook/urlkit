@@ -91,6 +91,7 @@
     "@commitlint/config-conventional": "21.0.2",
     "@eslint/js": "10.0.1",
     "@rollup/plugin-typescript": "^12.3.0",
+    "@types/node": "25.9.3",
     "eslint": "10.4.1",
     "eslint-config-prettier": "10.1.8",
     "husky": "9.1.7",
@@ -103,6 +104,6 @@
     "vitest": "^4.1.8"
   },
   "dependencies": {
-    "@cookbook/pathkit": "^0.4.1"
+    "@cookbook/pathkit": "^1.0.0"
   }
 }

@@ -27,7 +27,14 @@ const href = UserUrl.build({
 const matches = UserUrl.match('/users/42?tab=settings&page=2');
 const doesNotMatch = UserUrl.match('/projects/42?tab=settings&page=2#open');
 
+const ApiUrl = url({ path: '/api' }, { pathMatch: { end: false } });
+
+const apiPrefix = ApiUrl.parse('/api/users').pathname;
+
+const FilesUrl = url({ path: '/files/{*path}' });
+const fileSegments = FilesUrl.parse('/files/docs/readme', { wildcardFormat: 'array' }).params.path;
+
 // matches === true
 // doesNotMatch === false
 
-export { UserUrl, doesNotMatch, href, matches, parsed };
+export { UserUrl, apiPrefix, doesNotMatch, fileSegments, href, matches, parsed };

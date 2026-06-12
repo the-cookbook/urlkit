@@ -306,6 +306,81 @@ Inside TypeScript string literals, escape backslashes as needed:
 url({ path: '/scores/{id:regex(\\d):min(1)}' });
 ```
 
+### Path match options
+
+URLKit uses PathKit for path matching. You can pass path match options to `parse`, `safeParse`, `parseRequest`, `safeParseRequest`, `match`, and `parsePathname`. They do not affect `normalize` or `build`.
+
+URLKit always uses `/` as the path delimiter.
+
+| Option           | Default    | What it does                                            |
+| ---------------- | ---------- | ------------------------------------------------------- |
+| `trailing`       | `true`     | Allows one final `/`.                                   |
+| `sensitive`      | `false`    | Matches paths without checking letter case.             |
+| `strict`         | `false`    | Lets `match` return `false` for path constraint misses. |
+| `end`            | `true`     | Requires the whole pathname to match.                   |
+| `wildcardFormat` | `'string'` | Returns wildcard params as one string.                  |
+| `decode`         | `false`    | Keeps path params raw.                                  |
+
+Set path match options on the contract when you want the same behavior everywhere:
+
+```ts
+const ApiUrl = url(
+  { path: '/api' },
+  {
+    pathMatch: {
+      end: false,
+    },
+  },
+);
+
+ApiUrl.parse('/api/users').pathname;
+// '/api'
+```
+
+Per-call options override contract options:
+
+```ts
+ApiUrl.match('/api/users', { end: true });
+// false
+```
+
+Use `end: false` to match only the start of a pathname. When `parse` uses `end: false`, `state.pathname` is the part matched by the contract.
+
+```ts
+const parsed = ApiUrl.parse('/api/users?page=2', { end: false });
+
+parsed.pathname;
+// '/api'
+```
+
+Wildcard params are strings by default:
+
+```ts
+const FileUrl = url({ path: '/files/{*path}' });
+
+FileUrl.parse('/files/docs/readme').params;
+// { path: 'docs/readme' }
+```
+
+Use `wildcardFormat: 'array'` to get path segments:
+
+```ts
+FileUrl.parse('/files/docs/readme', { wildcardFormat: 'array' }).params;
+// { path: ['docs', 'readme'] }
+```
+
+Path params are raw by default. Use `decode: true` to decode them:
+
+```ts
+const UserUrl = url({ path: '/users/{name}' });
+
+UserUrl.parse('/users/John%20Doe').params;
+// { name: 'John%20Doe' }
+
+UserUrl.parse('/users/John%20Doe', { decode: true }).params;
+// { name: 'John Doe' }
+```
+
 ### Custom path constraints
 
 URLKit re-exports PathKit's `createConstraint` and provides global registration helpers for reusable path constraints. Custom constraints infer `string` params by default unless chained with a numeric constraint. Built-in `int`, `decimal`, `range(...)`, `min(...)`, and `max(...)` infer `number`. When a PathKit constraint rejects a value, URLKit wraps it as `UrlKitError` with `code: 'invalid-param'` and preserves the original PathKit error in `error.cause`.

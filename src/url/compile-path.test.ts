@@ -105,7 +105,7 @@ describe('compilePath', () => {
 
     expect(path.parsePathname('/posts/post-1')).toEqual({ slug: 'post-1' });
     expect(path.buildPath({ slug: 'post-1' })).toBe('/posts/post-1');
-    expectUrlKitError(() => path.parsePathname('/posts/Post'), 'invalid-param', ['params', 'slug']);
+    expectUrlKitError(() => path.parsePathname('/posts/Post'), 'invalid-param', ['params']);
     expectUrlKitError(() => path.buildPath({ slug: 'Post' }), 'invalid-param', ['params']);
     expectType<{ readonly slug: string }>(
       {} as ParamsFromPattern<'/posts/{slug:urlkitslugcompile}'>,
@@ -124,21 +124,17 @@ describe('compilePath', () => {
     expectUrlKitError(() => path.buildPath({ id: 'abc' } as never), 'invalid-param', ['params']);
   });
 
-  it('throws invalid-param when pathname shape matches but param constraints fail', () => {
+  it('throws path-mismatch when PathKit rejects constrained params as non-matches', () => {
     const intPath = compilePath('/users/{id:int}');
     const decimalPath = compilePath('/prices/{amount:decimal}');
     const rangePath = compilePath('/users/{id:range(1,10)}');
     const regexPath = compilePath('/posts/{slug:regex([a-z0-9-]+)}');
 
-    expectUrlKitError(() => intPath.parsePathname('/users/abc'), 'invalid-param', ['params', 'id']);
-    expectUrlKitError(() => decimalPath.parsePathname('/prices/abc'), 'invalid-param', [
-      'params',
-      'amount',
+    expectUrlKitError(() => intPath.parsePathname('/users/abc'), 'path-mismatch', ['pathname']);
+    expectUrlKitError(() => decimalPath.parsePathname('/prices/abc'), 'path-mismatch', [
+      'pathname',
     ]);
-    expectUrlKitError(() => rangePath.parsePathname('/users/abc'), 'invalid-param', [
-      'params',
-      'id',
-    ]);
+    expectUrlKitError(() => rangePath.parsePathname('/users/abc'), 'path-mismatch', ['pathname']);
     expectUrlKitError(() => regexPath.parsePathname('/posts/Post'), 'invalid-param', [
       'params',
       'slug',
@@ -205,6 +201,61 @@ describe('compilePath', () => {
     expectType<{ readonly id: string }>({} as ParamsFromPattern<'/users/{id:uuid}'>);
     expectType<{ readonly slug: string }>(
       {} as ParamsFromPattern<'/articles/{slug:minlength(3):maxlength(50)}'>,
+    );
+  });
+
+  it('supports configurable PathKit match options', () => {
+    const casePath = compilePath('/Users/{id}');
+    const apiPath = compilePath('/api');
+    const trailingPath = compilePath('/users/{id}');
+
+    expect(casePath.parsePathname('/users/42')).toEqual({ id: '42' });
+    expectUrlKitError(
+      () => casePath.parsePathname('/users/42', { sensitive: true }),
+      'path-mismatch',
+      ['pathname'],
+    );
+
+    expect(apiPath.matchPathname('/api/users', { end: false })).toEqual({
+      match: true,
+      path: '/api',
+      params: {},
+    });
+    expectUrlKitError(
+      () => trailingPath.parsePathname('/users/42/', { trailing: false }),
+      'path-mismatch',
+      ['pathname'],
+    );
+  });
+
+  it('supports wildcard array output and path param decoding', () => {
+    const filesPath = compilePath('/files/{*path}');
+    const helloPath = compilePath('/hello/{name}');
+
+    expect(filesPath.parsePathname('/files/docs/guides/readme')).toEqual({
+      path: 'docs/guides/readme',
+    });
+    expect(
+      filesPath.parsePathname('/files/docs/guides/readme', { wildcardFormat: 'array' }),
+    ).toEqual({
+      path: ['docs', 'guides', 'readme'],
+    });
+    expect(
+      filesPath.parsePathname('/files/a%2Fb/c%20d', {
+        wildcardFormat: 'array',
+        decode: true,
+      }),
+    ).toEqual({ path: ['a/b', 'c d'] });
+    expect(helloPath.parsePathname('/hello/John%20Doe', { decode: true })).toEqual({
+      name: 'John Doe',
+    });
+  });
+
+  it('builds wildcard paths from arrays through PathKit compile', () => {
+    const path = compilePath('/files/{*path}');
+
+    expect(path.buildPath({ path: ['docs', 'guides', 'readme'] } as never)).toBe(
+      '/files/docs/guides/readme',
     );
   });
 });

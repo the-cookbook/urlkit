@@ -28,10 +28,10 @@ importers:
         version: 5.9.3
 
 packages:
-  '@cookbook/pathkit@0.4.1':
+  '@cookbook/pathkit@1.0.0':
     resolution:
       {
-        integrity: sha512-F/NCJS+F92UEnZ72Hj7OEqD9Sno8XZg23cybCKZd6FnDsHTcHYV3xkX09Hx6BWAsKmLuZbIGTAT7KXA8NoPpuw==,
+        integrity: sha512-/tnJjm30FJhupCtaRcq/E7JTuyHC8uFSzhn0QzFUcHUKGj3xLhErDtZL2R1d6W47ouIjacaYOimFqnvWarni4w==,
       }
     engines: { node: '>=20.0.0' }
 
@@ -333,11 +333,11 @@ packages:
       }
 
 snapshots:
-  '@cookbook/pathkit@0.4.1': {}
+  '@cookbook/pathkit@1.0.0': {}
 
   '@cookbook/urlkit@file:../../..':
     dependencies:
-      '@cookbook/pathkit': 0.4.1
+      '@cookbook/pathkit': 1.0.0
 
   '@esbuild/aix-ppc64@0.28.0':
     optional: true

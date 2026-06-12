@@ -14,6 +14,7 @@ import type {
   UrlSafeNormalizeResult,
   UrlSafeParseResult,
   UrlState,
+  UrlPathMatchOptions,
 } from '../contracts.js';
 import { buildHash } from '../hash/build-hash.js';
 import { parseHash } from '../hash/parse-hash.js';
@@ -51,6 +52,7 @@ export function createUrlContract<
   const compiled = compileUrlDescriptor(descriptor);
   const unknownSearch = options.unknownSearch ?? 'strip';
   const arrayFormat = options.arrayFormat ?? 'repeat';
+  const pathMatch = options.pathMatch;
 
   const contract = {
     pattern: compiled.pattern,
@@ -62,7 +64,7 @@ export function createUrlContract<
         input,
         compiled,
         options?.unknownSearch ?? unknownSearch,
-        mergeParseOptions(arrayFormat, options),
+        mergeParseOptions(arrayFormat, pathMatch, options),
       );
     },
     safeParse(
@@ -76,7 +78,7 @@ export function createUrlContract<
             input,
             compiled,
             options?.unknownSearch ?? unknownSearch,
-            mergeParseOptions(arrayFormat, options),
+            mergeParseOptions(arrayFormat, pathMatch, options),
           ),
         });
       } catch (error) {
@@ -95,7 +97,7 @@ export function createUrlContract<
         resolveRequestUrlInput(input, options),
         compiled,
         options?.unknownSearch ?? unknownSearch,
-        mergeParseOptions(arrayFormat, options),
+        mergeParseOptions(arrayFormat, pathMatch, options),
       );
     },
     safeParseRequest(
@@ -109,7 +111,7 @@ export function createUrlContract<
             resolveRequestUrlInput(input, options),
             compiled,
             options?.unknownSearch ?? unknownSearch,
-            mergeParseOptions(arrayFormat, options),
+            mergeParseOptions(arrayFormat, pathMatch, options),
           ),
         });
       } catch (error) {
@@ -172,11 +174,16 @@ export function createUrlContract<
         input,
         compiled,
         options?.unknownSearch ?? unknownSearch,
-        mergeParseOptions(arrayFormat, options),
+        mergeParseOptions(arrayFormat, pathMatch, options),
       );
     },
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    parsePathname: compiled.path?.parsePathname,
+    parsePathname: compiled.path
+      ? (pathname: string, options?: UrlPathMatchOptions): Params =>
+          compiled.path?.parsePathname(
+            pathname,
+            mergePathMatchOptions(pathMatch, options),
+          ) as Params
+      : undefined,
     buildPath: compiled.path?.buildPath,
     parseSearch(input: string | URLSearchParams, options?: ParseUrlOptions): Search {
       if (compiled.search) {
@@ -184,7 +191,7 @@ export function createUrlContract<
           parseRawSearch(input),
           compiled.search,
           options?.unknownSearch ?? unknownSearch,
-          mergeParseOptions(arrayFormat, options),
+          mergeParseOptions(arrayFormat, pathMatch, options),
         ).search as Search;
       }
 
@@ -248,12 +255,24 @@ export function createUrlContract<
 
 function mergeParseOptions<Options extends ParseUrlOptions>(
   arrayFormat: NonNullable<ParseUrlOptions['arrayFormat']>,
+  pathMatch: UrlPathMatchOptions | undefined,
   options: Options | undefined,
 ): Options & ParseUrlOptions {
   return {
+    ...pathMatch,
     ...options,
     arrayFormat: options?.arrayFormat ?? arrayFormat,
   } as Options & ParseUrlOptions;
+}
+
+function mergePathMatchOptions(
+  pathMatch: UrlPathMatchOptions | undefined,
+  options: UrlPathMatchOptions | undefined,
+): UrlPathMatchOptions {
+  return {
+    ...pathMatch,
+    ...options,
+  };
 }
 
 function mergeBuildOptions<Options extends BuildUrlOptions>(

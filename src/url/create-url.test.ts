@@ -267,7 +267,7 @@ describe('url parse and safeParse', () => {
 
     if (!failure.success) {
       expect(failure.error).toBeInstanceOf(UrlKitError);
-      expect(failure.error.code).toBe('invalid-param');
+      expect(failure.error.code).toBe('path-mismatch');
     }
   });
 
@@ -841,7 +841,7 @@ describe('url parseRequest and safeParseRequest', () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.code).toBe('invalid-param');
+      expect(result.error.code).toBe('path-mismatch');
     }
   });
 

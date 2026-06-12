@@ -1,13 +1,16 @@
 import compile from '@cookbook/pathkit/compile';
-import match from '@cookbook/pathkit/match';
 import type { MatchedParam } from '@cookbook/pathkit';
+import type { UrlPathMatchOptions } from '../contracts.js';
 import { UrlKitError } from '../errors/url-kit-error.js';
-import { assertPathMatchFailure } from './assert-path-match-failure.js';
 import { coercePathParam } from './coerce-path-param.js';
 import { normalizePathBuildParams } from './normalize-path-build-params.js';
 import { parsePathPattern } from './parse-path-pattern.js';
 import { registerPathConstraints } from './path-constraints.js';
-import type { CompiledPath, CompilePathOptions } from './contracts.js';
+import { createPathMatchCache } from './path-match-cache.js';
+import { resolveUrlPathMatchOptions } from './resolve-url-path-match-options.js';
+import { mapPathKitMatchError } from './map-pathkit-error.js';
+import { defaultUrlPathMatchOptions } from './default-url-path-match-options.js';
+import type { CompiledPath, CompilePathOptions, PathMatchResult } from './contracts.js';
 
 export function compilePath<Pattern extends string>(
   pattern: Pattern,
@@ -18,18 +21,26 @@ export function compilePath<Pattern extends string>(
   }
 
   const paramsMode = options.params ?? 'parsed';
-  const { segments, matcher, builder } = compilePathPattern(pattern);
+  const { segments, matcherCache, builder } = compilePathPattern(pattern);
 
   return Object.freeze({
     pattern,
-    parsePathname(pathname: string) {
-      const result = matcher(pathname);
+    parsePathname(pathname: string, matchOptions?: UrlPathMatchOptions) {
+      const result = matchPathname(pathname, {
+        ...matchOptions,
+        strict: matchOptions?.strict ?? true,
+      });
 
-      if (!result.match || !result.params) {
-        assertPathMatchFailure(pattern, pathname, segments);
+      if (!result.match) {
+        throw new UrlKitError('path-mismatch', 'Pathname does not match the URL pattern.', {
+          path: ['pathname'],
+        });
       }
 
-      return Object.freeze(coercePathParams(result.params, segments, paramsMode)) as never;
+      return result.params as never;
+    },
+    matchPathname(pathname: string, matchOptions?: UrlPathMatchOptions) {
+      return matchPathname(pathname, matchOptions) as never;
     },
     buildPath(params?: unknown) {
       try {
@@ -39,14 +50,39 @@ export function compilePath<Pattern extends string>(
       }
     },
   });
+
+  function matchPathname(
+    pathname: string,
+    matchOptions?: UrlPathMatchOptions,
+  ): PathMatchResult<Record<string, string | number | readonly (string | number)[]>> {
+    try {
+      const matcher = matcherCache.get(resolveUrlPathMatchOptions(undefined, matchOptions));
+      const result = matcher(pathname);
+
+      if (!result.match || !result.params) {
+        return Object.freeze({
+          match: false,
+          params: null,
+        });
+      }
+
+      return Object.freeze({
+        match: true,
+        path: result.path,
+        params: Object.freeze(coercePathParams(result.params, segments, paramsMode)),
+      });
+    } catch (error) {
+      throw mapPathKitMatchError(error);
+    }
+  }
 }
 
 function coercePathParams(
   matchedParams: MatchedParam,
   segments: ReturnType<typeof parsePathPattern>,
   paramsMode: 'raw' | 'parsed',
-): Record<string, string | number> {
-  const params: Record<string, string | number> = {};
+): Record<string, string | number | readonly (string | number)[]> {
+  const params: Record<string, string | number | readonly (string | number)[]> = {};
 
   for (const segment of segments) {
     if (segment.kind !== 'param') {
@@ -54,6 +90,25 @@ function coercePathParams(
     }
 
     const value = matchedParams[segment.name];
+
+    if (value === undefined) {
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      if (!segment.wildcard) {
+        throw new UrlKitError(
+          'invalid-param',
+          `Path parameter "${segment.name}" returned an array for a non-wildcard segment.`,
+          { path: ['params', segment.name] },
+        );
+      }
+
+      params[segment.name] = Object.freeze(
+        value.map((item) => coercePathParam(segment, item, paramsMode)),
+      );
+      continue;
+    }
 
     if (typeof value !== 'string') {
       continue;
@@ -94,13 +149,13 @@ function compilePathPattern<Pattern extends string>(
   pattern: Pattern,
 ): {
   readonly segments: ReturnType<typeof parsePathPattern>;
-  readonly matcher: ReturnType<typeof match>;
+  readonly matcherCache: ReturnType<typeof createPathMatchCache>;
   readonly builder: ReturnType<typeof compile>;
 } {
   try {
     return Object.freeze({
       segments: parsePathPattern(pattern),
-      matcher: match(pattern),
+      matcherCache: createValidatedPathMatchCache(pattern),
       builder: compile(pattern),
     });
   } catch (error) {
@@ -113,4 +168,11 @@ function compilePathPattern<Pattern extends string>(
       cause: error,
     });
   }
+}
+
+function createValidatedPathMatchCache(pattern: string): ReturnType<typeof createPathMatchCache> {
+  const matcherCache = createPathMatchCache(pattern);
+  matcherCache.get(defaultUrlPathMatchOptions);
+
+  return matcherCache;
 }

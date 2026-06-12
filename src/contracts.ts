@@ -11,6 +11,19 @@ export type InvalidHashBehavior = 'error' | 'omit';
 
 export type SearchArrayFormat = 'repeat' | 'comma';
 
+export type UrlPathWildcardFormat = 'string' | 'array';
+
+export type DecodePathParam = (value: string) => string;
+
+export interface UrlPathMatchOptions {
+  readonly trailing?: boolean;
+  readonly sensitive?: boolean;
+  readonly strict?: boolean;
+  readonly end?: boolean;
+  readonly wildcardFormat?: UrlPathWildcardFormat;
+  readonly decode?: boolean | DecodePathParam;
+}
+
 export type UnknownSearchParams = Readonly<Record<string, string | readonly string[]>>;
 
 export type EmptyParams = Readonly<Record<never, never>>;
@@ -33,7 +46,7 @@ export interface UrlRequestInput {
   readonly url: string;
 }
 
-export interface ParseUrlOptions {
+export interface ParseUrlOptions extends UrlPathMatchOptions {
   readonly unknownSearch?: UnknownSearchBehavior;
   readonly arrayFormat?: SearchArrayFormat;
   readonly invalidSearch?: InvalidSearchBehavior;

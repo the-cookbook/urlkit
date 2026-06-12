@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { UrlKitError } from '../errors/url-kit-error.js';
 import { enumOf } from '../schema/enum-of.js';
 import { int } from '../schema/int.js';
 import { string } from '../schema/string.js';
@@ -211,5 +212,45 @@ describe('UrlContract.match', () => {
 
     expect(UserUrl.match(new URL('https://example.com/users/42'))).toBe(true);
     expect(UserUrl.match(new URL('https://example.com/users/wrong'))).toBe(false);
+  });
+
+  it('supports public path match options', () => {
+    const ApiUrl = url({ path: '/api' });
+    const UserUrl = url({ path: '/Users/{name}' });
+    const FilesUrl = url({ path: '/files/{*path}' });
+
+    expect(ApiUrl.match('/api/users')).toBe(false);
+    expect(ApiUrl.match('/api/users', { end: false })).toBe(true);
+    expect(UserUrl.match('/users/John%20Doe')).toBe(true);
+    expect(UserUrl.match('/users/John%20Doe', { sensitive: true })).toBe(false);
+    expect(UserUrl.parse('/users/John%20Doe', { decode: true }).params).toEqual({
+      name: 'John Doe',
+    });
+    expect(FilesUrl.parse('/files/docs/guides/readme', { wildcardFormat: 'array' }).params).toEqual(
+      {
+        path: ['docs', 'guides', 'readme'],
+      },
+    );
+  });
+
+  it('supports contract-level pathMatch options with method-level overrides', () => {
+    const ApiUrl = url(
+      { path: '/api' },
+      {
+        pathMatch: {
+          end: false,
+        },
+      },
+    );
+
+    expect(ApiUrl.match('/api/users')).toBe(true);
+    expect(ApiUrl.match('/api/users', { end: true })).toBe(false);
+    expect(ApiUrl.parse('/api/users').pathname).toBe('/api');
+  });
+
+  it('throws decode errors instead of converting them into failed matches', () => {
+    const UserUrl = url({ path: '/users/{name}' });
+
+    expect(() => UserUrl.match('/users/%E0%A4%A', { decode: true })).toThrow(UrlKitError);
   });
 });

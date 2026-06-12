@@ -145,8 +145,8 @@ describe('router-runtime public exports', () => {
   });
 
   it('does not expose route definition concepts through router-runtime options', () => {
-    expectTypeOf<'params' | 'unknownSearch' | 'arrayFormat' | 'pathConstraints' | never>(
-      {} as keyof import('./runtime/contracts.js').CreateRouteUrlContractOptions,
-    );
+    expectTypeOf<
+      'params' | 'unknownSearch' | 'arrayFormat' | 'pathConstraints' | 'pathMatch' | never
+    >({} as keyof import('./runtime/contracts.js').CreateRouteUrlContractOptions);
   });
 });

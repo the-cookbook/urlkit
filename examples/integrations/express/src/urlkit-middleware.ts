@@ -36,6 +36,7 @@ export function createUrlKitMiddleware<
         code: parsed.error.code,
         message: parsed.error.message,
       });
+
       return;
     }
 
