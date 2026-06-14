@@ -1,6 +1,6 @@
 {
   "name": "@cookbook/urlkit",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "Framework-agnostic typed URL contract library for parsing, validating, normalizing, matching, and building URL state.",
   "license": "MIT",
   "author": "The Cookbook",
