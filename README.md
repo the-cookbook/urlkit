@@ -86,6 +86,12 @@ const { params, search, hash } = ArticleUrl.parse('/articles/42?page=2&tag=ts&ta
 
 Define the URL shape **once**. URLKit validates the path, parses params, applies defaults, handles repeated query values, validates the hash, and returns typed URL state you can use right away.
 
+## Playground
+
+Try URLKit online and explore what it can do in the interactive playground:
+
+[https://the-cookbook.github.io/urlkit-playground/](https://the-cookbook.github.io/urlkit-playground/)
+
 ## Documentation
 
 - [Full API reference](./docs/api.md)
