@@ -1,4 +1,4 @@
-import { describe, it } from 'vitest';
+import { describe, it, expectTypeOf } from 'vitest';
 import type { UnknownSearchParams, UrlBuildInput, UrlNormalizeInput } from './contracts.js';
 import { hash } from './hash/create-hash.js';
 import { array } from './schema/array.js';
@@ -14,8 +14,6 @@ import type { InferStaticSearch } from './static/contracts.js';
 import { createRouteUrlContract } from './runtime/create-route-url-contract.js';
 import type { ParamsFromPattern, PathnameFromPattern } from './url/contracts.js';
 import { url } from './url/create-url.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 type Expect<Condition extends true> = Condition;
 type Equal<Left, Right> =
@@ -50,8 +48,8 @@ describe('comprehensive TypeScript inference', () => {
       Equal<ProductParams, { readonly sku: string; readonly amount: number }>
     >;
 
-    expectType<UserPathname>('/users/42');
-    expectType<ArticlePathname>('/articles/post-1');
+    expectTypeOf<UserPathname>('/users/42');
+    expectTypeOf<ArticlePathname>('/articles/post-1');
   });
 
   it('infers weighted chained constraints in runtime URL contracts', () => {
@@ -67,11 +65,11 @@ describe('comprehensive TypeScript inference', () => {
     const uuidParsed = UuidUrl.parse('/users/7d444840-9dc0-11d1-b245-5ffdce74fad2');
     const slugParsed = SlugUrl.parse('/articles/hello');
 
-    expectType<number | undefined>(optionalParsed.params.id);
-    expectType<number>(requiredParsed.params.id);
-    expectType<number>(regexMinParsed.params.id);
-    expectType<string>(uuidParsed.params.id);
-    expectType<string>(slugParsed.params.slug);
+    expectTypeOf<number | undefined>(optionalParsed.params.id);
+    expectTypeOf<number>(requiredParsed.params.id);
+    expectTypeOf<number>(regexMinParsed.params.id);
+    expectTypeOf<string>(uuidParsed.params.id);
+    expectTypeOf<string>(slugParsed.params.slug);
 
     OptionalMinUrl.build({});
     OptionalMinUrl.build({ params: {} });
@@ -99,14 +97,14 @@ describe('comprehensive TypeScript inference', () => {
 
     const state = SearchUrl.parse('/search?q=urlkit&page=2&tags=ts');
 
-    expectType<string>(state.search.q);
-    expectType<number>(state.search.page);
-    expectType<number | undefined>(state.search.rating);
-    expectType<boolean>(state.search.includeArchived);
-    expectType<'newest' | 'popular'>(state.search.sort);
-    expectType<readonly string[]>(state.search.tags);
-    expectType<Date | undefined>(state.search.createdOn);
-    expectType<Date | undefined>(state.search.createdAt);
+    expectTypeOf<string>(state.search.q);
+    expectTypeOf<number>(state.search.page);
+    expectTypeOf<number | undefined>(state.search.rating);
+    expectTypeOf<boolean>(state.search.includeArchived);
+    expectTypeOf<'newest' | 'popular'>(state.search.sort);
+    expectTypeOf<readonly string[]>(state.search.tags);
+    expectTypeOf<Date | undefined>(state.search.createdOn);
+    expectTypeOf<Date | undefined>(state.search.createdAt);
 
     type Search = typeof state.search;
     type _Search = Expect<
@@ -143,9 +141,9 @@ describe('comprehensive TypeScript inference', () => {
 
     const state = TableUrl.parse('/admin?filter.role=admin&filter.tags=core&selected=draft');
 
-    expectType<'table' | 'cards'>(state.search.view);
-    expectType<readonly ('draft' | 'published')[]>(state.search.selected);
-    expectType<{
+    expectTypeOf<'table' | 'cards'>(state.search.view);
+    expectTypeOf<readonly ('draft' | 'published')[]>(state.search.selected);
+    expectTypeOf<{
       readonly role?: string;
       readonly active?: boolean;
       readonly tags: readonly string[];
@@ -200,11 +198,11 @@ describe('comprehensive TypeScript inference', () => {
     } as const);
     const state = routeUrl.parse('/articles/post-1?page=2&sort=popular');
 
-    expectType<string | undefined>(state.search.ref);
-    expectType<readonly string[] | undefined>(state.search.filters);
-    expectType<number>(state.search.page);
-    expectType<'newest' | 'popular'>(state.search.sort);
-    expectType<Date | undefined>(state.search.startsAt);
+    expectTypeOf<string | undefined>(state.search.ref);
+    expectTypeOf<readonly string[] | undefined>(state.search.filters);
+    expectTypeOf<number>(state.search.page);
+    expectTypeOf<'newest' | 'popular'>(state.search.sort);
+    expectTypeOf<Date | undefined>(state.search.startsAt);
   });
 
   it('infers hash optional/default states', () => {
@@ -212,9 +210,9 @@ describe('comprehensive TypeScript inference', () => {
     const RequiredHashUrl = hash(enumOf(['intro', 'api'] as const));
     const DefaultHashUrl = hash(enumOf(['intro', 'api'] as const).default('intro'));
 
-    expectType<'intro' | 'api' | undefined>(OptionalHashUrl.parse('/docs#intro').hash);
-    expectType<'intro' | 'api'>(RequiredHashUrl.parse('/docs#intro').hash);
-    expectType<'intro' | 'api'>(DefaultHashUrl.parse('/docs').hash);
+    expectTypeOf<'intro' | 'api' | undefined>(OptionalHashUrl.parse('/docs#intro').hash);
+    expectTypeOf<'intro' | 'api'>(RequiredHashUrl.parse('/docs#intro').hash);
+    expectTypeOf<'intro' | 'api'>(DefaultHashUrl.parse('/docs').hash);
   });
 
   it('keeps unknown search params out of typed search', () => {
@@ -227,8 +225,8 @@ describe('comprehensive TypeScript inference', () => {
 
     const state = SearchUrl.parse('/search?q=urlkit&debug=true', { unknownSearch: 'preserve' });
 
-    expectType<string>(state.search.q);
-    expectType<UnknownSearchParams | undefined>(state.unknownSearch);
+    expectTypeOf<string>(state.search.q);
+    expectTypeOf<UnknownSearchParams | undefined>(state.unknownSearch);
 
     if (false) {
       // @ts-expect-error preserved unknown params live in state.unknownSearch, not in typed search.
@@ -313,13 +311,13 @@ describe('comprehensive TypeScript inference', () => {
       // @ts-expect-error static descriptors also enforce required search fields in build input.
       StaticRouteUrl.build({ params: { slug: 'post-1' }, search: { sort: 'popular' } });
 
-      expectType<
+      expectTypeOf<
         UrlBuildInput<'path', { readonly id: number }, { readonly tab?: string }, undefined>
       >({ params: { id: 1 } });
-      expectType<UrlBuildInput<'path', {}, { readonly q: string }, undefined>>({
+      expectTypeOf<UrlBuildInput<'path', {}, { readonly q: string }, undefined>>({
         search: { q: 'router' },
       });
-      expectType<UrlBuildInput<'pathless', {}, { readonly page: number }, undefined>>({
+      expectTypeOf<UrlBuildInput<'pathless', {}, { readonly page: number }, undefined>>({
         pathname: '/products',
         search: { page: 2 },
       });
@@ -353,8 +351,8 @@ describe('comprehensive TypeScript inference', () => {
     const pathlessState = FiltersUrl.parse('/products?page=2');
     const literalState = FiltersUrl.normalize({ pathname: '/products', search: { page: 2 } });
 
-    expectType<string>(pathlessState.pathname);
-    expectType<'/products'>(literalState.pathname);
+    expectTypeOf<string>(pathlessState.pathname);
+    expectTypeOf<'/products'>(literalState.pathname);
 
     UserUrl.normalize({ params: { id: 1 }, search: { tab: 'profile' } });
     SearchUrl.normalize({ search: { q: 'router' } });
@@ -383,13 +381,13 @@ describe('comprehensive TypeScript inference', () => {
       // @ts-expect-error required hash fields without defaults must be present in normalize input.
       RequiredHashUrl.normalize({});
 
-      expectType<
+      expectTypeOf<
         UrlNormalizeInput<'path', { readonly id: number }, { readonly tab?: string }, undefined>
       >({ params: { id: 1 } });
-      expectType<UrlNormalizeInput<'path', {}, { readonly q: string }, undefined>>({
+      expectTypeOf<UrlNormalizeInput<'path', {}, { readonly q: string }, undefined>>({
         search: { q: 'router' },
       });
-      expectType<UrlNormalizeInput<'pathless', {}, { readonly page: number }, undefined>>({
+      expectTypeOf<UrlNormalizeInput<'pathless', {}, { readonly page: number }, undefined>>({
         pathname: '/products',
         search: { page: 2 },
       });
@@ -400,10 +398,10 @@ describe('comprehensive TypeScript inference', () => {
     const UserUrl = url({ path: '/users/{id:int}' });
     const FiltersUrl = url({ search: { page: int().default(1) } });
 
-    expectType<(pathname: string) => { readonly id: number }>(UserUrl.parsePathname);
-    expectType<(params: { readonly id: number }) => string>(UserUrl.buildPath);
-    expectType<never>(FiltersUrl.parsePathname);
-    expectType<never>(FiltersUrl.buildPath);
+    expectTypeOf<(pathname: string) => { readonly id: number }>(UserUrl.parsePathname);
+    expectTypeOf<(params: { readonly id: number }) => string>(UserUrl.buildPath);
+    expectTypeOf<never>(FiltersUrl.parsePathname);
+    expectTypeOf<never>(FiltersUrl.buildPath);
 
     if (false) {
       UserUrl.parsePathname('/users/1');

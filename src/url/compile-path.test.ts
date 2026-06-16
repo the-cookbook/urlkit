@@ -1,10 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { compilePath } from './compile-path.js';
 import { createPathConstraint } from './path-constraints.js';
 import type { ParamsFromPattern, PathnameFromPattern } from './contracts.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 const expectUrlKitError = (
   callback: () => unknown,
@@ -43,16 +41,16 @@ describe('compilePath', () => {
     const path = compilePath('/users/{id}');
 
     expect(path.parsePathname('/users/abc')).toEqual({ id: 'abc' });
-    expectType<{ readonly id: string }>({} as ParamsFromPattern<'/users/{id}'>);
-    expectType<`/users/${string}`>('/users/abc');
+    expectTypeOf<{ readonly id: string }>({} as ParamsFromPattern<'/users/{id}'>);
+    expectTypeOf<`/users/${string}`>('/users/abc');
   });
 
   it('parses int params to numbers in standalone parsed-param mode', () => {
     const path = compilePath('/users/{id:int}');
 
     expect(path.parsePathname('/users/42')).toEqual({ id: 42 });
-    expectType<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:int}'>);
-    expectType<`/users/${number}`>('/users/42');
+    expectTypeOf<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:int}'>);
+    expectTypeOf<`/users/${number}`>('/users/42');
   });
 
   it('parses decimal and range params to numbers in standalone parsed-param mode', () => {
@@ -61,8 +59,8 @@ describe('compilePath', () => {
 
     expect(decimalPath.parsePathname('/prices/4.2')).toEqual({ amount: 4.2 });
     expect(rangePath.parsePathname('/users/4.2')).toEqual({ id: 4.2 });
-    expectType<{ readonly amount: number }>({} as ParamsFromPattern<'/prices/{amount:decimal}'>);
-    expectType<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:range(1,1000)}'>);
+    expectTypeOf<{ readonly amount: number }>({} as ParamsFromPattern<'/prices/{amount:decimal}'>);
+    expectTypeOf<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:range(1,1000)}'>);
   });
 
   it('supports raw-param mode for router runtime integration', () => {
@@ -75,7 +73,7 @@ describe('compilePath', () => {
     const path = compilePath('/posts/{slug:regex([a-z0-9-]+)}');
 
     expect(path.parsePathname('/posts/post-1')).toEqual({ slug: 'post-1' });
-    expectType<{ readonly slug: string }>(
+    expectTypeOf<{ readonly slug: string }>(
       {} as ParamsFromPattern<'/posts/{slug:regex([a-z0-9-]+)}'>,
     );
   });
@@ -107,7 +105,7 @@ describe('compilePath', () => {
     expect(path.buildPath({ slug: 'post-1' })).toBe('/posts/post-1');
     expectUrlKitError(() => path.parsePathname('/posts/Post'), 'invalid-param', ['params']);
     expectUrlKitError(() => path.buildPath({ slug: 'Post' }), 'invalid-param', ['params']);
-    expectType<{ readonly slug: string }>(
+    expectTypeOf<{ readonly slug: string }>(
       {} as ParamsFromPattern<'/posts/{slug:urlkitslugcompile}'>,
     );
   });
@@ -176,9 +174,9 @@ describe('compilePath', () => {
     expect(intMinPath.parsePathname('/users/2')).toEqual({ id: 2 });
     expect(decimalMinMaxPath.parsePathname('/prices/-9.99')).toEqual({ amount: -9.99 });
 
-    expectType<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:min(1)}'>);
-    expectType<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:regex(\\d):min(1)}'>);
-    expectType<`/users/${number}`>('/users/2.5');
+    expectTypeOf<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:min(1)}'>);
+    expectTypeOf<{ readonly id: number }>({} as ParamsFromPattern<'/users/{id:regex(\\d):min(1)}'>);
+    expectTypeOf<`/users/${number}`>('/users/2.5');
   });
 
   it('parses and builds optional chained numeric constraints', () => {
@@ -190,7 +188,7 @@ describe('compilePath', () => {
     expect(path.buildPath({})).toBe('/users');
     expect(path.buildPath({ id: 2.5 })).toBe('/users/2.5');
 
-    expectType<{ readonly id?: number }>({});
+    expectTypeOf<{ readonly id?: number }>({});
   });
 
   it('keeps uuid and length-only constraints as strings', () => {
@@ -202,8 +200,8 @@ describe('compilePath', () => {
     });
     expect(slugPath.parsePathname('/articles/hello')).toEqual({ slug: 'hello' });
 
-    expectType<{ readonly id: string }>({} as ParamsFromPattern<'/users/{id:uuid}'>);
-    expectType<{ readonly slug: string }>(
+    expectTypeOf<{ readonly id: string }>({} as ParamsFromPattern<'/users/{id:uuid}'>);
+    expectTypeOf<{ readonly slug: string }>(
       {} as ParamsFromPattern<'/articles/{slug:minlength(3):maxlength(50)}'>,
     );
   });

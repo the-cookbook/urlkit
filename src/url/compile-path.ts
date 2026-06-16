@@ -27,6 +27,7 @@ export function compilePath<Pattern extends string>(
     pattern,
     parsePathname(pathname: string, matchOptions?: UrlPathMatchOptions) {
       const result = matchPathname(pathname, {
+        ...options.pathMatch,
         ...matchOptions,
         strict: matchOptions?.strict ?? true,
       });

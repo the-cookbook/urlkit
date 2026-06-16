@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { dateTime } from '../schema/date-time.js';
 import { enumOf } from '../schema/enum-of.js';
@@ -8,8 +8,6 @@ import type { UrlNormalizeInput } from '../contracts.js';
 import type { UrlContract } from './contracts.js';
 import { url } from './create-url.js';
 import { createPathConstraint } from './path-constraints.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('url', () => {
   it('constructs path-mode contracts from runtime builder descriptors', () => {
@@ -36,18 +34,18 @@ describe('url', () => {
 
     if (false) {
       const state = UserUrl.parse('/users/42?tab=profile');
-      expectType<`/users/${number}`>(state.pathname);
-      expectType<{ readonly id: number }>(state.params);
-      expectType<{
+      expectTypeOf<`/users/${number}`>(state.pathname);
+      expectTypeOf<{ readonly id: number }>(state.params);
+      expectTypeOf<{
         readonly tab: 'profile' | 'settings';
         readonly page: number;
         readonly ref?: string;
         readonly createdAt?: Date;
       }>(state.search);
-      expectType<'activity' | 'comments' | undefined>(state.hash);
+      expectTypeOf<'activity' | 'comments' | undefined>(state.hash);
     }
 
-    expectType<
+    expectTypeOf<
       UrlContract<
         'path',
         `/users/${number}`,
@@ -97,7 +95,7 @@ describe('url', () => {
     expect(ArticleUrl.match('/articles/HelloWorld')).toBe(false);
 
     if (false) {
-      expectType<string>(state.params.slug);
+      expectTypeOf<string>(state.params.slug);
     }
   });
 
@@ -118,10 +116,10 @@ describe('url', () => {
 
     if (false) {
       const state = FiltersUrl.parse('/products?page=2');
-      expectType<string>(state.pathname);
-      expectType<{}>(state.params);
-      expectType<{ readonly page: number; readonly q?: string }>(state.search);
-      expectType<undefined>(state.hash);
+      expectTypeOf<string>(state.pathname);
+      expectTypeOf<{}>(state.params);
+      expectTypeOf<{ readonly page: number; readonly q?: string }>(state.search);
+      expectTypeOf<undefined>(state.hash);
 
       const normalized = FiltersUrl.normalize({
         pathname: '/products',
@@ -129,11 +127,11 @@ describe('url', () => {
           page: 2,
         },
       });
-      expectType<'/products'>(normalized.pathname);
+      expectTypeOf<'/products'>(normalized.pathname);
     }
 
-    expectType<never>(FiltersUrl.parsePathname);
-    expectType<never>(FiltersUrl.buildPath);
+    expectTypeOf<never>(FiltersUrl.parsePathname);
+    expectTypeOf<never>(FiltersUrl.buildPath);
   });
 
   it('constructs pathless hash-only contracts', () => {
@@ -147,7 +145,7 @@ describe('url', () => {
 
     if (false) {
       const state = SectionUrl.parse('/docs');
-      expectType<'overview' | 'comments'>(state.hash);
+      expectTypeOf<'overview' | 'comments'>(state.hash);
     }
   });
 
@@ -194,10 +192,10 @@ describe('url', () => {
       const uuidState = UuidUrl.parse('/users/7d444840-9dc0-11d1-b245-5ffdce74fad2');
       const slugState = SlugUrl.parse('/articles/hello');
 
-      expectType<number>(minState.params.id);
-      expectType<number | undefined>(optionalState.params.id);
-      expectType<string>(uuidState.params.id);
-      expectType<string>(slugState.params.slug);
+      expectTypeOf<number>(minState.params.id);
+      expectTypeOf<number | undefined>(optionalState.params.id);
+      expectTypeOf<string>(uuidState.params.id);
+      expectTypeOf<string>(slugState.params.slug);
 
       OptionalMinUrl.build({});
       OptionalMinUrl.build({ params: {} });
@@ -319,7 +317,7 @@ describe('url parse and safeParse', () => {
     expect(defaultState.params).toEqual({
       path: 'a%2Fb/c',
     });
-    expectType<{ readonly path: string }>(defaultState.params);
+    expectTypeOf<{ readonly path: string }>(defaultState.params);
 
     expect(state).toEqual({
       hash: undefined,
@@ -327,7 +325,7 @@ describe('url parse and safeParse', () => {
       pathname: '/dashboard/files/a%2Fb/c',
       search: {},
     });
-    expectType<{ readonly path: readonly string[] }>(state.params);
+    expectTypeOf<{ readonly path: readonly string[] }>(state.params);
 
     expect(safeParseState).toEqual({
       success: true,
@@ -340,7 +338,7 @@ describe('url parse and safeParse', () => {
     });
 
     if (safeParseState.success) {
-      expectType<{ readonly path: readonly string[] }>(safeParseState.data.params);
+      expectTypeOf<{ readonly path: readonly string[] }>(safeParseState.data.params);
     }
   });
 
@@ -391,7 +389,7 @@ describe('url parse and safeParse', () => {
     expect(params).toEqual({
       path: ['alpha beta', 'release notes'],
     });
-    expectType<{ readonly path: readonly string[] }>(params);
+    expectTypeOf<{ readonly path: readonly string[] }>(params);
   });
 
   it('uses contract-level unknownSearch and method-level overrides', () => {
@@ -428,10 +426,10 @@ describe('url parse and safeParse', () => {
 
     const state = UserUrl.parse('/users/42?page=2#activity');
 
-    expectType<`/users/${number}`>(state.pathname);
-    expectType<{ readonly id: number }>(state.params);
-    expectType<{ readonly page: number; readonly ref?: string }>(state.search);
-    expectType<'activity' | 'comments' | undefined>(state.hash);
+    expectTypeOf<`/users/${number}`>(state.pathname);
+    expectTypeOf<{ readonly id: number }>(state.params);
+    expectTypeOf<{ readonly page: number; readonly ref?: string }>(state.search);
+    expectTypeOf<'activity' | 'comments' | undefined>(state.hash);
   });
 });
 
@@ -474,7 +472,7 @@ describe('url normalize and safeNormalize', () => {
       search: { page: 2 },
       hash: undefined,
     });
-    expectType<'/products'>(state.pathname);
+    expectTypeOf<'/products'>(state.pathname);
   });
 
   it('returns discriminated safeNormalize results', () => {
@@ -543,7 +541,7 @@ describe('url normalize and safeNormalize', () => {
           debug: 'true',
         },
       };
-      expectType<UrlNormalizeInput<'pathless', {}, { readonly q: string }, undefined>>(input);
+      expectTypeOf<UrlNormalizeInput<'pathless', {}, { readonly q: string }, undefined>>(input);
     }
   });
 
@@ -862,7 +860,7 @@ describe('url contract helper methods', () => {
     expect(params).toEqual({
       path: ['a/b', 'c'],
     });
-    expectType<{ readonly path: readonly string[] }>(params);
+    expectTypeOf<{ readonly path: readonly string[] }>(params);
   });
 
   it('keeps path methods mode-aware by type', () => {
@@ -877,10 +875,10 @@ describe('url contract helper methods', () => {
     expect((FiltersUrl as unknown as { readonly buildPath?: unknown }).buildPath).toBeUndefined();
 
     if (false) {
-      expectType<(pathname: string) => { readonly id: number }>(UserUrl.parsePathname);
-      expectType<(params: { readonly id: number }) => string>(UserUrl.buildPath);
-      expectType<never>(FiltersUrl.parsePathname);
-      expectType<never>(FiltersUrl.buildPath);
+      expectTypeOf<(pathname: string) => { readonly id: number }>(UserUrl.parsePathname);
+      expectTypeOf<(params: { readonly id: number }) => string>(UserUrl.buildPath);
+      expectTypeOf<never>(FiltersUrl.parsePathname);
+      expectTypeOf<never>(FiltersUrl.buildPath);
     }
   });
 });
@@ -1016,7 +1014,7 @@ describe('url parseRequest and safeParseRequest', () => {
       hash: undefined,
       search: {},
     });
-    expectType<{ readonly path: readonly string[] }>(state.params);
+    expectTypeOf<{ readonly path: readonly string[] }>(state.params);
 
     expect(safeParseState).toEqual({
       success: true,
@@ -1029,7 +1027,7 @@ describe('url parseRequest and safeParseRequest', () => {
     });
 
     if (safeParseState.success) {
-      expectType<{ readonly path: readonly string[] }>(safeParseState.data.params);
+      expectTypeOf<{ readonly path: readonly string[] }>(safeParseState.data.params);
     }
   });
 
@@ -1077,9 +1075,9 @@ describe('url parseRequest and safeParseRequest', () => {
 
     const state = UserUrl.parseRequest({ url: 'https://example.com/users/42?page=2#activity' });
 
-    expectType<`/users/${number}`>(state.pathname);
-    expectType<{ readonly id: number }>(state.params);
-    expectType<{ readonly page: number }>(state.search);
-    expectType<'activity' | 'comments' | undefined>(state.hash);
+    expectTypeOf<`/users/${number}`>(state.pathname);
+    expectTypeOf<{ readonly id: number }>(state.params);
+    expectTypeOf<{ readonly page: number }>(state.search);
+    expectTypeOf<'activity' | 'comments' | undefined>(state.hash);
   });
 });

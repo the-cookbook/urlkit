@@ -1,12 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { int } from '../schema/int.js';
 import { string } from '../schema/string.js';
 import { compileStaticUrl } from '../static/compile-static-url.js';
 import { createUrlContract } from './create-url-contract.js';
 import type { ParamsFromPattern, PathnameFromPattern, UrlContract } from './contracts.js';
-
-const expectType = <Value>(_value: Value): void => undefined;
 
 describe('createUrlContract', () => {
   it('creates a frozen path contract with the public UrlContract shape', () => {
@@ -35,7 +33,7 @@ describe('createUrlContract', () => {
     expect(contract.buildHash('comments')).toBe('#comments');
     expect(Object.isFrozen(contract)).toBe(true);
 
-    expectType<
+    expectTypeOf<
       UrlContract<
         'path',
         `/users/${number}`,

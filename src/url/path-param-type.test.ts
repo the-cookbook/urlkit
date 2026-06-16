@@ -1,8 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, expectTypeOf } from 'vitest';
 import { getPathParamType, type PathParamType } from './path-param-type.js';
 import type { ParsedPathParamSegment } from './path-segment.js';
-
-function expectType<Value>(_value: Value): void {}
 
 describe('getPathParamType', () => {
   it('maps supported constraints to URLKit path param types', () => {
@@ -114,7 +112,7 @@ describe('getPathParamType', () => {
     });
     const segment: ParsedPathParamSegment = { type: 'parameter', name: 'slug' };
 
-    expectType<'string' | 'int' | 'decimal' | 'range' | 'regex'>(type);
+    expectTypeOf<'string' | 'int' | 'decimal' | 'range' | 'regex'>(type);
     expect(getPathParamType(segment)).toBe('string');
   });
 });
