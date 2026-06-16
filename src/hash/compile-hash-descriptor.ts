@@ -14,13 +14,13 @@ export function compileHashDescriptor(
   descriptor?: HashDescriptorInput,
 ): CompiledHashDescriptor<string | undefined> {
   if (descriptor === undefined) {
-    return compileNormalizedHashDescriptor({ kind: 'string', presence: 'optional' });
+    return compileNormalizedHashDescriptor({ type: 'string', presence: 'optional' });
   }
 
-  const runtimeKind = getRuntimeSchemaKind(descriptor);
+  const runtimeType = getRuntimeSchemaType(descriptor);
 
-  if (runtimeKind) {
-    if (runtimeKind !== 'string' && runtimeKind !== 'enum') {
+  if (runtimeType) {
+    if (runtimeType !== 'string' && runtimeType !== 'enum') {
       throw new UrlKitError('invalid-descriptor', 'Hash schema must be a string or enum schema.', {
         path: HASH_PATH,
       });
@@ -40,10 +40,10 @@ export function compileHashDescriptor(
   );
 }
 
-function getRuntimeSchemaKind(input: unknown): string | undefined {
+function getRuntimeSchemaType(input: unknown): string | undefined {
   try {
     const internals = getRuntimeSchemaInternals(input as RuntimeSchemaBuilder<unknown>);
-    return internals.kind;
+    return internals.type;
   } catch {
     return undefined;
   }

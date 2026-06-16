@@ -4,19 +4,19 @@ import type { NormalizedRuntimeSchemaDescriptor } from './contracts.js';
 import { handleRuntimeSchemaAbsence } from './handle-runtime-schema-absence.js';
 
 const optionalDescriptor = {
-  kind: 'test',
+  type: 'test',
   presence: 'optional',
   options: {},
 } satisfies NormalizedRuntimeSchemaDescriptor<'test', Record<never, never>>;
 
 const requiredDescriptor = {
-  kind: 'test',
+  type: 'test',
   presence: 'required',
   options: {},
 } satisfies NormalizedRuntimeSchemaDescriptor<'test', Record<never, never>>;
 
 const defaultedDescriptor = {
-  kind: 'test',
+  type: 'test',
   presence: 'defaulted',
   options: {},
   defaultValue: 'fallback',

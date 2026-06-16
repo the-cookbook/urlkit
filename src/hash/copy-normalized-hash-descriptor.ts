@@ -7,7 +7,7 @@ export function copyNormalizedHashDescriptor(
 
   if (descriptor.presence === 'defaulted') {
     return Object.freeze({
-      kind: descriptor.kind,
+      type: descriptor.type,
       presence: 'defaulted',
       ...(values ? { values } : {}),
       defaultValue: descriptor.defaultValue,
@@ -15,7 +15,7 @@ export function copyNormalizedHashDescriptor(
   }
 
   return Object.freeze({
-    kind: descriptor.kind,
+    type: descriptor.type,
     presence: descriptor.presence,
     ...(values ? { values } : {}),
   });

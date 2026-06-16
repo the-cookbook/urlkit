@@ -23,13 +23,13 @@ export function serializeCompiledRuntimeSchemaValue<Value = unknown>(
   if (!compiled.codec) {
     throw new UrlKitError(
       'invalid-descriptor',
-      `Runtime schema "${compiled.descriptor.kind}" does not define a serializer.`,
+      `Runtime schema "${compiled.descriptor.type}" does not define a serializer.`,
       options.path ? { path: options.path } : undefined,
     );
   }
 
   try {
-    const context = createRuntimeSchemaValueContext(compiled.descriptor.kind, options);
+    const context = createRuntimeSchemaValueContext(compiled.descriptor.type, options);
     const normalized = compiled.codec.normalize(input, context);
     return compiled.codec.serialize(normalized, context);
   } catch (error) {

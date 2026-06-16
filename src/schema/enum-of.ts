@@ -41,7 +41,7 @@ export function enumOf<const Values extends readonly string[]>(values: Values): 
   };
 
   return createRuntimeSchemaBuilder<Values[number], 'enum', EnumSchemaOptions<Values>>({
-    kind: 'enum',
+    type: 'enum',
     options: {
       values: normalizedValues as unknown as Values,
     },

@@ -27,7 +27,7 @@ describe('normalizeRuntimeSchemaValue', () => {
   });
 
   it('rejects schemas without normalize codecs', () => {
-    const schema = createRuntimeSchemaBuilder<string, 'test'>({ kind: 'test' });
+    const schema = createRuntimeSchemaBuilder<string, 'test'>({ type: 'test' });
 
     expect(() => normalizeRuntimeSchemaValue(schema, 'value')).toThrow(UrlKitError);
   });

@@ -7,15 +7,6 @@ export function getPathParamConstraints(
     return segment.constraints;
   }
 
-  if (segment.constraint) {
-    return [
-      {
-        type: segment.constraint,
-        params: segment.constraintParams ?? '',
-      },
-    ];
-  }
-
   return [];
 }
 

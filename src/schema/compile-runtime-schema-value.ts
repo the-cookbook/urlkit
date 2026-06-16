@@ -15,11 +15,11 @@ export interface CompiledRuntimeSchema<Value = unknown> {
 
 export function compileRuntimeSchemaValue<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
 >(
-  schema: RuntimeSchemaBuilder<Value, Kind, Options, Descriptor>,
+  schema: RuntimeSchemaBuilder<Value, Type, Options, Descriptor>,
   options: CompileRuntimeSchemaOptions = {},
 ): CompiledRuntimeSchema<Value> {
   const descriptor = compileRuntimeSchema(schema, options);

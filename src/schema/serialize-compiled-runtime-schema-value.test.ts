@@ -6,7 +6,7 @@ import { serializeCompiledRuntimeSchemaValue } from './serialize-compiled-runtim
 function trackedSchema() {
   let validations = 0;
   const schema = createRuntimeSchemaBuilder<string, 'tracked'>({
-    kind: 'tracked',
+    type: 'tracked',
     codec: {
       parse: (input) => input,
       normalize: (input) => String(input).toUpperCase(),

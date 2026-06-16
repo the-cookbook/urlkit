@@ -9,10 +9,10 @@ import { string } from './string.js';
 describe('array', () => {
   it('compiles to a normalized descriptor with an element descriptor', () => {
     expect(compileRuntimeSchema(array(string()))).toEqual({
-      kind: 'array',
+      type: 'array',
       presence: 'required',
       options: {
-        element: { kind: 'string', presence: 'required', options: {} },
+        element: { type: 'string', presence: 'required', options: {} },
       },
     });
   });

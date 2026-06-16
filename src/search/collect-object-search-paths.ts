@@ -1,5 +1,5 @@
 import type { AnyRuntimeSchemaBuilder } from '../schema/contracts.js';
-import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
+import { isRuntimeSchemaType } from '../schema/is-runtime-schema-type.js';
 import { getObjectSchemaShape, type AnyObjectSchema } from '../schema/object.js';
 
 export function collectObjectSearchPaths(schema: AnyObjectSchema): readonly (readonly string[])[] {
@@ -16,7 +16,7 @@ function collectObjectSearchPathsFromShape(
   for (const [key, childSchema] of Object.entries(shape)) {
     const childPath = [...basePath, key];
 
-    if (isRuntimeSchemaKind(childSchema as AnyRuntimeSchemaBuilder, 'object')) {
+    if (isRuntimeSchemaType(childSchema as AnyRuntimeSchemaBuilder, 'object')) {
       paths.push(...collectObjectSearchPathsFromShape(childSchema as AnyObjectSchema, childPath));
       continue;
     }

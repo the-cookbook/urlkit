@@ -10,17 +10,17 @@ import { serializeRuntimeSchemaValue } from './serialize-runtime-schema-value.js
 describe('number', () => {
   it('compiles to a normalized descriptor', () => {
     expect(compileRuntimeSchema(number())).toEqual({
-      kind: 'number',
+      type: 'number',
       presence: 'required',
       options: {},
     });
     expect(compileRuntimeSchema(number().optional())).toEqual({
-      kind: 'number',
+      type: 'number',
       presence: 'optional',
       options: {},
     });
     expect(compileRuntimeSchema(number().default(1.5))).toEqual({
-      kind: 'number',
+      type: 'number',
       presence: 'defaulted',
       options: {},
       defaultValue: 1.5,

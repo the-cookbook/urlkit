@@ -38,7 +38,7 @@ export function validateNormalizedHashValue(
     );
   }
 
-  if (descriptor.kind === 'enum' && !(descriptor.values ?? []).includes(input)) {
+  if (descriptor.type === 'enum' && !(descriptor.values ?? []).includes(input)) {
     throw new UrlKitError(
       'invalid-hash',
       `Expected hash to be one of: ${(descriptor.values ?? []).join(', ')}.`,

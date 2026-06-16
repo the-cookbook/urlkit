@@ -57,7 +57,7 @@ export function object<const Shape extends ObjectSchemaShape>(shape: Shape): Obj
     'object',
     ObjectSchemaOptions
   >({
-    kind: 'object',
+    type: 'object',
     options: {
       shape: createShapeDescriptor(shape),
     },
@@ -168,7 +168,7 @@ function validateObjectDefault(
   context: RuntimeDefaultValidationContext,
 ): void {
   normalizeObjectValue(shape, value, {
-    kind: 'object',
+    type: 'object',
     path: context.path,
     errorCode: 'invalid-descriptor',
   });

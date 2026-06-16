@@ -27,7 +27,7 @@ describe('serializeRuntimeSchemaValue', () => {
   });
 
   it('rejects schemas without serialize codecs', () => {
-    const schema = createRuntimeSchemaBuilder<string, 'test'>({ kind: 'test' });
+    const schema = createRuntimeSchemaBuilder<string, 'test'>({ type: 'test' });
 
     expect(() => serializeRuntimeSchemaValue(schema, 'value')).toThrow(UrlKitError);
   });

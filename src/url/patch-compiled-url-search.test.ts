@@ -53,7 +53,7 @@ describe('patchCompiledUrlSearch', () => {
     );
   });
 
-  it('serializes all supported patched scalar kinds through compiled codecs', () => {
+  it('serializes all supported patched scalar types through compiled codecs', () => {
     const compiled = compileUrlDescriptor(
       compileRuntimeUrlDescriptor({
         search: {

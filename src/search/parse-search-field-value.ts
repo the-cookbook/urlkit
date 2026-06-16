@@ -1,6 +1,6 @@
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { parseCompiledRuntimeSchemaValue } from '../schema/parse-compiled-runtime-schema-value.js';
-import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
+import { isRuntimeSchemaType } from '../schema/is-runtime-schema-type.js';
 import type { AnyObjectSchema } from '../schema/object.js';
 import type { ArraySchema } from '../schema/array.js';
 import type {
@@ -18,13 +18,13 @@ export function parseSearchFieldValue(
   rawSearch: RawSearchParams,
   options: SearchParseOptions = {},
 ): unknown {
-  if (isRuntimeSchemaKind(field.schema, 'object')) {
+  if (isRuntimeSchemaType(field.schema, 'object')) {
     return parseObjectSearchValue(
       field.schema as AnyObjectSchema,
       field.key,
       rawSearch,
       {
-        kind: 'object',
+        type: 'object',
         path: [field.key],
         errorCode: 'invalid-search',
       },
@@ -32,12 +32,12 @@ export function parseSearchFieldValue(
     );
   }
 
-  if (isRuntimeSchemaKind(field.schema, 'array')) {
+  if (isRuntimeSchemaType(field.schema, 'array')) {
     return parseArraySearchValue(
       field.schema as ArraySchema<any>,
       rawSearch[field.key],
       {
-        kind: 'array',
+        type: 'array',
         path: [field.key],
         errorCode: 'invalid-search',
       },

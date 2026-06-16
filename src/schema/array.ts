@@ -47,7 +47,7 @@ export function array<Schema extends AnyRuntimeSchemaBuilder>(
     'array',
     ArraySchemaOptions
   >({
-    kind: 'array',
+    type: 'array',
     options: {
       element: elementDescriptor,
     },

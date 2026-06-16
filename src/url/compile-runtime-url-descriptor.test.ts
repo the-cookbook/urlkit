@@ -23,7 +23,7 @@ describe('compileRuntimeUrlDescriptor', () => {
     expect(descriptor.path?.parsePathname('/users/42')).toEqual({ id: 42 });
     expect(descriptor.search).toBeDefined();
     expect(descriptor.hash).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'optional',
       values: ['activity', 'comments'],
     });

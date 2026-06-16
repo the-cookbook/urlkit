@@ -41,7 +41,7 @@ const booleanCodec: RuntimeSchemaCodec<boolean> = {
 
 export function boolean(): BooleanSchema {
   return createRuntimeSchemaBuilder<boolean, 'boolean'>({
-    kind: 'boolean',
+    type: 'boolean',
     codec: booleanCodec,
     validateDefault(value, context) {
       validateBooleanDefault(value, context);

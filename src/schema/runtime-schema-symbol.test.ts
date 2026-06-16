@@ -7,7 +7,7 @@ import {
 
 describe('runtimeSchemaSymbol', () => {
   it('stores schema internals on builders without string-key exposure', () => {
-    const schema = createRuntimeSchemaBuilder<string, 'test'>({ kind: 'test' });
+    const schema = createRuntimeSchemaBuilder<string, 'test'>({ type: 'test' });
 
     const schemaWithInternals = schema as RuntimeSchemaBuilderWithInternals<
       string,
@@ -16,7 +16,7 @@ describe('runtimeSchemaSymbol', () => {
       never
     >;
 
-    expect(schemaWithInternals[runtimeSchemaSymbol].kind).toBe('test');
+    expect(schemaWithInternals[runtimeSchemaSymbol].type).toBe('test');
     expect(Object.keys(schema)).toEqual(['optional', 'required', 'default']);
   });
 });

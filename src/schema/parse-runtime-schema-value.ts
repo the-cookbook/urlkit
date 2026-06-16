@@ -9,11 +9,11 @@ import { parseCompiledRuntimeSchemaValue } from './parse-compiled-runtime-schema
 
 export function parseRuntimeSchemaValue<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
 >(
-  schema: RuntimeSchemaBuilder<Value, Kind, Options, Descriptor>,
+  schema: RuntimeSchemaBuilder<Value, Type, Options, Descriptor>,
   input: unknown,
   options: RuntimeSchemaValueOptions = {},
 ): Value {

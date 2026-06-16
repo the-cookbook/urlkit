@@ -12,11 +12,11 @@ import { serializeRuntimeSchemaValue } from './serialize-runtime-schema-value.js
 
 export function safeParseRuntimeSchemaValue<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
 >(
-  schema: RuntimeSchemaBuilder<Value, Kind, Options, Descriptor>,
+  schema: RuntimeSchemaBuilder<Value, Type, Options, Descriptor>,
   input: unknown,
   options: RuntimeSchemaValueOptions = {},
 ): RuntimeSchemaSafeResult<Value> {
@@ -29,11 +29,11 @@ export function safeParseRuntimeSchemaValue<
 
 export function safeNormalizeRuntimeSchemaValue<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
 >(
-  schema: RuntimeSchemaBuilder<Value, Kind, Options, Descriptor>,
+  schema: RuntimeSchemaBuilder<Value, Type, Options, Descriptor>,
   input: unknown,
   options: RuntimeSchemaValueOptions = {},
 ): RuntimeSchemaSafeResult<Value> {
@@ -46,11 +46,11 @@ export function safeNormalizeRuntimeSchemaValue<
 
 export function safeSerializeRuntimeSchemaValue<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
 >(
-  schema: RuntimeSchemaBuilder<Value, Kind, Options, Descriptor>,
+  schema: RuntimeSchemaBuilder<Value, Type, Options, Descriptor>,
   input: unknown,
   options: RuntimeSchemaValueOptions = {},
 ): RuntimeSchemaSafeResult<string | undefined> {

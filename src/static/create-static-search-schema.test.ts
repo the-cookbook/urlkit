@@ -41,7 +41,7 @@ describe('createStaticSearchSchema', () => {
 
     expect(runtimeField?.type).toBe('one');
     expect(runtimeField?.optional).toBe(true);
-    expect(compileRuntimeSchema(runtimeField!.value).kind).toBe('string');
+    expect(compileRuntimeSchema(runtimeField!.value).type).toBe('string');
   });
 
   it('creates built-in date schemas from static date descriptors', () => {

@@ -9,11 +9,11 @@ import { normalizeCompiledRuntimeSchemaValue } from './normalize-compiled-runtim
 
 export function normalizeRuntimeSchemaValue<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
 >(
-  schema: RuntimeSchemaBuilder<Value, Kind, Options, Descriptor>,
+  schema: RuntimeSchemaBuilder<Value, Type, Options, Descriptor>,
   input: unknown,
   options: RuntimeSchemaValueOptions = {},
 ): Value {

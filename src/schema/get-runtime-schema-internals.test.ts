@@ -5,9 +5,9 @@ import { getRuntimeSchemaInternals } from './get-runtime-schema-internals.js';
 
 describe('getRuntimeSchemaInternals', () => {
   it('returns internals for runtime schema builders', () => {
-    const schema = createRuntimeSchemaBuilder<string, 'test'>({ kind: 'test' });
+    const schema = createRuntimeSchemaBuilder<string, 'test'>({ type: 'test' });
 
-    expect(getRuntimeSchemaInternals(schema).kind).toBe('test');
+    expect(getRuntimeSchemaInternals(schema).type).toBe('test');
   });
 
   it('throws invalid-descriptor for non-builder values', () => {

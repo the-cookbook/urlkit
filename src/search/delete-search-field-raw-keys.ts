@@ -1,4 +1,4 @@
-import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
+import { isRuntimeSchemaType } from '../schema/is-runtime-schema-type.js';
 import type { CompiledSearchField } from './contracts.js';
 import { collectObjectSearchPaths } from './collect-object-search-paths.js';
 import { getObjectSearchRawKeyPath } from './object-search-raw-key-path.js';
@@ -8,7 +8,7 @@ export function deleteSearchFieldRawKeys(
   field: CompiledSearchField,
   rawSearch: Record<string, unknown>,
 ): void {
-  if (isRuntimeSchemaKind(field.schema, 'object')) {
+  if (isRuntimeSchemaType(field.schema, 'object')) {
     deleteObjectSearchKeys(field, rawSearch);
     return;
   }

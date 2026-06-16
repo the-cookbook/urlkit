@@ -4,16 +4,16 @@ import { copyNormalizedHashDescriptor } from './copy-normalized-hash-descriptor.
 
 describe('copyNormalizedHashDescriptor', () => {
   it('copies and freezes optional string descriptors', () => {
-    const copy = copyNormalizedHashDescriptor({ kind: 'string', presence: 'optional' });
+    const copy = copyNormalizedHashDescriptor({ type: 'string', presence: 'optional' });
 
-    expect(copy).toEqual({ kind: 'string', presence: 'optional' });
+    expect(copy).toEqual({ type: 'string', presence: 'optional' });
     expect(Object.isFrozen(copy)).toBe(true);
   });
 
   it('copies and freezes enum values', () => {
     const values = ['overview', 'comments'];
     const descriptor: NormalizedHashDescriptor<string | undefined> = {
-      kind: 'enum',
+      type: 'enum',
       presence: 'optional',
       values,
     };
@@ -27,14 +27,14 @@ describe('copyNormalizedHashDescriptor', () => {
 
   it('copies defaulted descriptors', () => {
     const copy = copyNormalizedHashDescriptor({
-      kind: 'enum',
+      type: 'enum',
       presence: 'defaulted',
       values: ['overview', 'comments'],
       defaultValue: 'overview',
     });
 
     expect(copy).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'defaulted',
       values: ['overview', 'comments'],
       defaultValue: 'overview',

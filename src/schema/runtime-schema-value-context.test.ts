@@ -8,7 +8,7 @@ describe('createRuntimeSchemaValueContext', () => {
 
     path.push('mutated');
 
-    expect(context).toEqual({ kind: 'string', path: ['search', 'q'], errorCode: 'invalid-search' });
+    expect(context).toEqual({ type: 'string', path: ['search', 'q'], errorCode: 'invalid-search' });
   });
 
   it('uses custom error codes', () => {

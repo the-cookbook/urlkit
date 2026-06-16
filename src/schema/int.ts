@@ -33,7 +33,7 @@ const intCodec: RuntimeSchemaCodec<number> = {
 
 export function int(): IntSchema {
   return createRuntimeSchemaBuilder<number, 'int'>({
-    kind: 'int',
+    type: 'int',
     codec: intCodec,
     validateDefault(value, context) {
       validateIntDefault(value, context);

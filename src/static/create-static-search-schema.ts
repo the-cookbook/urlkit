@@ -21,7 +21,7 @@ import {
   isStaticSearchFieldOptional,
   normalizeStaticSearchFieldType,
   normalizeStaticSearchFieldValue,
-} from './static-search-field-kind.js';
+} from './static-search-field-type.js';
 import { normalizeStaticSearchDefault } from './normalize-static-search-default.js';
 
 export function createStaticSearchSchema(descriptor: StaticSearchDescriptor): RuntimeSearchSchema {

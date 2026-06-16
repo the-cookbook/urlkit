@@ -9,10 +9,8 @@ import type { ParsedPathParamSegment } from './path-segment.js';
 describe('path param constraints', () => {
   it('returns full constraint chains when available', () => {
     const segment: ParsedPathParamSegment = {
-      kind: 'param',
+      type: 'parameter',
       name: 'id',
-      constraint: 'regex',
-      constraintParams: '/\\d/',
       constraints: [
         { type: 'regex', params: '/\\d/' },
         { type: 'min', params: '1' },
@@ -29,15 +27,15 @@ describe('path param constraints', () => {
 
   it('falls back to compatibility aliases', () => {
     const segment: ParsedPathParamSegment = {
-      kind: 'param',
+      type: 'parameter',
       name: 'id',
-      constraint: 'int',
+      constraints: [{ type: 'int', params: '' }],
     };
 
     expect(getPathParamConstraints(segment)).toEqual([{ type: 'int', params: '' }]);
   });
 
   it('returns an empty chain for unconstrained params', () => {
-    expect(getPathParamConstraints({ kind: 'param', name: 'slug' })).toEqual([]);
+    expect(getPathParamConstraints({ type: 'parameter', name: 'slug' })).toEqual([]);
   });
 });

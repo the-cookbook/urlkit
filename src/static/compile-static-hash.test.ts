@@ -21,13 +21,13 @@ describe('compileStaticHash', () => {
   });
 
   it('compiles string hash descriptors', () => {
-    expect(compileStaticHash({ type: 'string' })).toEqual({ kind: 'string', presence: 'required' });
+    expect(compileStaticHash({ type: 'string' })).toEqual({ type: 'string', presence: 'required' });
     expect(compileStaticHash({ type: 'string', optional: true })).toEqual({
-      kind: 'string',
+      type: 'string',
       presence: 'optional',
     });
     expect(compileStaticHash({ type: 'string', default: 'overview' })).toEqual({
-      kind: 'string',
+      type: 'string',
       presence: 'defaulted',
       defaultValue: 'overview',
     });
@@ -35,7 +35,7 @@ describe('compileStaticHash', () => {
 
   it('compiles enum hash descriptors', () => {
     expect(compileStaticHash({ type: 'enum', values: ['overview', 'comments'] })).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'required',
       values: ['overview', 'comments'],
     });
@@ -43,7 +43,7 @@ describe('compileStaticHash', () => {
     expect(
       compileStaticHash({ type: 'enum', values: ['overview', 'comments'], optional: true }),
     ).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'optional',
       values: ['overview', 'comments'],
     });
@@ -51,7 +51,7 @@ describe('compileStaticHash', () => {
     expect(
       compileStaticHash({ type: 'enum', values: ['overview', 'comments'], default: 'overview' }),
     ).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'defaulted',
       values: ['overview', 'comments'],
       defaultValue: 'overview',

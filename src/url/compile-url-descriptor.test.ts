@@ -28,7 +28,7 @@ describe('compileUrlDescriptor', () => {
         tab: string().default('profile'),
       },
       hash: {
-        kind: 'string',
+        type: 'string',
         presence: 'optional',
       },
     });
@@ -37,7 +37,7 @@ describe('compileUrlDescriptor', () => {
     expect(compiled.pattern).toBe('/users/{id:int}');
     expect(compiled.path).toBe(path);
     expect(compiled.search?.fields).toHaveLength(1);
-    expect(compiled.hash?.descriptor).toEqual({ kind: 'string', presence: 'optional' });
+    expect(compiled.hash?.descriptor).toEqual({ type: 'string', presence: 'optional' });
     expect(Object.isFrozen(compiled)).toBe(true);
   });
 

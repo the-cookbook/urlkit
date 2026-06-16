@@ -4,7 +4,7 @@ import { int } from '../schema/int.js';
 import { string } from '../schema/string.js';
 import { parseArraySearchValue } from './parse-array-search-value.js';
 
-const context = { kind: 'search' as const, path: ['tags'], errorCode: 'invalid-search' as const };
+const context = { type: 'search' as const, path: ['tags'], errorCode: 'invalid-search' as const };
 
 describe('parseArraySearchValue', () => {
   it('parses repeated and single raw search values as arrays', () => {

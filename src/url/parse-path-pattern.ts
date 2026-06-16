@@ -48,7 +48,7 @@ function appendLiteralSegments(
       continue;
     }
 
-    segments.push({ kind: 'literal', value: segment });
+    segments.push({ type: 'literal', value: segment });
   }
 }
 
@@ -57,19 +57,12 @@ function toParsedParamSegment(token: ParameterSegment): ParsedPathSegment {
     type: constraint.type,
     params: constraint.params,
   }));
-  const firstConstraint = constraints[0];
 
   return {
-    kind: 'param',
+    type: 'parameter',
     name: token.name,
     ...(token.optional ? { optional: true as const } : {}),
     ...(token.wildcard ? { wildcard: true as const } : {}),
     ...(constraints.length ? { constraints } : {}),
-    ...(firstConstraint
-      ? {
-          constraint: firstConstraint.type,
-          ...(firstConstraint.params ? { constraintParams: firstConstraint.params } : {}),
-        }
-      : {}),
   };
 }

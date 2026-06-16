@@ -8,7 +8,7 @@ import type {
 describe('hash contracts', () => {
   it('models normalized and compiled hash descriptors', () => {
     const descriptor: NormalizedHashDescriptor<'comments' | undefined> = {
-      kind: 'enum',
+      type: 'enum',
       presence: 'optional',
       values: ['comments', 'share'],
     };
@@ -23,6 +23,6 @@ describe('hash contracts', () => {
 
     expect(compiled.parse('#comments')).toBe('comments');
     expect(options.defaults).toBe('omit');
-    expectTypeOf<'string' | 'enum'>(descriptor.kind);
+    expectTypeOf<'string' | 'enum'>(descriptor.type);
   });
 });

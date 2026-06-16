@@ -19,7 +19,7 @@ export function normalizeCompiledRuntimeSchemaValue<Value = unknown>(
   if (!compiled.codec) {
     throw new UrlKitError(
       'invalid-descriptor',
-      `Runtime schema "${compiled.descriptor.kind}" does not define a normalizer.`,
+      `Runtime schema "${compiled.descriptor.type}" does not define a normalizer.`,
       options.path ? { path: options.path } : undefined,
     );
   }
@@ -27,7 +27,7 @@ export function normalizeCompiledRuntimeSchemaValue<Value = unknown>(
   try {
     return compiled.codec.normalize(
       input,
-      createRuntimeSchemaValueContext(compiled.descriptor.kind, options),
+      createRuntimeSchemaValueContext(compiled.descriptor.type, options),
     );
   } catch (error) {
     if (error instanceof UrlKitError) {

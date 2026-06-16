@@ -27,7 +27,7 @@ export function parseCompiledRuntimeSchemaValue<Value = unknown>(
   if (!compiled.codec) {
     throw new UrlKitError(
       'invalid-descriptor',
-      `Runtime schema "${compiled.descriptor.kind}" does not define a parser.`,
+      `Runtime schema "${compiled.descriptor.type}" does not define a parser.`,
       options.path ? { path: options.path } : undefined,
     );
   }
@@ -35,7 +35,7 @@ export function parseCompiledRuntimeSchemaValue<Value = unknown>(
   try {
     return compiled.codec.parse(
       input,
-      createRuntimeSchemaValueContext(compiled.descriptor.kind, options),
+      createRuntimeSchemaValueContext(compiled.descriptor.type, options),
     );
   } catch (error) {
     if (error instanceof UrlKitError) {

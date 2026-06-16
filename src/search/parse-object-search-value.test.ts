@@ -6,7 +6,7 @@ import { object } from '../schema/object.js';
 import { string } from '../schema/string.js';
 import { parseObjectSearchValue } from './parse-object-search-value.js';
 
-const context = { kind: 'search' as const, path: ['filter'], errorCode: 'invalid-search' as const };
+const context = { type: 'search' as const, path: ['filter'], errorCode: 'invalid-search' as const };
 
 describe('parseObjectSearchValue', () => {
   it('hydrates only declared object fields from dotted keys', () => {

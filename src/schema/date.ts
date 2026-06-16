@@ -114,7 +114,7 @@ export function date(
   const format = resolveDateFormat(options, formatStringMode);
 
   return createRuntimeSchemaBuilder<Date, 'date', DateSchemaOptions>({
-    kind: 'date',
+    type: 'date',
     options: { format },
     codec: getDateCodec(format, formatStringMode),
     validateDefault(value, context) {

@@ -11,12 +11,12 @@ import {
 
 export function getRuntimeSchemaInternals<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
->(schema: RuntimeSchemaBuilder<Value, Kind, Options, Descriptor>) {
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
+>(schema: RuntimeSchemaBuilder<Value, Type, Options, Descriptor>) {
   const candidate = schema as Partial<
-    RuntimeSchemaBuilderWithInternals<Value, Kind, Options, Descriptor>
+    RuntimeSchemaBuilderWithInternals<Value, Type, Options, Descriptor>
   >;
   const internals = candidate[runtimeSchemaSymbol];
 

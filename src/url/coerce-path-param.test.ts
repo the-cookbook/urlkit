@@ -4,9 +4,9 @@ import { coercePathParam } from './coerce-path-param.js';
 import type { ParsedPathParamSegment } from './path-segment.js';
 
 const param = (constraint?: string): ParsedPathParamSegment => ({
-  kind: 'param',
+  type: 'parameter',
   name: 'id',
-  ...(constraint ? { constraint } : {}),
+  ...(constraint ? { constraints: [{ type: constraint, params: '' }] } : {}),
 });
 
 describe('coercePathParam', () => {
@@ -33,7 +33,7 @@ describe('coercePathParam', () => {
     expect(
       coercePathParam(
         {
-          kind: 'param',
+          type: 'parameter',
           name: 'id',
           constraints: [
             { type: 'regex', params: '/\\d/' },
@@ -48,7 +48,7 @@ describe('coercePathParam', () => {
     expect(
       coercePathParam(
         {
-          kind: 'param',
+          type: 'parameter',
           name: 'id',
           constraints: [
             { type: 'decimal', params: '' },

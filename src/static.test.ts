@@ -11,6 +11,7 @@ import {
   registerPathConstraint,
   registerPathConstraints,
   unregisterPathConstraint,
+  parsePathPattern,
 } from './static.js';
 import type {
   InferStaticHash,
@@ -44,6 +45,7 @@ describe('static public exports', () => {
     expect(registerPathConstraint).toBeTypeOf('function');
     expect(registerPathConstraints).toBeTypeOf('function');
     expect(unregisterPathConstraint).toBeTypeOf('function');
+    expect(parsePathPattern).toBeTypeOf('function');
   });
 
   it('exports static descriptor contracts for tooling users', () => {

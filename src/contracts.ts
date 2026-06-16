@@ -1,4 +1,4 @@
-import type { ConstraintValidation } from '@cookbook/pathkit';
+import type { ConstraintValidation, MatchOptions } from '@cookbook/pathkit';
 import type { UrlKitError } from './errors/url-kit-error.js';
 
 export type UrlMode = 'path' | 'pathless';
@@ -11,18 +11,12 @@ export type InvalidHashBehavior = 'error' | 'omit';
 
 export type SearchArrayFormat = 'repeat' | 'comma';
 
-export type UrlPathWildcardFormat = 'string' | 'array';
+export type UrlPathWildcardFormat = MatchOptions['wildcardFormat'];
 
-export type DecodePathParam = (value: string) => string;
+// eslint-disable-next-line  @typescript-eslint/no-unsafe-function-type
+export type DecodePathParam = Extract<MatchOptions['decode'], Function>;
 
-export interface UrlPathMatchOptions {
-  readonly trailing?: boolean;
-  readonly sensitive?: boolean;
-  readonly strict?: boolean;
-  readonly end?: boolean;
-  readonly wildcardFormat?: UrlPathWildcardFormat;
-  readonly decode?: boolean | DecodePathParam;
-}
+export type UrlPathMatchOptions = Omit<MatchOptions, 'delimiter'>;
 
 export type UnknownSearchParams = Readonly<Record<string, string | readonly string[]>>;
 

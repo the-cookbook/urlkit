@@ -18,11 +18,11 @@ import {
 
 interface RuntimeSchemaState<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
 > {
-  readonly kind: Kind;
+  readonly type: Type;
   readonly presence: Descriptor['presence'];
   readonly options: Options;
   readonly defaultValue?: unknown;
@@ -33,13 +33,13 @@ interface RuntimeSchemaState<
 
 export function createRuntimeSchemaBuilder<
   Value,
-  const Kind extends string,
+  const Type extends string,
   Options extends RuntimeSchemaOptions = EmptyRuntimeSchemaOptions,
 >(
-  definition: RuntimeSchemaDefinition<Kind, Options, Value>,
-): RuntimeSchemaBuilder<Value, Kind, Options, RequiredRuntimeSchemaDescriptor<Kind, Options>> {
-  return createBuilder<Value, Kind, Options, RequiredRuntimeSchemaDescriptor<Kind, Options>>({
-    kind: definition.kind,
+  definition: RuntimeSchemaDefinition<Type, Options, Value>,
+): RuntimeSchemaBuilder<Value, Type, Options, RequiredRuntimeSchemaDescriptor<Type, Options>> {
+  return createBuilder<Value, Type, Options, RequiredRuntimeSchemaDescriptor<Type, Options>>({
+    type: definition.type,
     presence: 'required',
     options: copyOptions(definition.options),
     ...(definition.codec ? { codec: definition.codec } : {}),
@@ -50,14 +50,14 @@ export function createRuntimeSchemaBuilder<
 
 function createBuilder<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
 >(
-  state: RuntimeSchemaState<Value, Kind, Options, Descriptor>,
-): RuntimeSchemaBuilderWithInternals<Value, Kind, Options, Descriptor> {
+  state: RuntimeSchemaState<Value, Type, Options, Descriptor>,
+): RuntimeSchemaBuilderWithInternals<Value, Type, Options, Descriptor> {
   const internals = Object.freeze({
-    kind: state.kind,
+    type: state.type,
     presence: state.presence,
     options: state.options,
     ...(state.defaultValue !== undefined ? { defaultValue: state.defaultValue } : {}),
@@ -73,17 +73,17 @@ function createBuilder<
     optional: () => {
       if (state.presence === 'defaulted') {
         return createBuilder(
-          copyDefaultedState<Value, Kind, Options, Descriptor>(state),
+          copyDefaultedState<Value, Type, Options, Descriptor>(state),
         ) as unknown as RuntimeSchemaBuilder<
           Value | undefined,
-          Kind,
+          Type,
           Options,
-          OptionalRuntimeSchemaDescriptor<Kind, Options>
+          OptionalRuntimeSchemaDescriptor<Type, Options>
         >;
       }
 
       const nextState = {
-        kind: state.kind,
+        type: state.type,
         presence: 'optional',
         options: state.options,
         ...(state.codec ? { codec: state.codec as RuntimeSchemaCodec<Value | undefined> } : {}),
@@ -93,33 +93,33 @@ function createBuilder<
         ...(state.validateDescriptor ? { validateDescriptor: state.validateDescriptor } : {}),
       } satisfies RuntimeSchemaState<
         Value | undefined,
-        Kind,
+        Type,
         Options,
-        OptionalRuntimeSchemaDescriptor<Kind, Options>
+        OptionalRuntimeSchemaDescriptor<Type, Options>
       >;
 
       return createBuilder<
         Value | undefined,
-        Kind,
+        Type,
         Options,
-        OptionalRuntimeSchemaDescriptor<Kind, Options>
+        OptionalRuntimeSchemaDescriptor<Type, Options>
       >(nextState);
     },
 
     required: () => {
       if (state.presence === 'defaulted') {
         return createBuilder(
-          copyDefaultedState<Value, Kind, Options, Descriptor>(state),
+          copyDefaultedState<Value, Type, Options, Descriptor>(state),
         ) as unknown as RuntimeSchemaBuilder<
           NonNullable<Value>,
-          Kind,
+          Type,
           Options,
-          RequiredRuntimeSchemaDescriptor<Kind, Options>
+          RequiredRuntimeSchemaDescriptor<Type, Options>
         >;
       }
 
       const nextState = {
-        kind: state.kind,
+        type: state.type,
         presence: 'required',
         options: state.options,
         ...(state.codec ? { codec: state.codec as RuntimeSchemaCodec<NonNullable<Value>> } : {}),
@@ -131,22 +131,22 @@ function createBuilder<
         ...(state.validateDescriptor ? { validateDescriptor: state.validateDescriptor } : {}),
       } satisfies RuntimeSchemaState<
         NonNullable<Value>,
-        Kind,
+        Type,
         Options,
-        RequiredRuntimeSchemaDescriptor<Kind, Options>
+        RequiredRuntimeSchemaDescriptor<Type, Options>
       >;
 
       return createBuilder<
         NonNullable<Value>,
-        Kind,
+        Type,
         Options,
-        RequiredRuntimeSchemaDescriptor<Kind, Options>
+        RequiredRuntimeSchemaDescriptor<Type, Options>
       >(nextState);
     },
 
     default: (value: NonNullable<Value>) => {
       const nextState = {
-        kind: state.kind,
+        type: state.type,
         presence: 'defaulted',
         options: state.options,
         defaultValue: value,
@@ -159,33 +159,33 @@ function createBuilder<
         ...(state.validateDescriptor ? { validateDescriptor: state.validateDescriptor } : {}),
       } satisfies RuntimeSchemaState<
         NonNullable<Value>,
-        Kind,
+        Type,
         Options,
-        DefaultedRuntimeSchemaDescriptor<Kind, Options, NonNullable<Value>>
+        DefaultedRuntimeSchemaDescriptor<Type, Options, NonNullable<Value>>
       >;
 
       return createBuilder<
         NonNullable<Value>,
-        Kind,
+        Type,
         Options,
-        DefaultedRuntimeSchemaDescriptor<Kind, Options, NonNullable<Value>>
+        DefaultedRuntimeSchemaDescriptor<Type, Options, NonNullable<Value>>
       >(nextState);
     },
-  } satisfies RuntimeSchemaBuilderWithInternals<Value, Kind, Options, Descriptor>;
+  } satisfies RuntimeSchemaBuilderWithInternals<Value, Type, Options, Descriptor>;
 
   return Object.freeze(builder);
 }
 
 function copyDefaultedState<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
 >(
-  state: RuntimeSchemaState<Value, Kind, Options, Descriptor>,
-): RuntimeSchemaState<NonNullable<Value>, Kind, Options, Descriptor> {
+  state: RuntimeSchemaState<Value, Type, Options, Descriptor>,
+): RuntimeSchemaState<NonNullable<Value>, Type, Options, Descriptor> {
   return {
-    kind: state.kind,
+    type: state.type,
     presence: 'defaulted',
     options: state.options,
     defaultValue: state.defaultValue,
@@ -197,12 +197,12 @@ function copyDefaultedState<
 
 function createDescriptor<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
->(state: RuntimeSchemaState<Value, Kind, Options, Descriptor>): Descriptor {
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
+>(state: RuntimeSchemaState<Value, Type, Options, Descriptor>): Descriptor {
   const base = {
-    kind: state.kind,
+    type: state.type,
     presence: state.presence,
     options: copyOptions(state.options),
   };

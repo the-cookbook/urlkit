@@ -21,12 +21,12 @@ describe('object', () => {
         }),
       ),
     ).toEqual({
-      kind: 'object',
+      type: 'object',
       presence: 'required',
       options: {
         shape: {
-          role: { kind: 'string', presence: 'optional', options: {} },
-          active: { kind: 'boolean', presence: 'defaulted', options: {}, defaultValue: false },
+          role: { type: 'string', presence: 'optional', options: {} },
+          active: { type: 'boolean', presence: 'defaulted', options: {}, defaultValue: false },
         },
       },
     });

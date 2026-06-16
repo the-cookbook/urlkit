@@ -1,11 +1,11 @@
 import type { RuntimeSchemaValueContext, RuntimeSchemaValueOptions } from './contracts.js';
 
 export function createRuntimeSchemaValueContext(
-  kind: string,
+  type: string,
   options: RuntimeSchemaValueOptions = {},
 ): RuntimeSchemaValueContext {
   return {
-    kind,
+    type,
     path: [...(options.path ?? [])],
     errorCode: options.errorCode ?? 'invalid-search',
   };

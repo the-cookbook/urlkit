@@ -9,7 +9,7 @@ interface TestSchemaOptions extends RuntimeSchemaOptions {
 
 function createTestSchema() {
   return createRuntimeSchemaBuilder<string, 'test', TestSchemaOptions>({
-    kind: 'test',
+    type: 'test',
     options: { label: 'field' },
   });
 }
@@ -20,7 +20,7 @@ describe('createRuntimeSchemaBuilder', () => {
     const descriptor = compileRuntimeSchema(schema);
 
     expect(descriptor).toEqual({
-      kind: 'test',
+      type: 'test',
       presence: 'required',
       options: { label: 'field' },
     });
@@ -51,7 +51,7 @@ describe('createRuntimeSchemaBuilder', () => {
 
     expect(requiredDescriptor.presence).toBe('required');
     expect(defaultedDescriptor).toEqual({
-      kind: 'test',
+      type: 'test',
       presence: 'defaulted',
       options: { label: 'field' },
       defaultValue: 'profile',
@@ -82,13 +82,13 @@ describe('createRuntimeSchemaBuilder', () => {
     };
 
     expect(optionalDescriptor).toEqual({
-      kind: 'test',
+      type: 'test',
       presence: 'defaulted',
       options: { label: 'field' },
       defaultValue: 'fallback',
     });
     expect(requiredDescriptor).toEqual({
-      kind: 'test',
+      type: 'test',
       presence: 'defaulted',
       options: { label: 'field' },
       defaultValue: 'fallback',
@@ -98,7 +98,7 @@ describe('createRuntimeSchemaBuilder', () => {
   it('copies options into descriptors', () => {
     const options = { label: 'before' } satisfies TestSchemaOptions;
     const schema = createRuntimeSchemaBuilder<string, 'test', TestSchemaOptions>({
-      kind: 'test',
+      type: 'test',
       options,
     });
 

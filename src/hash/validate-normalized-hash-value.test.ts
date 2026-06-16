@@ -4,15 +4,15 @@ import type { NormalizedHashDescriptor } from './contracts.js';
 import { validateNormalizedHashValue } from './validate-normalized-hash-value.js';
 
 const optionalString: NormalizedHashDescriptor<string | undefined> = {
-  kind: 'string',
+  type: 'string',
   presence: 'optional',
 };
 const requiredString: NormalizedHashDescriptor<string | undefined> = {
-  kind: 'string',
+  type: 'string',
   presence: 'required',
 };
 const defaultEnum: NormalizedHashDescriptor<string | undefined> = {
-  kind: 'enum',
+  type: 'enum',
   presence: 'defaulted',
   values: ['overview', 'comments'],
   defaultValue: 'overview',

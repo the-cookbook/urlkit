@@ -14,7 +14,7 @@ export function compileRuntimeHashDescriptor(
   const compiledSchema = compileRuntimeSchemaValue(schema, { path: HASH_PATH });
   const descriptor = compiledSchema.descriptor;
 
-  if (descriptor.kind !== 'string' && descriptor.kind !== 'enum') {
+  if (descriptor.type !== 'string' && descriptor.type !== 'enum') {
     throw new UrlKitError('invalid-descriptor', 'Hash schema must be a string or enum schema.', {
       path: HASH_PATH,
     });
@@ -23,7 +23,7 @@ export function compileRuntimeHashDescriptor(
   return Object.freeze({
     descriptor: toNormalizedHashDescriptor(
       descriptor as {
-        readonly kind: 'string' | 'enum';
+        readonly type: 'string' | 'enum';
         readonly presence: 'required' | 'optional' | 'defaulted';
         readonly options: RuntimeSchemaOptions;
         readonly defaultValue?: unknown;
@@ -67,7 +67,7 @@ export function compileRuntimeHashDescriptor(
 }
 
 function toNormalizedHashDescriptor(descriptor: {
-  readonly kind: 'string' | 'enum';
+  readonly type: 'string' | 'enum';
   readonly presence: 'required' | 'optional' | 'defaulted';
   readonly options: RuntimeSchemaOptions;
   readonly defaultValue?: unknown;
@@ -78,7 +78,7 @@ function toNormalizedHashDescriptor(descriptor: {
 
   if (descriptor.presence === 'defaulted') {
     return Object.freeze({
-      kind: descriptor.kind,
+      type: descriptor.type,
       presence: 'defaulted',
       ...(values ? { values: Object.freeze(values) } : {}),
       defaultValue: descriptor.defaultValue as string,
@@ -86,7 +86,7 @@ function toNormalizedHashDescriptor(descriptor: {
   }
 
   return Object.freeze({
-    kind: descriptor.kind,
+    type: descriptor.type,
     presence: descriptor.presence,
     ...(values ? { values: Object.freeze(values) } : {}),
   });

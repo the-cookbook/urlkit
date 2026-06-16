@@ -3,7 +3,7 @@ import { compileRuntimeSchema } from '../schema/compile-runtime-schema.js';
 import type { AnyRuntimeSchemaBuilder, RuntimeSchemaValueContext } from '../schema/contracts.js';
 import { getObjectSchemaShape, type AnyObjectSchema } from '../schema/object.js';
 import { parseRuntimeSchemaValue } from '../schema/parse-runtime-schema-value.js';
-import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
+import { isRuntimeSchemaType } from '../schema/is-runtime-schema-type.js';
 import { parseArraySearchValue } from './parse-array-search-value.js';
 import type { RawSearchParams, SearchParseOptions } from './contracts.js';
 import { assertNoObjectSearchCollisions } from './assert-object-search-collisions.js';
@@ -54,7 +54,7 @@ function parseObjectShape(
       childObjectPath,
       rawSearch,
       {
-        kind: 'object',
+        type: 'object',
         path: childPath,
         errorCode: context.errorCode,
       },
@@ -77,7 +77,7 @@ function parseChildObjectSearchValue(
   context: RuntimeSchemaValueContext,
   options: SearchParseOptions,
 ): unknown {
-  if (isRuntimeSchemaKind(schema, 'object')) {
+  if (isRuntimeSchemaType(schema, 'object')) {
     return parseNestedObjectSearchValue(
       schema as AnyObjectSchema,
       parentKey,
@@ -90,7 +90,7 @@ function parseChildObjectSearchValue(
 
   const rawValue = findObjectSearchRawValue(parentKey, objectPath, rawSearch);
 
-  if (isRuntimeSchemaKind(schema, 'array')) {
+  if (isRuntimeSchemaType(schema, 'array')) {
     return parseArraySearchValue(schema as never, rawValue, context, options);
   }
 
@@ -142,7 +142,7 @@ function hasDeclaredObjectValues(
   return Object.entries(shape).some(([key, childSchema]) => {
     const childObjectPath = [...objectPath, key];
 
-    if (isRuntimeSchemaKind(childSchema as AnyRuntimeSchemaBuilder, 'object')) {
+    if (isRuntimeSchemaType(childSchema as AnyRuntimeSchemaBuilder, 'object')) {
       return hasDeclaredObjectValues(
         childSchema as AnyObjectSchema,
         parentKey,

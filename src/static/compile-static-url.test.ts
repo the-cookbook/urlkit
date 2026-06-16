@@ -39,7 +39,7 @@ describe('compileStaticUrl', () => {
     expect(compiled.path?.buildPath({ slug: 'post-1' })).toBe('/articles/post-1');
     expect(compiled.search).toBeDefined();
     expect(compiled.hash).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'optional',
       values: ['comments', 'share'],
     });
@@ -183,7 +183,7 @@ describe('compileStaticUrl', () => {
     });
 
     expect(compiled.hash).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'defaulted',
       values: ['overview', 'comments'],
       defaultValue: 'overview',

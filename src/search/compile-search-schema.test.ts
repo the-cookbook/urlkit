@@ -85,12 +85,12 @@ describe('compileSearchSchema', () => {
     expect(compiled.keys.has('q')).toBe(true);
     expect(compiled.keys.has('page')).toBe(true);
     expect(compiled.fields[0]!.compiledSchema.descriptor).toEqual({
-      kind: 'string',
+      type: 'string',
       presence: 'required',
       options: {},
     });
     expect(compiled.fields[1]!.compiledSchema.descriptor).toMatchObject({
-      kind: 'int',
+      type: 'int',
       presence: 'defaulted',
       defaultValue: 1,
     });
@@ -99,7 +99,7 @@ describe('compileSearchSchema', () => {
   it('does not rerun descriptor validation during repeated compiled parse/build/normalize calls', () => {
     let validations = 0;
     const schema = createRuntimeSchemaBuilder<string, 'tracked'>({
-      kind: 'tracked',
+      type: 'tracked',
       codec: {
         parse: (input) => input,
         normalize: (input) => String(input),

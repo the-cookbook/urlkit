@@ -13,3 +13,5 @@ Re-export Pathkit constraint helpers with URLKit-friendly names:
 Deprecate `createConstraint` in favor of `createPathConstraint`.
 
 > `createConstraint` is set to be removed in v3.
+
+Exports `parsePathPattern` and its related types (`ParsedPathLiteralSegment`, `ParsedPathParamConstraint`, `ParsedPathParamSegment`, and `ParsedPathSegment`) from root, `router-runtime` and `static` entry points.

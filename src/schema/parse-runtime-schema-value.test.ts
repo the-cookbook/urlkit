@@ -36,7 +36,7 @@ describe('parseRuntimeSchemaValue', () => {
   });
 
   it('rejects schemas without parse codecs', () => {
-    const schema = createRuntimeSchemaBuilder<string, 'test'>({ kind: 'test' });
+    const schema = createRuntimeSchemaBuilder<string, 'test'>({ type: 'test' });
 
     expect(() => parseRuntimeSchemaValue(schema, 'value')).toThrow(UrlKitError);
   });

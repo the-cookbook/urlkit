@@ -5,7 +5,7 @@ export function isNormalizedHashDescriptor(
 ): input is NormalizedHashDescriptor<string | undefined> {
   return (
     isRecord(input) &&
-    (input.kind === 'string' || input.kind === 'enum') &&
+    (input.type === 'string' || input.type === 'enum') &&
     (input.presence === 'required' ||
       input.presence === 'optional' ||
       input.presence === 'defaulted')

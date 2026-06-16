@@ -3,12 +3,12 @@ import { isNormalizedHashDescriptor } from './is-normalized-hash-descriptor.js';
 
 describe('isNormalizedHashDescriptor', () => {
   it('accepts normalized string descriptors', () => {
-    expect(isNormalizedHashDescriptor({ kind: 'string', presence: 'optional' })).toBe(true);
+    expect(isNormalizedHashDescriptor({ type: 'string', presence: 'optional' })).toBe(true);
   });
 
   it('accepts normalized enum descriptors', () => {
     expect(
-      isNormalizedHashDescriptor({ kind: 'enum', presence: 'defaulted', defaultValue: 'overview' }),
+      isNormalizedHashDescriptor({ type: 'enum', presence: 'defaulted', defaultValue: 'overview' }),
     ).toBe(true);
   });
 
@@ -18,8 +18,8 @@ describe('isNormalizedHashDescriptor', () => {
     expect(isNormalizedHashDescriptor([])).toBe(false);
   });
 
-  it('rejects unsupported kind or presence values', () => {
-    expect(isNormalizedHashDescriptor({ kind: 'number', presence: 'optional' })).toBe(false);
-    expect(isNormalizedHashDescriptor({ kind: 'string', presence: 'unknown' })).toBe(false);
+  it('rejects unsupported type or presence values', () => {
+    expect(isNormalizedHashDescriptor({ type: 'number', presence: 'optional' })).toBe(false);
+    expect(isNormalizedHashDescriptor({ type: 'string', presence: 'unknown' })).toBe(false);
   });
 });

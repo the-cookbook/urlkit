@@ -18,17 +18,17 @@ describe('dateTime', () => {
     const defaultValue = new Date('2026-01-01T10:30:00.000Z');
 
     expect(compileRuntimeSchema(dateTime())).toEqual({
-      kind: 'date',
+      type: 'date',
       presence: 'required',
       options: { format: 'date-time' },
     });
     expect(compileRuntimeSchema(date({ format: 'date-time' }).optional())).toEqual({
-      kind: 'date',
+      type: 'date',
       presence: 'optional',
       options: { format: 'date-time' },
     });
     expect(compileRuntimeSchema(dateTime().default(defaultValue))).toEqual({
-      kind: 'date',
+      type: 'date',
       presence: 'defaulted',
       options: { format: 'date-time' },
       defaultValue,
@@ -127,7 +127,7 @@ describe('dateTime', () => {
     const schema = dateTime({ format: 'dd-MM-yyyy HH:mm:ss' });
 
     expect(compileRuntimeSchema(schema.default(defaultValue))).toEqual({
-      kind: 'date',
+      type: 'date',
       presence: 'defaulted',
       options: { format: 'dd-MM-yyyy HH:mm:ss' },
       defaultValue,
@@ -185,7 +185,7 @@ describe('dateTime', () => {
     const schema = dateTime({ format: customFormat });
 
     expect(compileRuntimeSchema(schema.default(defaultValue))).toEqual({
-      kind: 'date',
+      type: 'date',
       presence: 'defaulted',
       options: { format: customFormat },
       defaultValue,

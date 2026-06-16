@@ -1,5 +1,5 @@
 import { UrlKitError } from '../errors/url-kit-error.js';
-import { getPathParamKind, isNumericPathParamKind } from './path-param-kind.js';
+import { getPathParamType, isNumericPathParamType } from './path-param-type.js';
 import type { ParsedPathParamSegment } from './path-segment.js';
 
 export function coercePathParam(
@@ -11,9 +11,9 @@ export function coercePathParam(
     return value;
   }
 
-  const kind = getPathParamKind(segment);
+  const type = getPathParamType(segment);
 
-  if (kind === 'int') {
+  if (type === 'int') {
     const parsed = Number(value);
 
     if (!Number.isInteger(parsed)) {
@@ -29,7 +29,7 @@ export function coercePathParam(
     return parsed;
   }
 
-  if (isNumericPathParamKind(kind)) {
+  if (isNumericPathParamType(type)) {
     const parsed = Number(value);
 
     if (!Number.isFinite(parsed)) {

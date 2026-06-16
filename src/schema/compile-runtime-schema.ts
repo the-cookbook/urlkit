@@ -8,11 +8,11 @@ import { getRuntimeSchemaInternals } from './get-runtime-schema-internals.js';
 
 export function compileRuntimeSchema<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
 >(
-  schema: RuntimeSchemaBuilder<Value, Kind, Options, Descriptor>,
+  schema: RuntimeSchemaBuilder<Value, Type, Options, Descriptor>,
   options: CompileRuntimeSchemaOptions = {},
 ): Descriptor {
   const internals = getRuntimeSchemaInternals(schema);
@@ -20,14 +20,14 @@ export function compileRuntimeSchema<
 
   if (internals.validateDescriptor) {
     internals.validateDescriptor({
-      kind: descriptor.kind,
+      type: descriptor.type,
       path: [...(options.path ?? [])],
     });
   }
 
   if (descriptor.presence === 'defaulted' && internals.validateDefault) {
     internals.validateDefault(descriptor.defaultValue as Value, {
-      kind: descriptor.kind,
+      type: descriptor.type,
       path: [...(options.path ?? [])],
     });
   }

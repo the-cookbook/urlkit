@@ -52,13 +52,13 @@ function compileStaticStringHashDescriptor(
 
   if (descriptor.default !== undefined) {
     return Object.freeze({
-      kind: 'string',
+      type: 'string',
       presence: 'defaulted',
       defaultValue: descriptor.default,
     });
   }
 
-  return Object.freeze({ kind: 'string', presence: descriptor.optional ? 'optional' : 'required' });
+  return Object.freeze({ type: 'string', presence: descriptor.optional ? 'optional' : 'required' });
 }
 
 function compileStaticEnumHashDescriptor(
@@ -79,7 +79,7 @@ function compileStaticEnumHashDescriptor(
 
   if (descriptor.default !== undefined) {
     return Object.freeze({
-      kind: 'enum',
+      type: 'enum',
       presence: 'defaulted',
       values,
       defaultValue: descriptor.default,
@@ -87,7 +87,7 @@ function compileStaticEnumHashDescriptor(
   }
 
   return Object.freeze({
-    kind: 'enum',
+    type: 'enum',
     presence: descriptor.optional ? 'optional' : 'required',
     values,
   });

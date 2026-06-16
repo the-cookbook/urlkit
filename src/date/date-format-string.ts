@@ -11,12 +11,12 @@ export interface DateFormatStringOptions {
 type DateFormatToken = 'yyyy' | 'MM' | 'dd' | 'HH' | 'mm' | 'ss' | 'SSS';
 
 interface TokenPart {
-  readonly kind: 'token';
+  readonly type: 'token';
   readonly value: DateFormatToken;
 }
 
 interface LiteralPart {
-  readonly kind: 'literal';
+  readonly type: 'literal';
   readonly value: string;
 }
 
@@ -120,7 +120,7 @@ export function serializeDateFormatString(
 
   return compiled.parts
     .map((part) => {
-      if (part.kind === 'literal') {
+      if (part.type === 'literal') {
         return part.value;
       }
 
@@ -143,7 +143,7 @@ function compileDateFormatString(
   const pattern = new RegExp(
     `^${parts
       .map((part) =>
-        part.kind === 'literal' ? escapeRegExp(part.value) : getTokenPattern(part.value),
+        part.type === 'literal' ? escapeRegExp(part.value) : getTokenPattern(part.value),
       )
       .join('')}$`,
   );
@@ -153,7 +153,7 @@ function compileDateFormatString(
     mode,
     parts,
     pattern,
-    hasMilliseconds: parts.some((part) => part.kind === 'token' && part.value === 'SSS'),
+    hasMilliseconds: parts.some((part) => part.type === 'token' && part.value === 'SSS'),
   };
 }
 
@@ -185,7 +185,7 @@ function tokenizeDateFormatString(format: string, mode: DateFormatStringMode): D
         );
       }
 
-      parts.push({ kind: 'literal', value: literal });
+      parts.push({ type: 'literal', value: literal });
       index = literalEnd + 1;
       continue;
     }
@@ -193,7 +193,7 @@ function tokenizeDateFormatString(format: string, mode: DateFormatStringMode): D
     const token = findTokenAt(format, index);
 
     if (token) {
-      parts.push({ kind: 'token', value: token });
+      parts.push({ type: 'token', value: token });
       index += token.length;
       continue;
     }
@@ -206,7 +206,7 @@ function tokenizeDateFormatString(format: string, mode: DateFormatStringMode): D
       );
     }
 
-    parts.push({ kind: 'literal', value: character });
+    parts.push({ type: 'literal', value: character });
     index += 1;
   }
 
@@ -223,8 +223,8 @@ function mergeAdjacentLiterals(parts: readonly DateFormatPart[]): DateFormatPart
   for (const part of parts) {
     const previous = merged[merged.length - 1];
 
-    if (part.kind === 'literal' && previous?.kind === 'literal') {
-      merged[merged.length - 1] = { kind: 'literal', value: `${previous.value}${part.value}` };
+    if (part.type === 'literal' && previous?.type === 'literal') {
+      merged[merged.length - 1] = { type: 'literal', value: `${previous.value}${part.value}` };
       continue;
     }
 
@@ -245,7 +245,7 @@ function validateDateFormatParts(
   const seenTokens = new Set<DateFormatToken>();
 
   for (const part of parts) {
-    if (part.kind === 'literal') {
+    if (part.type === 'literal') {
       continue;
     }
 

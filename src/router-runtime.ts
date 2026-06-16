@@ -27,3 +27,10 @@ export { normalizeHash } from './hash/normalize-hash.js';
 export { parseHash } from './hash/parse-hash.js';
 export type { ParseHashOptions } from './hash/contracts.js';
 export { UrlKitError } from './errors/url-kit-error.js';
+export { parsePathPattern } from './url/parse-path-pattern.js';
+export type {
+  ParsedPathLiteralSegment,
+  ParsedPathParamConstraint,
+  ParsedPathParamSegment,
+  ParsedPathSegment,
+} from './url/path-segment.js';

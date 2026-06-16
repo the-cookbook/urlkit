@@ -15,7 +15,7 @@ import { serializeRuntimeSchemaValue } from './serialize-runtime-schema-value.js
 describe('enumOf', () => {
   it('compiles to a normalized descriptor', () => {
     expect(compileRuntimeSchema(enumOf(['newest', 'popular'] as const))).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'required',
       options: {
         values: ['newest', 'popular'],
@@ -23,7 +23,7 @@ describe('enumOf', () => {
     });
 
     expect(compileRuntimeSchema(enumOf(['newest', 'popular'] as const).optional())).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'optional',
       options: {
         values: ['newest', 'popular'],
@@ -31,7 +31,7 @@ describe('enumOf', () => {
     });
 
     expect(compileRuntimeSchema(enumOf(['newest', 'popular'] as const).default('newest'))).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'defaulted',
       options: {
         values: ['newest', 'popular'],

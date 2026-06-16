@@ -1,5 +1,5 @@
 import type { BuildSearchOptions } from '../contracts.js';
-import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
+import { isRuntimeSchemaType } from '../schema/is-runtime-schema-type.js';
 import type { AnyObjectSchema } from '../schema/object.js';
 import { appendObjectSearchEntries } from './append-object-search-entries.js';
 import { appendSearchEntry } from './append-search-entry.js';
@@ -24,7 +24,7 @@ export function buildCompiledSearch(
       continue;
     }
 
-    if (isRuntimeSchemaKind(field.schema, 'object')) {
+    if (isRuntimeSchemaType(field.schema, 'object')) {
       appendObjectSearchEntries(
         entries,
         field.key,

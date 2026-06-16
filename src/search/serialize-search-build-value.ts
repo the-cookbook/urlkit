@@ -1,21 +1,21 @@
 import { serializeCompiledRuntimeSchemaValue } from '../schema/serialize-compiled-runtime-schema-value.js';
 import { serializeArrayRuntimeSchemaValue } from '../schema/array.js';
-import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
+import { isRuntimeSchemaType } from '../schema/is-runtime-schema-type.js';
 import type { CompiledSearchField } from './contracts.js';
 
 export function serializeSearchBuildValue(
   field: CompiledSearchField,
   normalized: unknown,
 ): string | readonly string[] | undefined {
-  if (isRuntimeSchemaKind(field.schema, 'array')) {
+  if (isRuntimeSchemaType(field.schema, 'array')) {
     return serializeArrayRuntimeSchemaValue(field.schema as never, normalized, {
-      kind: 'array',
+      type: 'array',
       path: [field.key],
       errorCode: 'invalid-search',
     });
   }
 
-  if (isRuntimeSchemaKind(field.schema, 'object')) {
+  if (isRuntimeSchemaType(field.schema, 'object')) {
     return undefined;
   }
 

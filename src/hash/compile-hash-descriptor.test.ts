@@ -6,12 +6,12 @@ import { compileHashDescriptor } from './compile-hash-descriptor.js';
 
 describe('compileHashDescriptor', () => {
   it('defaults to an optional string hash descriptor', () => {
-    expect(compileHashDescriptor().descriptor).toEqual({ kind: 'string', presence: 'optional' });
+    expect(compileHashDescriptor().descriptor).toEqual({ type: 'string', presence: 'optional' });
   });
 
   it('compiles runtime string descriptors', () => {
     expect(compileHashDescriptor(string().default('overview')).descriptor).toEqual({
-      kind: 'string',
+      type: 'string',
       presence: 'defaulted',
       defaultValue: 'overview',
     });

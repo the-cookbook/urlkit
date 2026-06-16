@@ -10,7 +10,7 @@ describe('compileRuntimeHashDescriptor', () => {
     const compiled = compileRuntimeHashDescriptor(string().default('overview'));
 
     expect(compiled.descriptor).toEqual({
-      kind: 'string',
+      type: 'string',
       presence: 'defaulted',
       defaultValue: 'overview',
     });
@@ -25,7 +25,7 @@ describe('compileRuntimeHashDescriptor', () => {
     );
 
     expect(compiled.descriptor).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'optional',
       values: ['overview', 'comments'],
     });

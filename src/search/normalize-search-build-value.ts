@@ -1,10 +1,10 @@
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { normalizeCompiledRuntimeSchemaValue } from '../schema/normalize-compiled-runtime-schema-value.js';
-import { isRuntimeSchemaKind } from '../schema/is-runtime-schema-kind.js';
+import { isRuntimeSchemaType } from '../schema/is-runtime-schema-type.js';
 import type { CompiledSearchField } from './contracts.js';
 
 export function normalizeSearchBuildValue(field: CompiledSearchField, input: unknown): unknown {
-  if (isRuntimeSchemaKind(field.schema, 'array') || isRuntimeSchemaKind(field.schema, 'object')) {
+  if (isRuntimeSchemaType(field.schema, 'array') || isRuntimeSchemaType(field.schema, 'object')) {
     return normalizeCompiledRuntimeSchemaValue(field.compiledSchema, input, {
       path: [field.key],
       errorCode: 'invalid-search',

@@ -22,6 +22,7 @@ import {
   unregisterPathConstraint,
   registerPathConstraint,
   registerPathConstraints,
+  parsePathPattern,
 } from './index.js';
 import type {
   BuildSearchOptions,
@@ -81,6 +82,7 @@ describe('main public exports', () => {
     expect(resetPathConstraints).toBeTypeOf('function');
     expect(registerPathConstraint).toBeTypeOf('function');
     expect(registerPathConstraints).toBeTypeOf('function');
+    expect(parsePathPattern).toBeTypeOf('function');
   });
 
   it('exports UrlKitError', () => {

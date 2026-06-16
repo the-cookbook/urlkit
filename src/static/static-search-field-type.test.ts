@@ -4,9 +4,9 @@ import {
   assertStaticSearchField,
   normalizeStaticSearchFieldType,
   normalizeStaticSearchFieldValue,
-} from './static-search-field-kind.js';
+} from './static-search-field-type.js';
 
-describe('static search field kind helpers', () => {
+describe('static search field type helpers', () => {
   it('accepts only object fields with explicit type values', () => {
     expect(() => assertStaticSearchField({ type: 'int' }, ['search', 'page'])).not.toThrow();
     expect(() =>

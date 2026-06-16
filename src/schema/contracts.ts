@@ -8,12 +8,12 @@ export type RuntimeSchemaOptions = Readonly<Record<string, unknown>>;
 export type EmptyRuntimeSchemaOptions = Readonly<Record<never, never>>;
 
 export interface RuntimeDefaultValidationContext {
-  readonly kind: string;
+  readonly type: string;
   readonly path: readonly string[];
 }
 
 export interface RuntimeSchemaValueContext {
-  readonly kind: string;
+  readonly type: string;
   readonly path: readonly string[];
   readonly errorCode: UrlKitErrorCode;
 }
@@ -38,11 +38,11 @@ export interface RuntimeSchemaCodec<Value> {
 }
 
 export interface RuntimeSchemaDefinition<
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
   Value,
 > {
-  readonly kind: Kind;
+  readonly type: Type;
   readonly options?: Options;
   readonly codec?: RuntimeSchemaCodec<Value>;
   readonly validateDefault?: RuntimeDefaultValidator<Value>;
@@ -50,53 +50,53 @@ export interface RuntimeSchemaDefinition<
 }
 
 export interface BaseRuntimeSchemaDescriptor<
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
 > {
-  readonly kind: Kind;
+  readonly type: Type;
   readonly presence: RuntimeSchemaPresence;
   readonly options: Options;
 }
 
 export interface RequiredRuntimeSchemaDescriptor<
-  Kind extends string = string,
+  Type extends string = string,
   Options extends RuntimeSchemaOptions = RuntimeSchemaOptions,
-> extends BaseRuntimeSchemaDescriptor<Kind, Options> {
+> extends BaseRuntimeSchemaDescriptor<Type, Options> {
   readonly presence: 'required';
 }
 
 export interface OptionalRuntimeSchemaDescriptor<
-  Kind extends string = string,
+  Type extends string = string,
   Options extends RuntimeSchemaOptions = RuntimeSchemaOptions,
-> extends BaseRuntimeSchemaDescriptor<Kind, Options> {
+> extends BaseRuntimeSchemaDescriptor<Type, Options> {
   readonly presence: 'optional';
 }
 
 export interface DefaultedRuntimeSchemaDescriptor<
-  Kind extends string = string,
+  Type extends string = string,
   Options extends RuntimeSchemaOptions = RuntimeSchemaOptions,
   DefaultValue = unknown,
-> extends BaseRuntimeSchemaDescriptor<Kind, Options> {
+> extends BaseRuntimeSchemaDescriptor<Type, Options> {
   readonly presence: 'defaulted';
   readonly defaultValue: DefaultValue;
 }
 
 export type NormalizedRuntimeSchemaDescriptor<
-  Kind extends string = string,
+  Type extends string = string,
   Options extends RuntimeSchemaOptions = RuntimeSchemaOptions,
   DefaultValue = unknown,
 > =
-  | RequiredRuntimeSchemaDescriptor<Kind, Options>
-  | OptionalRuntimeSchemaDescriptor<Kind, Options>
-  | DefaultedRuntimeSchemaDescriptor<Kind, Options, DefaultValue>;
+  | RequiredRuntimeSchemaDescriptor<Type, Options>
+  | OptionalRuntimeSchemaDescriptor<Type, Options>
+  | DefaultedRuntimeSchemaDescriptor<Type, Options, DefaultValue>;
 
 export interface RuntimeSchemaInternals<
   Value,
-  Kind extends string,
+  Type extends string,
   Options extends RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options>,
 > {
-  readonly kind: Kind;
+  readonly type: Type;
   readonly presence: Descriptor['presence'];
   readonly options: Options;
   readonly defaultValue?: unknown;
@@ -110,36 +110,36 @@ declare const runtimeSchemaTypeSymbol: unique symbol;
 
 export interface RuntimeSchemaBuilder<
   Value,
-  Kind extends string = string,
+  Type extends string = string,
   Options extends RuntimeSchemaOptions = RuntimeSchemaOptions,
-  Descriptor extends NormalizedRuntimeSchemaDescriptor<Kind, Options> =
-    NormalizedRuntimeSchemaDescriptor<Kind, Options>,
+  Descriptor extends NormalizedRuntimeSchemaDescriptor<Type, Options> =
+    NormalizedRuntimeSchemaDescriptor<Type, Options>,
 > {
   readonly [runtimeSchemaTypeSymbol]?: {
     readonly value: Value;
-    readonly kind: Kind;
+    readonly type: Type;
     readonly options: Options;
     readonly descriptor: Descriptor;
   };
   readonly optional: () => RuntimeSchemaBuilder<
     Value | undefined,
-    Kind,
+    Type,
     Options,
-    OptionalRuntimeSchemaDescriptor<Kind, Options>
+    OptionalRuntimeSchemaDescriptor<Type, Options>
   >;
   readonly required: () => RuntimeSchemaBuilder<
     NonNullable<Value>,
-    Kind,
+    Type,
     Options,
-    RequiredRuntimeSchemaDescriptor<Kind, Options>
+    RequiredRuntimeSchemaDescriptor<Type, Options>
   >;
   readonly default: (
     value: NonNullable<Value>,
   ) => RuntimeSchemaBuilder<
     NonNullable<Value>,
-    Kind,
+    Type,
     Options,
-    DefaultedRuntimeSchemaDescriptor<Kind, Options, NonNullable<Value>>
+    DefaultedRuntimeSchemaDescriptor<Type, Options, NonNullable<Value>>
   >;
 }
 

@@ -11,15 +11,15 @@ describe('compileStaticHashDescriptor', () => {
 
   it('compiles string hash descriptors with optional and default presence', () => {
     expect(compileStaticHashDescriptor({ type: 'string' })).toEqual({
-      kind: 'string',
+      type: 'string',
       presence: 'required',
     });
     expect(compileStaticHashDescriptor({ type: 'string', optional: true })).toEqual({
-      kind: 'string',
+      type: 'string',
       presence: 'optional',
     });
     expect(compileStaticHashDescriptor({ type: 'string', default: 'overview' })).toEqual({
-      kind: 'string',
+      type: 'string',
       presence: 'defaulted',
       defaultValue: 'overview',
     });
@@ -33,7 +33,7 @@ describe('compileStaticHashDescriptor', () => {
         default: 'overview',
       }),
     ).toEqual({
-      kind: 'enum',
+      type: 'enum',
       presence: 'defaulted',
       values: ['overview', 'comments'],
       defaultValue: 'overview',

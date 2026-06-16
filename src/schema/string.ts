@@ -33,7 +33,7 @@ const stringCodec: RuntimeSchemaCodec<string> = {
 
 export function string(): StringSchema {
   return createRuntimeSchemaBuilder<string, 'string'>({
-    kind: 'string',
+    type: 'string',
     codec: stringCodec,
     validateDefault(value, context) {
       validateStringDefault(value, context);

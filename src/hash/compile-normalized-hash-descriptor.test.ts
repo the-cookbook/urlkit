@@ -4,7 +4,7 @@ import { compileNormalizedHashDescriptor } from './compile-normalized-hash-descr
 
 describe('compileNormalizedHashDescriptor', () => {
   it('compiles normalized descriptors into parse/normalize/serialize codecs', () => {
-    const compiled = compileNormalizedHashDescriptor({ kind: 'string', presence: 'optional' });
+    const compiled = compileNormalizedHashDescriptor({ type: 'string', presence: 'optional' });
 
     expect(compiled.parse('comments')).toBe('comments');
     expect(compiled.normalize('comments')).toBe('comments');
@@ -13,7 +13,7 @@ describe('compileNormalizedHashDescriptor', () => {
 
   it('applies defaults and detects default values', () => {
     const compiled = compileNormalizedHashDescriptor({
-      kind: 'enum',
+      type: 'enum',
       presence: 'defaulted',
       values: ['overview', 'comments'],
       defaultValue: 'overview',
@@ -26,14 +26,14 @@ describe('compileNormalizedHashDescriptor', () => {
   });
 
   it('serializes absent optional hash as undefined', () => {
-    const compiled = compileNormalizedHashDescriptor({ kind: 'string', presence: 'optional' });
+    const compiled = compileNormalizedHashDescriptor({ type: 'string', presence: 'optional' });
 
     expect(compiled.serialize(undefined)).toBeUndefined();
   });
 
   it('rejects invalid enum values', () => {
     const compiled = compileNormalizedHashDescriptor({
-      kind: 'enum',
+      type: 'enum',
       presence: 'optional',
       values: ['overview'],
     });
@@ -44,7 +44,7 @@ describe('compileNormalizedHashDescriptor', () => {
   it('copies normalized descriptors before compiling', () => {
     const values = ['overview'];
     const compiled = compileNormalizedHashDescriptor({
-      kind: 'enum',
+      type: 'enum',
       presence: 'optional',
       values,
     });

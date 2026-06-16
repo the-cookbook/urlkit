@@ -9,17 +9,17 @@ import { serializeRuntimeSchemaValue } from './serialize-runtime-schema-value.js
 describe('boolean', () => {
   it('compiles to a normalized descriptor', () => {
     expect(compileRuntimeSchema(boolean())).toEqual({
-      kind: 'boolean',
+      type: 'boolean',
       presence: 'required',
       options: {},
     });
     expect(compileRuntimeSchema(boolean().optional())).toEqual({
-      kind: 'boolean',
+      type: 'boolean',
       presence: 'optional',
       options: {},
     });
     expect(compileRuntimeSchema(boolean().default(false))).toEqual({
-      kind: 'boolean',
+      type: 'boolean',
       presence: 'defaulted',
       options: {},
       defaultValue: false,

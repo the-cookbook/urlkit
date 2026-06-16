@@ -7,7 +7,7 @@ import { parseCompiledRuntimeSchemaValue } from './parse-compiled-runtime-schema
 function trackedSchema() {
   let validations = 0;
   const schema = createRuntimeSchemaBuilder<string, 'tracked'>({
-    kind: 'tracked',
+    type: 'tracked',
     codec: {
       parse: (input) => input.toUpperCase(),
       normalize: (input) => String(input),
@@ -44,7 +44,7 @@ describe('parseCompiledRuntimeSchemaValue', () => {
   it('throws invalid-descriptor when a compiled schema has no parser', () => {
     expect(() =>
       parseCompiledRuntimeSchemaValue(
-        { descriptor: { kind: 'missing', presence: 'required', options: {} } },
+        { descriptor: { type: 'missing', presence: 'required', options: {} } },
         'x',
       ),
     ).toThrow(UrlKitError);

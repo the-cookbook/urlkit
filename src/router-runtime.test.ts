@@ -18,6 +18,7 @@ import {
   patchSearch,
   pickSearch,
   replaceSearch,
+  parsePathPattern,
 } from './router-runtime.js';
 
 describe('router-runtime public exports', () => {
@@ -42,6 +43,7 @@ describe('router-runtime public exports', () => {
     expect(parseHash).toBeTypeOf('function');
     expect(buildHash).toBeTypeOf('function');
     expect(normalizeHash).toBeTypeOf('function');
+    expect(parsePathPattern).toBeTypeOf('function');
   });
 
   it('uses static search descriptors through the public entry', () => {

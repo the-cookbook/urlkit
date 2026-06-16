@@ -1,25 +1,10 @@
-export interface ParsedPathLiteralSegment {
-  readonly kind: 'literal';
-  readonly value: string;
-}
+import type { LiteralSegment, ParameterSegment, Constraint } from '@cookbook/pathkit';
 
-export interface ParsedPathParamConstraint {
-  readonly type: string;
-  readonly params: string;
-}
+export type ParsedPathLiteralSegment = LiteralSegment;
 
-export interface ParsedPathParamSegment {
-  readonly kind: 'param';
-  readonly name: string;
-  readonly optional?: true;
-  readonly wildcard?: true;
-  readonly constraints?: readonly ParsedPathParamConstraint[];
+export type ParsedPathParamConstraint = Constraint;
 
-  /**
-   * Compatibility aliases for the first constraint in the PathKit chain.
-   */
-  readonly constraint?: string;
-  readonly constraintParams?: string;
-}
+export type ParsedPathParamSegment = Pick<ParameterSegment, 'type' | 'name'> &
+  Partial<Omit<ParameterSegment, 'type' | 'name'>>;
 
 export type ParsedPathSegment = ParsedPathLiteralSegment | ParsedPathParamSegment;

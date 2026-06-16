@@ -85,7 +85,7 @@ function coercePathParams(
   const params: Record<string, string | number | readonly (string | number)[]> = {};
 
   for (const segment of segments) {
-    if (segment.kind !== 'param') {
+    if (segment.type !== 'parameter') {
       continue;
     }
 
@@ -176,7 +176,7 @@ function compilePathPattern<Pattern extends string>(
 
 function getPathParamNames(segments: ReturnType<typeof parsePathPattern>): readonly string[] {
   return Object.freeze(
-    segments.flatMap((segment) => (segment.kind === 'param' ? [segment.name] : [])),
+    segments.flatMap((segment) => (segment.type === 'parameter' ? [segment.name] : [])),
   );
 }
 

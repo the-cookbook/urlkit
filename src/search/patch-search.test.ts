@@ -85,7 +85,7 @@ describe('patchSearch', () => {
     );
   });
 
-  it('serializes schema values using configured field kinds', () => {
+  it('serializes schema values using configured field types', () => {
     expect(
       patchSearch(
         '?q=old&tag=react&active=true',

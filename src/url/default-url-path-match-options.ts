@@ -1,13 +1,7 @@
-import type { DecodePathParam, UrlPathWildcardFormat } from '../contracts.js';
+import type { UrlPathMatchOptions } from '../contracts.js';
 
-export interface ResolvedUrlPathMatchOptions {
+export interface ResolvedUrlPathMatchOptions extends Required<UrlPathMatchOptions> {
   readonly delimiter: '/';
-  readonly trailing: boolean;
-  readonly sensitive: boolean;
-  readonly strict: boolean;
-  readonly end: boolean;
-  readonly wildcardFormat: UrlPathWildcardFormat;
-  readonly decode: boolean | DecodePathParam;
 }
 
 export const defaultUrlPathMatchOptions = Object.freeze({

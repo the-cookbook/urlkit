@@ -12,7 +12,7 @@ import { createRuntimeSchemaBuilder } from './create-schema-builder.js';
 
 describe('runtime schema contracts', () => {
   it('infers builder values and descriptor shapes', () => {
-    const required = createRuntimeSchemaBuilder<string, 'test'>({ kind: 'test' });
+    const required = createRuntimeSchemaBuilder<string, 'test'>({ type: 'test' });
     const optional = required.optional();
     const defaulted = required.default('fallback');
 

@@ -10,10 +10,10 @@ export type HashSchema = RuntimeSchemaBuilder<any, any, any, any>;
 
 export type HashDescriptorInput = HashSchema | StaticHashDescriptor | NormalizedHashDescriptor;
 
-export type HashKind = 'string' | 'enum';
+export type HashType = 'string' | 'enum';
 
 export interface NormalizedHashDescriptor<Hash = unknown> {
-  readonly kind: HashKind;
+  readonly type: HashType;
   readonly presence: RuntimeSchemaPresence;
   readonly values?: readonly string[];
   readonly defaultValue?: Hash;

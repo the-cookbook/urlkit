@@ -8,14 +8,14 @@ import { serializeRuntimeSchemaValue } from './serialize-runtime-schema-value.js
 
 describe('int', () => {
   it('compiles to a normalized descriptor', () => {
-    expect(compileRuntimeSchema(int())).toEqual({ kind: 'int', presence: 'required', options: {} });
+    expect(compileRuntimeSchema(int())).toEqual({ type: 'int', presence: 'required', options: {} });
     expect(compileRuntimeSchema(int().optional())).toEqual({
-      kind: 'int',
+      type: 'int',
       presence: 'optional',
       options: {},
     });
     expect(compileRuntimeSchema(int().default(1))).toEqual({
-      kind: 'int',
+      type: 'int',
       presence: 'defaulted',
       options: {},
       defaultValue: 1,

@@ -76,7 +76,7 @@ describe('createUrlContract', () => {
 
   it('uses compiled hash descriptors captured at construction time', () => {
     const hash = {
-      kind: 'enum',
+      type: 'enum',
       presence: 'optional',
       values: ['one', 'two'],
     } as const;

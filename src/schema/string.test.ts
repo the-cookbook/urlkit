@@ -10,17 +10,17 @@ import { string } from './string.js';
 describe('string', () => {
   it('compiles to a normalized descriptor', () => {
     expect(compileRuntimeSchema(string())).toEqual({
-      kind: 'string',
+      type: 'string',
       presence: 'required',
       options: {},
     });
     expect(compileRuntimeSchema(string().optional())).toEqual({
-      kind: 'string',
+      type: 'string',
       presence: 'optional',
       options: {},
     });
     expect(compileRuntimeSchema(string().default('profile'))).toEqual({
-      kind: 'string',
+      type: 'string',
       presence: 'defaulted',
       options: {},
       defaultValue: 'profile',
