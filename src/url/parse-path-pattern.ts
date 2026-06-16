@@ -5,7 +5,7 @@ import type { ParsedPathSegment } from './path-segment.js';
 
 export function parsePathPattern(pattern: string): readonly ParsedPathSegment[] {
   try {
-    return Object.freeze(toParsedPathSegments(tokenize(pattern)));
+    return toParsedPathSegments(tokenize(pattern));
   } catch (error) {
     if (error instanceof UrlKitError) {
       throw error;
@@ -32,7 +32,7 @@ function toParsedPathSegments(tokens: readonly RouteSegment[]): readonly ParsedP
     segments.push(toParsedParamSegment(token));
   }
 
-  return segments.map((segment) => Object.freeze(segment));
+  return Object.freeze(segments.map((segment) => Object.freeze(segment)));
 }
 
 function appendLiteralSegments(
@@ -48,21 +48,25 @@ function appendLiteralSegments(
       continue;
     }
 
-    segments.push({ type: 'literal', value: segment });
+    segments.push(Object.freeze({ type: 'literal', value: segment }));
   }
 }
 
 function toParsedParamSegment(token: ParameterSegment): ParsedPathSegment {
-  const constraints = token.constraints.map((constraint) => ({
-    type: constraint.type,
-    params: constraint.params,
-  }));
+  const constraints = Object.freeze(
+    token.constraints.map((constraint) =>
+      Object.freeze({
+        type: constraint.type,
+        params: constraint.params,
+      }),
+    ),
+  );
 
-  return {
+  return Object.freeze({
     type: 'parameter',
     name: token.name,
     ...(token.optional ? { optional: true as const } : {}),
     ...(token.wildcard ? { wildcard: true as const } : {}),
     ...(constraints.length ? { constraints } : {}),
-  };
+  });
 }

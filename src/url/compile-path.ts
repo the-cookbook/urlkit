@@ -182,6 +182,7 @@ function getPathParamNames(segments: ReturnType<typeof parsePathPattern>): reado
 
 function createValidatedPathMatchCache(pattern: string): ReturnType<typeof createPathMatchCache> {
   const matcherCache = createPathMatchCache(pattern);
+
   matcherCache.get(defaultUrlPathMatchOptions);
 
   return matcherCache;

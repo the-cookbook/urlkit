@@ -104,4 +104,18 @@ describe('parsePathPattern', () => {
     expect(Object.isFrozen(segments)).toBe(true);
     expect(Object.isFrozen(segments[0])).toBe(true);
   });
+
+  it('deeply freezes constraints', () => {
+    const segments = parsePathPattern('/users/{id:int:min(1)}');
+    const parameter = segments[1];
+
+    expect(parameter?.type).toBe('parameter');
+
+    if (parameter?.type !== 'parameter') {
+      throw new Error('Expected a parameter segment.');
+    }
+
+    expect(Object.isFrozen(parameter.constraints)).toBe(true);
+    expect(Object.isFrozen(parameter.constraints?.[0])).toBe(true);
+  });
 });
