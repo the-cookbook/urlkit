@@ -1,4 +1,5 @@
 import typescript from '@rollup/plugin-typescript';
+import terser from '@rollup/plugin-terser';
 import { defineConfig } from 'rollup';
 
 export default defineConfig({
@@ -12,7 +13,10 @@ export default defineConfig({
     dir: 'dist',
     entryFileNames: '[name].js',
     format: 'esm',
-    sourcemap: true,
+    sourcemap: false,
+    compact: true,
+    generatedCode: 'es2015',
+    minifyInternalExports: true,
   },
   plugins: [
     typescript({
@@ -22,6 +26,16 @@ export default defineConfig({
         declaration: false,
         declarationMap: false,
         noEmit: false,
+      },
+    }),
+    terser({
+      module: true,
+      compress: {
+        passes: 2,
+      },
+      mangle: true,
+      format: {
+        comments: false,
       },
     }),
   ],
