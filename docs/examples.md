@@ -116,11 +116,23 @@ FileUrl.parse('/files/docs/readme').params;
 // { path: 'docs/readme' }
 ```
 
-Use `wildcardFormat: 'array'` to return wildcard params as path segments.
+Use `wildcardFormat: 'array'` to return wildcard params as path segments. Setting it on the contract also updates the inferred return type for every path-parsing method.
 
 ```ts
-FileUrl.parse('/files/docs/readme', { wildcardFormat: 'array' }).params;
-// { path: ['docs', 'readme'] }
+const FileSegmentsUrl = url({ path: '/files/{*path}' }, { pathMatch: { wildcardFormat: 'array' } });
+
+FileSegmentsUrl.parse('/files/docs/readme').params.path;
+// readonly string[]
+
+FileSegmentsUrl.safeParse('/files/docs/readme');
+// success data uses readonly string[] for params.path
+```
+
+Per-call options still override the contract:
+
+```ts
+FileSegmentsUrl.parse('/files/docs/readme', { wildcardFormat: 'string' }).params.path;
+// string
 ```
 
 Use `decode: true` to decode path params with `decodeURIComponent`.

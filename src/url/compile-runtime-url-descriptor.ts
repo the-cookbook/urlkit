@@ -29,6 +29,7 @@ export function compileRuntimeUrlDescriptor<Descriptor extends RuntimeUrlDescrip
           path: compilePath(descriptor.path, {
             params: 'parsed',
             ...(options.pathConstraints ? { pathConstraints: options.pathConstraints } : {}),
+            ...(options.pathMatch ? { pathMatch: options.pathMatch } : {}),
           }),
         }
       : {}),

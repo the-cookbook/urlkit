@@ -53,6 +53,27 @@ describe('compileRuntimeUrlDescriptor', () => {
     expect(descriptor.path?.parsePathname('/products/12.5')).toEqual({ id: 12.5 });
   });
 
+  it('forwards contract pathMatch options to the compiled path', () => {
+    const descriptor = compileRuntimeUrlDescriptor(
+      { path: '/files/{*path}' },
+      { pathMatch: { wildcardFormat: 'array', sensitive: true } },
+    );
+
+    expect(descriptor.path?.parsePathname('/files/docs/guides')).toEqual({
+      path: ['docs', 'guides'],
+    });
+    expect(descriptor.path?.matchPathname('/FILES/docs/guides')).toEqual({
+      match: false,
+      params: null,
+    });
+    expect(
+      descriptor.path?.matchPathname('/FILES/docs/guides', { sensitive: false }),
+    ).toMatchObject({
+      match: true,
+      params: { path: ['docs', 'guides'] },
+    });
+  });
+
   it('validates search defaults at contract creation time', () => {
     expect(() =>
       compileRuntimeUrlDescriptor({

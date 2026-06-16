@@ -13,10 +13,14 @@ import type {
   UrlContract,
   UrlModeFromRuntimeDescriptor,
 } from './contracts.js';
+import type { PathMatchOptionsFromOptions } from './path-match-contracts.js';
 
-export function url<const Descriptor extends RuntimeUrlDescriptor>(
+export function url<
+  const Descriptor extends RuntimeUrlDescriptor,
+  const Options extends CreateUrlOptions | undefined = undefined,
+>(
   descriptor: Descriptor,
-  options: CreateUrlOptions = {},
+  options?: Options,
 ): UrlContract<
   UrlModeFromRuntimeDescriptor<Descriptor>,
   PathnameFromRuntimeDescriptor<Descriptor>,
@@ -25,8 +29,11 @@ export function url<const Descriptor extends RuntimeUrlDescriptor>(
   HashFromRuntimeDescriptor<Descriptor>,
   SearchBuildInputFromRuntimeDescriptor<Descriptor>,
   HashBuildInputFromRuntimeDescriptor<Descriptor>,
-  PathPatternFromRuntimeDescriptor<Descriptor>
+  PathPatternFromRuntimeDescriptor<Descriptor>,
+  PathMatchOptionsFromOptions<Options>
 > {
+  const resolvedOptions: CreateUrlOptions = options ?? {};
+
   return createUrlContract<
     UrlModeFromRuntimeDescriptor<Descriptor>,
     PathnameFromRuntimeDescriptor<Descriptor>,
@@ -35,6 +42,7 @@ export function url<const Descriptor extends RuntimeUrlDescriptor>(
     HashFromRuntimeDescriptor<Descriptor>,
     SearchBuildInputFromRuntimeDescriptor<Descriptor>,
     HashBuildInputFromRuntimeDescriptor<Descriptor>,
-    PathPatternFromRuntimeDescriptor<Descriptor>
-  >(compileRuntimeUrlDescriptor(descriptor, options), options);
+    PathPatternFromRuntimeDescriptor<Descriptor>,
+    PathMatchOptionsFromOptions<Options>
+  >(compileRuntimeUrlDescriptor(descriptor, resolvedOptions), resolvedOptions);
 }

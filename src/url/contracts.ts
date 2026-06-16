@@ -63,20 +63,26 @@ export interface UrlContract<
   SearchInput = Partial<Search>,
   HashInput = Hash,
   PathPattern extends string = string,
+  ContractPathMatchOptions extends UrlPathMatchOptions | undefined = undefined,
 > {
   readonly pattern: Mode extends 'path' ? string : undefined;
 
   parse<const Options extends ParseUrlOptions | undefined = undefined>(
     input: string | URL,
     options?: Options,
-  ): UrlState<Pathname, PathParamsFromOptions<PathPattern, Params, Options>, Search, Hash>;
+  ): UrlState<
+    Pathname,
+    PathParamsFromOptions<PathPattern, Params, Options, ContractPathMatchOptions>,
+    Search,
+    Hash
+  >;
 
   safeParse<const Options extends ParseUrlOptions | undefined = undefined>(
     input: string | URL,
     options?: Options,
   ): UrlSafeParseResult<
     Pathname,
-    PathParamsFromOptions<PathPattern, Params, Options>,
+    PathParamsFromOptions<PathPattern, Params, Options, ContractPathMatchOptions>,
     Search,
     Hash
   >;
@@ -84,14 +90,19 @@ export interface UrlContract<
   parseRequest<const Options extends ParseRequestOptions | undefined = undefined>(
     input: Request | UrlRequestInput,
     options?: Options,
-  ): UrlState<Pathname, PathParamsFromOptions<PathPattern, Params, Options>, Search, Hash>;
+  ): UrlState<
+    Pathname,
+    PathParamsFromOptions<PathPattern, Params, Options, ContractPathMatchOptions>,
+    Search,
+    Hash
+  >;
 
   safeParseRequest<const Options extends ParseRequestOptions | undefined = undefined>(
     input: Request | UrlRequestInput,
     options?: Options,
   ): UrlSafeParseResult<
     Pathname,
-    PathParamsFromOptions<PathPattern, Params, Options>,
+    PathParamsFromOptions<PathPattern, Params, Options, ContractPathMatchOptions>,
     Search,
     Hash
   >;
@@ -123,7 +134,7 @@ export interface UrlContract<
     ? <const Options extends UrlPathMatchOptions | undefined = undefined>(
         pathname: string,
         options?: Options,
-      ) => PathParamsFromOptions<PathPattern, Params, Options>
+      ) => PathParamsFromOptions<PathPattern, Params, Options, ContractPathMatchOptions>
     : never;
 
   readonly buildPath: Mode extends 'path' ? PathBuildMethod<Params> : never;
@@ -167,16 +178,17 @@ export type PathMatchResult<Params> = PathMatchSuccess<Params> | PathMatchFailur
 export interface CompiledPath<
   Pattern extends string = string,
   Params = ParamsFromPattern<Pattern>,
+  ContractPathMatchOptions extends UrlPathMatchOptions | undefined = undefined,
 > {
   readonly pattern: Pattern;
   parsePathname<const Options extends UrlPathMatchOptions | undefined = undefined>(
     pathname: string,
     options?: Options,
-  ): ParamsFromPatternWithOptions<Pattern, Options>;
+  ): PathParamsFromOptions<Pattern, Params, Options, ContractPathMatchOptions>;
   matchPathname<const Options extends UrlPathMatchOptions | undefined = undefined>(
     pathname: string,
     options?: Options,
-  ): PathMatchResult<ParamsFromPatternWithOptions<Pattern, Options>>;
+  ): PathMatchResult<PathParamsFromOptions<Pattern, Params, Options, ContractPathMatchOptions>>;
   buildPath: PathBuildMethod<Params>;
 }
 
@@ -258,21 +270,74 @@ export type PathnameFromPattern<Pattern extends string> =
 
 export type ParamsFromPattern<Pattern extends string> = Simplify<ExtractPathParams<Pattern>>;
 
-export type ParamsFromPatternWithOptions<Pattern extends string, Options> = Simplify<
-  ExtractPathParams<Pattern, WildcardFormatFromPathMatchOptions<Options>>
+export type ParamsFromPatternWithOptions<Pattern extends string, Options> = PathParamsFromOptions<
+  Pattern,
+  ParamsFromPattern<Pattern>,
+  Options
 >;
 
 export type PathParamsFromOptions<
   PathPattern extends string,
   Params,
-  Options,
-> = string extends PathPattern ? Params : ParamsFromPatternWithOptions<PathPattern, Options>;
+  MethodPathMatchOptions,
+  ContractPathMatchOptions = undefined,
+> = string extends PathPattern
+  ? Params
+  : ApplyWildcardFormat<
+      PathPattern,
+      Params,
+      ResolveWildcardFormat<ContractPathMatchOptions, MethodPathMatchOptions>
+    >;
 
-type WildcardFormatFromPathMatchOptions<Options> = Options extends {
-  readonly wildcardFormat: 'array';
-}
-  ? 'array'
-  : 'string';
+type ResolveWildcardFormat<ContractOptions, MethodOptions> = WildcardFormatFromOptions<
+  MethodOptions,
+  WildcardFormatFromOptions<ContractOptions, 'string'>
+>;
+
+type WildcardFormatFromOptions<
+  Options,
+  Fallback extends UrlPathWildcardFormat,
+> = Options extends undefined
+  ? Fallback
+  : Options extends object
+    ? 'wildcardFormat' extends keyof Options
+      ? Options extends { readonly wildcardFormat: infer WildcardFormat }
+        ? WildcardFormatFromRequiredValue<WildcardFormat, Fallback>
+        : Options extends { readonly wildcardFormat?: infer WildcardFormat }
+          ? Extract<WildcardFormat, UrlPathWildcardFormat> | Fallback
+          : Fallback
+      : Fallback
+    : Fallback;
+
+type WildcardFormatFromRequiredValue<Value, Fallback extends UrlPathWildcardFormat> = [
+  Extract<Value, UrlPathWildcardFormat>,
+] extends [never]
+  ? Fallback
+  : undefined extends Value
+    ? Extract<Value, UrlPathWildcardFormat> | Fallback
+    : Extract<Value, UrlPathWildcardFormat>;
+
+type ApplyWildcardFormat<
+  Pattern extends string,
+  Params,
+  WildcardFormat extends UrlPathWildcardFormat,
+> = Simplify<{
+  readonly [Key in keyof Params]: Key extends WildcardParamNames<Pattern>
+    ? WildcardFormat extends 'array'
+      ? readonly PathParamElement<Params[Key]>[]
+      : PathParamElement<Params[Key]>
+    : Params[Key];
+}>;
+
+type WildcardParamNames<Pattern extends string> =
+  Pattern extends `${string}{${infer Token}}${infer Rest}`
+    ? IsWildcardPathParamToken<Token> extends true
+      ? PathParamNameFromToken<Token> | WildcardParamNames<Rest>
+      : WildcardParamNames<Rest>
+    : never;
+
+type PathParamElement<Value> =
+  Exclude<Value, undefined> extends readonly (infer Item)[] ? Item : Exclude<Value, undefined>;
 
 type ExtractPathParams<
   Pattern extends string,

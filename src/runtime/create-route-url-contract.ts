@@ -17,6 +17,7 @@ import type {
   RawParamsFromPattern,
   UrlContract,
 } from '../url/contracts.js';
+import type { PathMatchOptionsFromOptions } from '../url/path-match-contracts.js';
 import type { EmptyParams } from '../contracts.js';
 import type { CreateRouteUrlContractOptions } from './contracts.js';
 
@@ -24,6 +25,8 @@ export function createRouteUrlContract<
   const Descriptor extends StaticUrlDescriptor,
   const Options extends CreateRouteUrlContractOptions | undefined = undefined,
 >(descriptor: Descriptor, options?: Options): RouteUrlContract<Descriptor, Options> {
+  const resolvedOptions: CreateRouteUrlContractOptions = options ?? {};
+
   return createUrlContract<
     StaticUrlModeFromDescriptor<Descriptor>,
     RoutePathnameFromDescriptor<Descriptor>,
@@ -31,8 +34,10 @@ export function createRouteUrlContract<
     InferStaticUrlSearch<Descriptor>,
     InferStaticUrlHash<Descriptor>,
     InferStaticUrlSearchBuildInput<Descriptor>,
-    InferStaticUrlHashBuildInput<Descriptor>
-  >(compileRouteUrlDescriptor(descriptor, options), options);
+    InferStaticUrlHashBuildInput<Descriptor>,
+    RoutePathPatternFromDescriptor<Descriptor>,
+    PathMatchOptionsFromOptions<Options>
+  >(compileRouteUrlDescriptor(descriptor, options), resolvedOptions);
 }
 
 export interface RouteUrlContract<
@@ -45,8 +50,13 @@ export interface RouteUrlContract<
   InferStaticUrlSearch<Descriptor>,
   InferStaticUrlHash<Descriptor>,
   InferStaticUrlSearchBuildInput<Descriptor>,
-  InferStaticUrlHashBuildInput<Descriptor>
+  InferStaticUrlHashBuildInput<Descriptor>,
+  RoutePathPatternFromDescriptor<Descriptor>,
+  PathMatchOptionsFromOptions<Options>
 > {}
+
+export type RoutePathPatternFromDescriptor<Descriptor extends StaticUrlDescriptor> =
+  Descriptor extends { readonly path: infer Pattern extends string } ? Pattern : string;
 
 export type RoutePathnameFromDescriptor<Descriptor extends StaticUrlDescriptor> =
   Descriptor extends {
@@ -88,6 +98,7 @@ function compileRouteUrlDescriptor<
           path: compilePath(descriptor.path, {
             params: paramsMode,
             ...(options?.pathConstraints ? { pathConstraints: options.pathConstraints } : {}),
+            ...(options?.pathMatch ? { pathMatch: options.pathMatch } : {}),
           }),
         }
       : {}),

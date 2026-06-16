@@ -10,26 +10,35 @@ import { createPathMatchCache } from './path-match-cache.js';
 import { resolveUrlPathMatchOptions } from './resolve-url-path-match-options.js';
 import { mapPathKitMatchError } from './map-pathkit-error.js';
 import { defaultUrlPathMatchOptions } from './default-url-path-match-options.js';
-import type { CompiledPath, CompilePathOptions, PathMatchResult } from './contracts.js';
+import type {
+  CompiledPath,
+  CompilePathOptions,
+  ParamsFromPattern,
+  PathMatchResult,
+} from './contracts.js';
+import type { PathMatchOptionsFromOptions } from './path-match-contracts.js';
 
-export function compilePath<Pattern extends string>(
+export function compilePath<
+  const Pattern extends string,
+  const Options extends CompilePathOptions | undefined = undefined,
+>(
   pattern: Pattern,
-  options: CompilePathOptions = {},
-): CompiledPath<Pattern> {
-  if (options.pathConstraints) {
-    registerPathConstraints(options.pathConstraints);
+  options?: Options,
+): CompiledPath<Pattern, ParamsFromPattern<Pattern>, PathMatchOptionsFromOptions<Options>> {
+  const resolvedOptions: CompilePathOptions = options ?? {};
+  if (resolvedOptions.pathConstraints) {
+    registerPathConstraints(resolvedOptions.pathConstraints);
   }
 
-  const paramsMode = options.params ?? 'parsed';
+  const paramsMode = resolvedOptions.params ?? 'parsed';
   const { segments, pathParamNames, matcherCache, builder } = compilePathPattern(pattern);
 
   return Object.freeze({
     pattern,
     parsePathname(pathname: string, matchOptions?: UrlPathMatchOptions) {
       const result = matchPathname(pathname, {
-        ...options.pathMatch,
         ...matchOptions,
-        strict: matchOptions?.strict ?? true,
+        strict: matchOptions?.strict ?? resolvedOptions.pathMatch?.strict ?? true,
       });
 
       if (!result.match) {
@@ -57,7 +66,9 @@ export function compilePath<Pattern extends string>(
     matchOptions?: UrlPathMatchOptions,
   ): PathMatchResult<Record<string, string | number | readonly (string | number)[]>> {
     try {
-      const matcher = matcherCache.get(resolveUrlPathMatchOptions(undefined, matchOptions));
+      const matcher = matcherCache.get(
+        resolveUrlPathMatchOptions(resolvedOptions.pathMatch, matchOptions),
+      );
       const result = matcher(pathname);
 
       if (!result.match || !result.params) {

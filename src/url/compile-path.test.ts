@@ -2,7 +2,7 @@ import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { compilePath } from './compile-path.js';
 import { createPathConstraint } from './path-constraints.js';
-import type { ParamsFromPattern, PathnameFromPattern } from './contracts.js';
+import type { ParamsFromPattern } from './contracts.js';
 
 const expectUrlKitError = (
   callback: () => unknown,

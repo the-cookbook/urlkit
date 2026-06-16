@@ -182,13 +182,23 @@ ApiUrl.match('/api/users', { end: true });
 // false
 ```
 
-Use `wildcardFormat: 'array'` when you want wildcard params as path segments.
+Use `wildcardFormat: 'array'` when you want wildcard params as path segments. Contract-level `wildcardFormat` is reflected in the return types of `parse`, `safeParse`, `parseRequest`, `safeParseRequest`, and `parsePathname`.
 
 ```ts
-const FileUrl = url({ path: '/files/{*path}' });
+const FileUrl = url({ path: '/files/{*path}' }, { pathMatch: { wildcardFormat: 'array' } });
 
-FileUrl.parse('/files/docs/readme', { wildcardFormat: 'array' }).params;
-// { path: ['docs', 'readme'] }
+FileUrl.parse('/files/docs/readme').params.path;
+// readonly string[]
+
+FileUrl.parsePathname('/files/docs/readme').path;
+// readonly string[]
+```
+
+Method-level options take precedence in both runtime behavior and type inference.
+
+```ts
+FileUrl.parse('/files/docs/readme', { wildcardFormat: 'string' }).params.path;
+// string
 ```
 
 Use `decode: true` to decode path params with `decodeURIComponent`.
@@ -1046,6 +1056,25 @@ const ArticleUrl = createRouteUrlContract({
 
 const state = ArticleUrl.parse('/articles/post-1?ref=email#comments');
 // state.params.slug is string because router-runtime defaults to raw params.
+```
+
+Contract-level wildcard formatting preserves the selected router parameter mode:
+
+```ts
+const RawFilesUrl = createRouteUrlContract({ path: '/files/{*path:int}' } as const, {
+  pathMatch: { wildcardFormat: 'array' },
+});
+
+RawFilesUrl.parse('/files/1').params.path;
+// readonly string[]
+
+const ParsedFilesUrl = createRouteUrlContract({ path: '/files/{*path:int}' } as const, {
+  params: 'parsed',
+  pathMatch: { wildcardFormat: 'array' },
+});
+
+ParsedFilesUrl.parse('/files/1').params.path;
+// readonly number[]
 ```
 
 Use parsed params when desired:
