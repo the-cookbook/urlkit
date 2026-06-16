@@ -1,16 +1,16 @@
 import {
+  url,
   array,
   boolean,
-  createConstraint,
   enumOf,
   int,
   object,
-  registerPathConstraint,
   string,
-  url,
+  createPathConstraint,
+  registerPathConstraint,
 } from './urlkit.js';
 
-export const slugConstraint = createConstraint({
+export const slugConstraint = createPathConstraint({
   parse(paramName, value) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(value))) {
       throw new Error(`Path parameter "${paramName}" must be a lowercase slug.`);

@@ -4,20 +4,24 @@ import {
   UrlKitError,
   array,
   boolean,
-  createConstraint,
   date,
   dateTime,
   enumOf,
   hash,
-  hasPathConstraint,
   int,
   number as numberSchema,
   object,
-  registerPathConstraint,
-  registerPathConstraints,
   search,
   string,
   url,
+  hasPathConstraint,
+  createConstraint,
+  createPathConstraint,
+  getPathConstraint,
+  resetPathConstraints,
+  unregisterPathConstraint,
+  registerPathConstraint,
+  registerPathConstraints,
 } from './index.js';
 import type {
   BuildSearchOptions,
@@ -58,17 +62,23 @@ describe('main public exports', () => {
     expect(url).toBeTypeOf('function');
     expect(search).toBeTypeOf('function');
     expect(hash).toBeTypeOf('function');
-    expect(hasPathConstraint).toBeTypeOf('function');
     expect(string).toBeTypeOf('function');
     expect(numberSchema).toBeTypeOf('function');
     expect(int).toBeTypeOf('function');
     expect(boolean).toBeTypeOf('function');
-    expect(createConstraint).toBeTypeOf('function');
     expect(date).toBeTypeOf('function');
     expect(dateTime).toBeTypeOf('function');
     expect(array).toBeTypeOf('function');
     expect(enumOf).toBeTypeOf('function');
     expect(object).toBeTypeOf('function');
+    expect(hasPathConstraint).toBeTypeOf('function');
+    expect(getPathConstraint).toBeTypeOf('function');
+    // "createConstraint" is flagged to be removed on v3
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    expect(createConstraint).toBeTypeOf('function');
+    expect(createPathConstraint).toBeTypeOf('function');
+    expect(unregisterPathConstraint).toBeTypeOf('function');
+    expect(resetPathConstraints).toBeTypeOf('function');
     expect(registerPathConstraint).toBeTypeOf('function');
     expect(registerPathConstraints).toBeTypeOf('function');
   });
@@ -147,7 +157,7 @@ describe('main public exports', () => {
     expectTypeOf<PathBuildMethod<{ readonly id: number }>>(
       (params: { readonly id: number }) => `/users/${params.id}`,
     );
-    const constraint = createConstraint({
+    const constraint = createPathConstraint({
       parse() {},
       verify() {},
       toRegExp() {

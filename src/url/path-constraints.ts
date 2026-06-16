@@ -1,7 +1,27 @@
-import { getConstraint, hasConstraint, registerConstraint } from '@cookbook/pathkit/constraints';
+import {
+  createConstraint as pathkitCreateConstraint,
+  getConstraint,
+  hasConstraint,
+  registerConstraint,
+  resetConstraints,
+  unregisterConstraint,
+} from '@cookbook/pathkit/constraints';
 import type { ConstraintValidation } from '@cookbook/pathkit';
 import type { PathConstraintMap, RegisterPathConstraintOptions } from '../contracts.js';
 import { UrlKitError } from '../errors/url-kit-error.js';
+
+export {
+  hasConstraint as hasPathConstraint,
+  getConstraint as getPathConstraint,
+  pathkitCreateConstraint as createPathConstraint,
+  resetConstraints as resetPathConstraints,
+  unregisterConstraint as unregisterPathConstraint,
+};
+
+/**
+ * @deprecated Use {@link createPathConstraint} instead. This method will be removed in upcoming v3.
+ */
+export const createConstraint = pathkitCreateConstraint;
 
 export function registerPathConstraint(
   name: string,
@@ -41,10 +61,6 @@ export function registerPathConstraints(
   }
 }
 
-export function hasPathConstraint(name: string): boolean {
-  return hasConstraint(name);
-}
-
 function assertPathConstraintName(name: unknown): asserts name is string {
   if (typeof name === 'string' && name.trim()) {
     return;
@@ -79,7 +95,7 @@ function assertPathConstraint(
 
   throw new UrlKitError(
     'invalid-descriptor',
-    `Path constraint "${name}" must be created with createConstraint().`,
+    `Path constraint "${name}" must be created with createPathConstraint().`,
     {
       path: ['pathConstraints', name],
     },

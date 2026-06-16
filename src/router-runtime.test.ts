@@ -3,26 +3,36 @@ import {
   buildHash,
   buildSearch,
   createConstraint,
+  createPathConstraint,
   createRouteUrlContract,
+  getPathConstraint,
   hasPathConstraint,
+  registerPathConstraint,
+  registerPathConstraints,
+  resetPathConstraints,
+  unregisterPathConstraint,
   normalizeHash,
   omitSearch,
   parseHash,
   parseSearch,
   patchSearch,
   pickSearch,
-  registerPathConstraint,
-  registerPathConstraints,
   replaceSearch,
 } from './router-runtime.js';
 
 describe('router-runtime public exports', () => {
   it('exports framework-agnostic router-runtime helpers', () => {
     expect(createRouteUrlContract).toBeTypeOf('function');
+    // "createConstraint" is flagged to be removed on v3
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     expect(createConstraint).toBeTypeOf('function');
+    expect(createPathConstraint).toBeTypeOf('function');
+    expect(getPathConstraint).toBeTypeOf('function');
     expect(hasPathConstraint).toBeTypeOf('function');
+    expect(resetPathConstraints).toBeTypeOf('function');
     expect(registerPathConstraint).toBeTypeOf('function');
     expect(registerPathConstraints).toBeTypeOf('function');
+    expect(unregisterPathConstraint).toBeTypeOf('function');
     expect(parseSearch).toBeTypeOf('function');
     expect(buildSearch).toBeTypeOf('function');
     expect(patchSearch).toBeTypeOf('function');

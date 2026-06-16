@@ -4,9 +4,13 @@ import {
   compileStaticSearch,
   compileStaticUrl,
   createConstraint,
+  createPathConstraint,
   hasPathConstraint,
+  getPathConstraint,
+  resetPathConstraints,
   registerPathConstraint,
   registerPathConstraints,
+  unregisterPathConstraint,
 } from './static.js';
 import type {
   InferStaticHash,
@@ -30,10 +34,16 @@ describe('static public exports', () => {
     expect(compileStaticUrl).toBeTypeOf('function');
     expect(compileStaticSearch).toBeTypeOf('function');
     expect(compileStaticHash).toBeTypeOf('function');
+    // "createConstraint" is flagged to be removed on v3
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     expect(createConstraint).toBeTypeOf('function');
+    expect(createPathConstraint).toBeTypeOf('function');
     expect(hasPathConstraint).toBeTypeOf('function');
+    expect(getPathConstraint).toBeTypeOf('function');
+    expect(resetPathConstraints).toBeTypeOf('function');
     expect(registerPathConstraint).toBeTypeOf('function');
     expect(registerPathConstraints).toBeTypeOf('function');
+    expect(unregisterPathConstraint).toBeTypeOf('function');
   });
 
   it('exports static descriptor contracts for tooling users', () => {

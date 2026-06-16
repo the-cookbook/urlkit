@@ -389,12 +389,12 @@ UserUrl.parse('/users/John%20Doe', { decode: true }).params;
 
 ### Custom path constraints
 
-URLKit re-exports PathKit's `createConstraint` and provides global registration helpers for reusable path constraints. Custom constraints infer `string` params by default unless chained with a numeric constraint. Built-in `int`, `decimal`, `range(...)`, `min(...)`, and `max(...)` infer `number`. When a PathKit constraint rejects a value, URLKit wraps it as `UrlKitError` with `code: 'invalid-param'` and preserves the original PathKit error in `error.cause`.
+URLKit re-exports PathKit's `createConstraint` as `createPathConstraint` and provides global registration helpers for reusable path constraints. Custom constraints infer `string` params by default unless chained with a numeric constraint. Built-in `int`, `decimal`, `range(...)`, `min(...)`, and `max(...)` infer `number`. When a PathKit constraint rejects a value, URLKit wraps it as `UrlKitError` with `code: 'invalid-param'` and preserves the original PathKit error in `error.cause`.
 
 ```ts
-import { createConstraint, registerPathConstraint, url } from '@cookbook/urlkit';
+import { createPathConstraint, registerPathConstraint, url } from '@cookbook/urlkit';
 
-const slug = createConstraint({
+const slug = createPathConstraint({
   parse(paramName, value) {
     if (!/^[a-z0-9-]+$/.test(String(value))) {
       throw new Error(`Path parameter "${paramName}" must be a slug.`);

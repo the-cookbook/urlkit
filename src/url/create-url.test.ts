@@ -1,4 +1,3 @@
-import { createConstraint } from '@cookbook/pathkit/constraints';
 import { describe, expect, it } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { dateTime } from '../schema/date-time.js';
@@ -8,6 +7,7 @@ import { string } from '../schema/string.js';
 import type { UrlNormalizeInput } from '../contracts.js';
 import type { UrlContract } from './contracts.js';
 import { url } from './create-url.js';
+import { createPathConstraint } from './path-constraints.js';
 
 const expectType = <Value>(_value: Value): void => undefined;
 
@@ -63,7 +63,7 @@ describe('url', () => {
     >(UserUrl);
   });
   it('supports custom PathKit constraints in runtime URL contracts', () => {
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse(paramName, value) {
         if (!/^[a-z0-9-]+$/.test(String(value))) {
           throw new Error(`Path parameter "${paramName}" must be a slug.`);

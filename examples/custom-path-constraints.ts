@@ -1,8 +1,8 @@
-import { createConstraint, registerPathConstraint, url } from '@cookbook/urlkit';
+import { createPathConstraint, registerPathConstraint, url } from '@cookbook/urlkit';
 import { createRouteUrlContract } from '@cookbook/urlkit/router-runtime';
 import { compileStaticUrl } from '@cookbook/urlkit/static';
 
-const slugConstraint = createConstraint({
+const slugConstraint = createPathConstraint({
   parse(paramName, value) {
     if (!/^[a-z0-9-]+$/.test(String(value))) {
       throw new Error(`Path parameter "${paramName}" must be a slug.`);
@@ -32,7 +32,7 @@ const articleHref = ArticleUrl.build({
 });
 const invalidArticle = ArticleUrl.safeParse('/articles/InvalidSlug');
 
-const skuConstraint = createConstraint({
+const skuConstraint = createPathConstraint({
   parse(paramName, value) {
     if (!/^sku-[0-9]+$/.test(String(value))) {
       throw new Error(`Path parameter "${paramName}" must be a SKU.`);

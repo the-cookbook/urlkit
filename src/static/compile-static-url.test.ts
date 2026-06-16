@@ -1,8 +1,8 @@
-import { createConstraint } from '@cookbook/pathkit/constraints';
 import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { buildSearch } from '../search/build-search.js';
 import { parseSearch } from '../search/parse-search.js';
+import { createPathConstraint } from '../router-runtime.js';
 import { compileStaticUrl } from './compile-static-url.js';
 import type { StaticUrlModeFromDescriptor } from './contracts.js';
 
@@ -58,7 +58,7 @@ describe('compileStaticUrl', () => {
 
   it('preserves PathKit causes for invalid custom path constraints', () => {
     const compileError = new Error('Static slug constraint could not compile.');
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse() {},
       verify() {},
       toRegExp() {
@@ -83,7 +83,7 @@ describe('compileStaticUrl', () => {
   });
 
   it('supports custom PathKit constraints outside static descriptors', () => {
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse(paramName, value) {
         if (!/^[a-z0-9-]+$/.test(String(value))) {
           throw new Error(`Path parameter "${paramName}" must be a slug.`);

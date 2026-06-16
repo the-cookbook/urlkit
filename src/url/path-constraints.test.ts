@@ -1,14 +1,18 @@
-import { createConstraint } from '@cookbook/pathkit/constraints';
 import { describe, expect, it } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import {
+  createConstraint,
+  createPathConstraint,
+  getPathConstraint,
   hasPathConstraint,
   registerPathConstraint,
   registerPathConstraints,
+  resetPathConstraints,
+  unregisterPathConstraint,
 } from './path-constraints.js';
 
 const createSlugConstraint = () =>
-  createConstraint({
+  createPathConstraint({
     parse(paramName, value) {
       if (!/^[a-z0-9-]+$/.test(String(value))) {
         throw new Error(`Path parameter "${paramName}" must be a slug.`);
@@ -23,6 +27,21 @@ const createSlugConstraint = () =>
       return '[a-z0-9-]+';
     },
   });
+
+describe('path public exports', () => {
+  it('exports helpers', () => {
+    // "createConstraint" is flagged to be removed on v3
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    expect(createConstraint).toBeTypeOf('function');
+    expect(createPathConstraint).toBeTypeOf('function');
+    expect(hasPathConstraint).toBeTypeOf('function');
+    expect(getPathConstraint).toBeTypeOf('function');
+    expect(registerPathConstraint).toBeTypeOf('function');
+    expect(registerPathConstraints).toBeTypeOf('function');
+    expect(resetPathConstraints).toBeTypeOf('function');
+    expect(unregisterPathConstraint).toBeTypeOf('function');
+  });
+});
 
 describe('path constraint registration', () => {
   it('registers global path constraints', () => {
@@ -76,5 +95,27 @@ describe('path constraint registration', () => {
     expect(() =>
       registerPathConstraint('urlkitinvalidconstraint', (() => undefined) as never),
     ).toThrow(UrlKitError);
+  });
+
+  it(' exposes registry helpers', () => {
+    const slug = createPathConstraint({
+      parse(_name, value) {
+        if (typeof value !== 'string' || !/^[a-z0-9-]+$/.test(value)) {
+          throw new Error('Invalid slug.');
+        }
+      },
+      verify() {},
+      toRegExp() {
+        return '[a-z0-9-]+';
+      },
+    });
+
+    registerPathConstraints({ slug });
+
+    expect(hasPathConstraint('slug')).toBe(true);
+    expect(getPathConstraint('slug')).toBe(slug);
+
+    unregisterPathConstraint('slug');
+    expect(hasPathConstraint('slug')).toBe(false);
   });
 });

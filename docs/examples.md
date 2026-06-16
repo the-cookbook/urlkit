@@ -28,9 +28,9 @@ UserUrl.build({
 ## Custom path constraints
 
 ```ts
-import { createConstraint, registerPathConstraint, url } from '@cookbook/urlkit';
+import { createPathConstraint, registerPathConstraint, url } from '@cookbook/urlkit';
 
-const slug = createConstraint({
+const slug = createPathConstraint({
   parse(paramName, value) {
     if (!/^[a-z0-9-]+$/.test(String(value))) {
       throw new Error(`Path parameter "${paramName}" must be a slug.`);

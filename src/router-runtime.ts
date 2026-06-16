@@ -1,5 +1,4 @@
 export * from './url/path-constraints.js';
-export { createConstraint } from '@cookbook/pathkit/constraints';
 export type { ConstraintValidation } from '@cookbook/pathkit';
 export { createRouteUrlContract } from './runtime/create-route-url-contract.js';
 export type { RouteUrlContract } from './runtime/create-route-url-contract.js';

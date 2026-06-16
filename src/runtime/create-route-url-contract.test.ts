@@ -1,6 +1,6 @@
-import { createConstraint } from '@cookbook/pathkit/constraints';
 import { describe, expect, it, expectTypeOf } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
+import { createPathConstraint } from '../router-runtime.js';
 import { createRouteUrlContract } from './create-route-url-contract.js';
 
 const expectUrlKitError = (
@@ -126,7 +126,7 @@ describe('createRouteUrlContract', () => {
   });
 
   it('supports custom PathKit constraints in router-runtime contracts', () => {
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse(paramName, value) {
         if (!/^[a-z0-9-]+$/.test(String(value))) {
           throw new Error(`Path parameter "${paramName}" must be a slug.`);
@@ -173,7 +173,7 @@ describe('createRouteUrlContract', () => {
 
   it('preserves PathKit causes for route custom constraint compilation failures', () => {
     const compileError = new Error('Route slug constraint could not compile.');
-    const slug = createConstraint({
+    const slug = createPathConstraint({
       parse() {},
       verify() {},
       toRegExp() {
