@@ -5,11 +5,6 @@ import type { InferRuntimeSchemaValue } from './contracts.js';
 import { date } from './date.js';
 import { normalizeRuntimeSchemaValue } from './normalize-runtime-schema-value.js';
 import { parseRuntimeSchemaValue } from './parse-runtime-schema-value.js';
-import {
-  safeNormalizeRuntimeSchemaValue,
-  safeParseRuntimeSchemaValue,
-  safeSerializeRuntimeSchemaValue,
-} from './safe-runtime-schema-value.js';
 import { serializeRuntimeSchemaValue } from './serialize-runtime-schema-value.js';
 
 describe('date', () => {
@@ -61,11 +56,12 @@ describe('date', () => {
     expect(serializeRuntimeSchemaValue(date(), value)).toBe('2026-06-02');
   });
 
-  it('rejects invalid date strings and invalid Date values', () => {
+  it('rejects invalid serialized, structured, and Date values', () => {
     for (const value of ['2026-02-31', '2026-13-01', '2026-00-01', 'not-a-date']) {
       expect(() => parseRuntimeSchemaValue(date(), value)).toThrow(UrlKitError);
     }
 
+    expect(() => normalizeRuntimeSchemaValue(date(), '2026-06-02')).toThrow(UrlKitError);
     expect(() => normalizeRuntimeSchemaValue(date(), new Date(Number.NaN))).toThrow(UrlKitError);
     expect(() => serializeRuntimeSchemaValue(date(), new Date(Number.NaN))).toThrow(UrlKitError);
   });
@@ -87,24 +83,19 @@ describe('date', () => {
     expect(() => compileRuntimeSchema(date().default('2026-06-02' as never))).toThrow(UrlKitError);
   });
 
-  it('returns safe failures for invalid parse, normalize, and serialize operations', () => {
-    const parseResult = safeParseRuntimeSchemaValue(date(), '2026-02-31');
-    const normalizeResult = safeNormalizeRuntimeSchemaValue(date(), '2026-06-02');
-    const serializeResult = safeSerializeRuntimeSchemaValue(date(), new Date(Number.NaN));
-
-    expect(parseResult.success).toBe(false);
-    expect(normalizeResult.success).toBe(false);
-    expect(serializeResult.success).toBe(false);
-  });
-
   it('uses search and hash error contexts', () => {
     try {
-      parseRuntimeSchemaValue(date(), 'wrong', { errorCode: 'invalid-hash', path: ['hash'] });
-      throw new Error('Expected date parsing to throw.');
+      parseRuntimeSchemaValue(date(), 'wrong', {
+        errorCode: 'invalid-hash',
+        path: ['hash'],
+      });
+      expect.unreachable('Expected date parsing to throw.');
     } catch (error) {
       expect(error).toBeInstanceOf(UrlKitError);
-      expect((error as UrlKitError).code).toBe('invalid-hash');
-      expect((error as UrlKitError).path).toEqual(['hash']);
+      expect(error).toMatchObject({
+        code: 'invalid-hash',
+        path: ['hash'],
+      });
     }
   });
 
@@ -292,38 +283,6 @@ describe('date', () => {
         new Date('2026-06-02T00:00:00.000Z'),
       ),
     ).toThrow(UrlKitError);
-  });
-
-  it('returns safe failures for invalid custom date formats', () => {
-    const parseResult = safeParseRuntimeSchemaValue(
-      date({
-        format: {
-          parse() {
-            return new Date(Number.NaN);
-          },
-          serialize(value: Date) {
-            return value.toISOString();
-          },
-        },
-      }),
-      'wrong',
-    );
-    const serializeResult = safeSerializeRuntimeSchemaValue(
-      date({
-        format: {
-          parse(value: string) {
-            return new Date(value);
-          },
-          serialize() {
-            return '';
-          },
-        },
-      }),
-      new Date('2026-06-02T00:00:00.000Z'),
-    );
-
-    expect(parseResult.success).toBe(false);
-    expect(serializeResult.success).toBe(false);
   });
 
   it('rejects unsupported format strings and invalid codec descriptors', () => {

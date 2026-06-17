@@ -6,11 +6,6 @@ import { date } from './date.js';
 import { dateTime } from './date-time.js';
 import { normalizeRuntimeSchemaValue } from './normalize-runtime-schema-value.js';
 import { parseRuntimeSchemaValue } from './parse-runtime-schema-value.js';
-import {
-  safeNormalizeRuntimeSchemaValue,
-  safeParseRuntimeSchemaValue,
-  safeSerializeRuntimeSchemaValue,
-} from './safe-runtime-schema-value.js';
 import { serializeRuntimeSchemaValue } from './serialize-runtime-schema-value.js';
 
 describe('dateTime', () => {
@@ -101,14 +96,18 @@ describe('dateTime', () => {
     ).toThrow(UrlKitError);
   });
 
-  it('returns safe failures for invalid parse, normalize, and serialize operations', () => {
-    const parseResult = safeParseRuntimeSchemaValue(dateTime(), '2026-01-01T10:30:00+02:00');
-    const normalizeResult = safeNormalizeRuntimeSchemaValue(dateTime(), '2026-01-01T10:30:00.000Z');
-    const serializeResult = safeSerializeRuntimeSchemaValue(dateTime(), new Date(Number.NaN));
+  it('rejects invalid parse, normalize, and serialize values', () => {
+    expect(() => parseRuntimeSchemaValue(dateTime(), '2026-01-01T10:30:00+02:00')).toThrow(
+      UrlKitError,
+    );
 
-    expect(parseResult.success).toBe(false);
-    expect(normalizeResult.success).toBe(false);
-    expect(serializeResult.success).toBe(false);
+    expect(() => normalizeRuntimeSchemaValue(dateTime(), '2026-01-01T10:30:00.000Z')).toThrow(
+      UrlKitError,
+    );
+
+    expect(() => serializeRuntimeSchemaValue(dateTime(), new Date(Number.NaN))).toThrow(
+      UrlKitError,
+    );
   });
 
   it('uses search and hash error contexts', () => {
@@ -243,35 +242,37 @@ describe('dateTime', () => {
     ).toThrow(UrlKitError);
   });
 
-  it('returns safe failures for invalid custom date-time formats', () => {
-    const parseResult = safeParseRuntimeSchemaValue(
-      dateTime({
-        format: {
-          parse() {
-            return new Date(Number.NaN);
+  it('rejects invalid custom date-time parser results and serializer output', () => {
+    expect(() =>
+      parseRuntimeSchemaValue(
+        dateTime({
+          format: {
+            parse() {
+              return new Date(Number.NaN);
+            },
+            serialize(value: Date) {
+              return value.toISOString();
+            },
           },
-          serialize(value: Date) {
-            return value.toISOString();
-          },
-        },
-      }),
-      'wrong',
-    );
-    const serializeResult = safeSerializeRuntimeSchemaValue(
-      dateTime({
-        format: {
-          parse(value: string) {
-            return new Date(value);
-          },
-          serialize() {
-            return '';
-          },
-        },
-      }),
-      new Date('2026-01-01T10:30:00.000Z'),
-    );
+        }),
+        'wrong',
+      ),
+    ).toThrow(UrlKitError);
 
-    expect(parseResult.success).toBe(false);
-    expect(serializeResult.success).toBe(false);
+    expect(() =>
+      serializeRuntimeSchemaValue(
+        dateTime({
+          format: {
+            parse(value: string) {
+              return new Date(value);
+            },
+            serialize() {
+              return '';
+            },
+          },
+        }),
+        new Date('2026-01-01T10:30:00.000Z'),
+      ),
+    ).toThrow(UrlKitError);
   });
 });

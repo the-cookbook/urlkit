@@ -1,15 +1,10 @@
-import { describe, expect, it, expectTypeOf } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { UrlKitError } from '../errors/url-kit-error.js';
 import { compileRuntimeSchema } from './compile-runtime-schema.js';
 import type { InferRuntimeSchemaValue } from './contracts.js';
 import { enumOf } from './enum-of.js';
 import { normalizeRuntimeSchemaValue } from './normalize-runtime-schema-value.js';
 import { parseRuntimeSchemaValue } from './parse-runtime-schema-value.js';
-import {
-  safeNormalizeRuntimeSchemaValue,
-  safeParseRuntimeSchemaValue,
-  safeSerializeRuntimeSchemaValue,
-} from './safe-runtime-schema-value.js';
 import { serializeRuntimeSchemaValue } from './serialize-runtime-schema-value.js';
 
 describe('enumOf', () => {
@@ -68,12 +63,15 @@ describe('enumOf', () => {
     expect(serializeRuntimeSchemaValue(sort, 'newest')).toBe('newest');
   });
 
-  it('rejects invalid serialized, structured, and serialized output values', () => {
+  it('rejects invalid serialized, structured, and output values', () => {
     const sort = enumOf(['newest', 'popular'] as const);
 
     expect(() => parseRuntimeSchemaValue(sort, 'oldest')).toThrow(UrlKitError);
+
     expect(() => normalizeRuntimeSchemaValue(sort, 'oldest')).toThrow(UrlKitError);
+
     expect(() => normalizeRuntimeSchemaValue(sort, 1)).toThrow(UrlKitError);
+
     expect(() => serializeRuntimeSchemaValue(sort, 'oldest')).toThrow(UrlKitError);
   });
 
@@ -94,14 +92,24 @@ describe('enumOf', () => {
   it('validates defaults at compile time', () => {
     const sort = enumOf(['newest', 'popular'] as const).default('oldest' as never);
 
-    expect(() => compileRuntimeSchema(sort, { path: ['search', 'sort'] })).toThrow(UrlKitError);
+    expect(() =>
+      compileRuntimeSchema(sort, {
+        path: ['search', 'sort'],
+      }),
+    ).toThrow(UrlKitError);
 
     try {
-      compileRuntimeSchema(sort, { path: ['search', 'sort'] });
+      compileRuntimeSchema(sort, {
+        path: ['search', 'sort'],
+      });
+
+      expect.unreachable('Expected enum compilation to throw.');
     } catch (error) {
       expect(error).toBeInstanceOf(UrlKitError);
-      expect((error as UrlKitError).code).toBe('invalid-descriptor');
-      expect((error as UrlKitError).path).toEqual(['search', 'sort']);
+      expect(error).toMatchObject({
+        code: 'invalid-descriptor',
+        path: ['search', 'sort'],
+      });
     }
   });
 
@@ -124,11 +132,18 @@ describe('enumOf', () => {
     const hash = enumOf(['comments', 'share'] as const);
 
     try {
-      parseRuntimeSchemaValue(hash, 'overview', { errorCode: 'invalid-hash', path: ['hash'] });
+      parseRuntimeSchemaValue(hash, 'overview', {
+        errorCode: 'invalid-hash',
+        path: ['hash'],
+      });
+
+      expect.unreachable('Expected enum parsing to throw.');
     } catch (error) {
       expect(error).toBeInstanceOf(UrlKitError);
-      expect((error as UrlKitError).code).toBe('invalid-hash');
-      expect((error as UrlKitError).path).toEqual(['hash']);
+      expect(error).toMatchObject({
+        code: 'invalid-hash',
+        path: ['hash'],
+      });
     }
 
     try {
@@ -136,29 +151,14 @@ describe('enumOf', () => {
         errorCode: 'invalid-search',
         path: ['search', 'tab'],
       });
+
+      expect.unreachable('Expected enum parsing to throw.');
     } catch (error) {
       expect(error).toBeInstanceOf(UrlKitError);
-      expect((error as UrlKitError).code).toBe('invalid-search');
-      expect((error as UrlKitError).path).toEqual(['search', 'tab']);
-    }
-  });
-
-  it('returns safe failures', () => {
-    const sort = enumOf(['newest', 'popular'] as const);
-
-    expect(safeParseRuntimeSchemaValue(sort, 'newest')).toEqual({ success: true, data: 'newest' });
-
-    const parseResult = safeParseRuntimeSchemaValue(sort, 'oldest');
-    const normalizeResult = safeNormalizeRuntimeSchemaValue(sort, 'oldest');
-    const serializeResult = safeSerializeRuntimeSchemaValue(sort, 'oldest');
-
-    expect(parseResult.success).toBe(false);
-    expect(normalizeResult.success).toBe(false);
-    expect(serializeResult.success).toBe(false);
-
-    if (!parseResult.success) {
-      expect(parseResult.error).toBeInstanceOf(UrlKitError);
-      expect(parseResult.error.code).toBe('invalid-search');
+      expect(error).toMatchObject({
+        code: 'invalid-search',
+        path: ['search', 'tab'],
+      });
     }
   });
 });
