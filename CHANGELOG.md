@@ -1,5 +1,29 @@
 # @cookbook/urlkit
 
+## 2.2.0
+
+### Minor Changes
+
+- 1e26004: Re-export Pathkit constraint helpers with URLKit-friendly names:
+
+  - `hasConstraint` as `hasPathConstraint`
+  - `getConstraint` as `getPathConstraint`
+  - `pathkitCreateConstraint` as `createPathConstraint`
+  - `resetConstraints` as `resetPathConstraints`
+  - `unregisterConstraint` as `unregisterPathConstraint`
+
+  Deprecate `createConstraint` in favor of `createPathConstraint`.
+
+  > `createConstraint` is set to be removed in v3.
+
+  Exports `parsePathPattern` and its related types (`ParsedPathLiteralSegment`, `ParsedPathParamConstraint`, `ParsedPathParamSegment`, and `ParsedPathSegment`) from root, `router-runtime` and `static` entry points.
+
+### Patch Changes
+
+- c289953: Fix contract-level `pathMatch.wildcardFormat` type inference for wildcard params.
+
+  Contract-level `pathMatch` options now affect inferred params for `parse`, `safeParse`, `parseRequest`, `safeParseRequest`, and `parsePathname`, while method-level options remain the precedence override. Router-runtime wildcard inference now preserves raw versus parsed parameter modes, and `compilePath().matchPathname()` now applies contract-level path-match options consistently.
+
 ## 2.1.0
 
 ### Minor Changes
